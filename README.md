@@ -7,7 +7,7 @@
 | `architecture` | 先查 code、建立 current model，再逐步澄清、比較方案、確認決策與規劃。包含 explore、plan、refactor 模式。 |
 | `design-doc` | 將已有模型、evidence 與決策整理成可獨立 review 的 Markdown 文件。 |
 
-`architecture` 按需載入 planning 與 refactoring 指引。完整規劃交接給 `design-doc`，沿用同一份模型與決策。兩者保留互動停點；實作需要使用者另行要求。
+`architecture` 按需載入 planning 與 refactoring 指引。規劃可以交付 Resolved、Draft / Pending Decisions 或 Blocked；refactor 先驗證 premise，PREMISE REJECTED 也是成功結果。只有明確要求文件，或接受保存建議時，才交接給 `design-doc`，沿用同一份模型與決策。Reasoning completion 與文件產出獨立；實作需要使用者另行要求。
 
 ```text
 agent-skills/

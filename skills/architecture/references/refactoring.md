@@ -1,8 +1,24 @@
 # Refactoring Planning
 
-在 refactor 模式形成 target architecture 與 migration strategy 時讀取本指引。它補充 planning 指引；共通訪談、選項比較與 decision gates 仍由 `architecture/SKILL.md` 定義。
+Refactor 在 DISCOVER／MODEL 時先讀取本指引，驗證前提後才考慮 target architecture 與 migration。共通訪談、選項比較、decision gates 與完成契約沿用 `architecture/SKILL.md`。
+
+## 先驗證 refactoring premise
+
+把使用者描述的問題拆成可查證的 claims。從實際 implementation、callers、state 讀寫與 side effects，確認問題是否存在，以及責任目前由誰負責。不要從 class 名稱或 refactoring template 推定責任放錯位置。重要結論提供 `file:line` 與 symbols。
+
+| 分類 | Repository evidence 與下一步 |
+| --- | --- |
+| **CONFIRMED** | Evidence 支持 refactoring premise。繼續 refactoring analysis；成立不表示某個 target 已獲確認。 |
+| **PARTIALLY CONFIRMED** | 部分 claims 正確，但實際 problem 或 responsibility 與描述不同。先校正 current model，再針對成立的部分分析。修正若改變目標或 scope，先詢問使用者，不自行換題。 |
+| **PREMISE REJECTED** | Evidence 與 premise 矛盾。展示相關證據，說明實際 responsibility boundary，交付拒絕結論並成功停止。 |
+
+Evidence 不足時，不勉強判定 CONFIRMED 或 PREMISE REJECTED。列明欠缺的 repository evidence、requirements 或 user context；若因此無法做有意義的規劃，依完成契約交付 Blocked。
+
+PREMISE REJECTED 時，不虛構 target architecture、不建立 migration phases，也不提議移動已位於預期 boundary 的 code。若存在較窄的 unresolved question，明列該問題與範圍，然後停止；不要把它改寫成新的 refactor 任務。拒絕前提不是失敗或 Blocked。Refactoring template 不能凌駕相反的 repository evidence。
 
 ## 先確認保留範圍
+
+只對 premise 成立的部分繼續下列分析。尚未選定的 target choices 回到對應 decision gate，或交付帶 unresolved decisions 的結果。
 
 從 callers、資料格式、讀寫流程、side effects 與 tests 查明現有 contracts。依任務檢查 identity、ordering、notifications、async／concurrency、error handling、lifecycle、persistence 與外部 consumers；只展開與變更相關的項目。
 
@@ -10,7 +26,7 @@
 
 ## 設計 migration
 
-建立 current -> transitional -> target 的最小路徑。不要在 codebase 沒有這種需求時預設 dual writes、adapter、feature flag 或資料格式升級。
+Premise 已查證且相關 target decisions 足夠時，建立 current -> transitional -> target 的最小路徑。可先交付獨立部分的 strategy；未決選擇所阻止的階段保持未規劃，明列原因，不填入虛構步驟。不要在 codebase 沒有這種需求時預設 dual writes、adapter、feature flag 或資料格式升級。
 
 必要時用 ASCII 圖解釋每個過渡階段的 dependency direction、state owner 與 read／write paths。逐項交代：
 
@@ -21,7 +37,7 @@
 - **Rollback／recovery：**各階段能退回到哪裡。若真有不可逆步驟，先呈現影響與恢復限制，取得對該取捨的決定。
 - **Cleanup：**依可驗證的條件移除舊路徑、過渡機制與不再使用的資料；不只寫「之後清理」。
 
-Migration strategy 必須在實作前形成。若證據顯示有多個合理遷移方向，回到共通選項比較與 decision gate；不在步驟安排中默默決定。
+需要 migration 的實作開始前，必須先形成 migration strategy；refactor session 本身不必達到此階段才算完成。若有多個合理遷移方向，回到共通選項比較與 decision gate，或交付 pending decisions；不在步驟安排中默默決定。
 
 ## Regression strategy
 
