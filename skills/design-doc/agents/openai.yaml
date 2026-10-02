@@ -1,0 +1,6 @@
+interface:
+  display_name: "Design Document"
+  short_description: "Write evidence-based designs for independent review"
+  default_prompt: "使用 $design-doc 將既有模型與決策整理成可獨立 review 的 Markdown 設計文件。"
+policy:
+  allow_implicit_invocation: true
