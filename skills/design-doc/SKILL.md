@@ -21,19 +21,22 @@ description: Create or update a review-ready Markdown architecture or refactorin
 
 沒有既有文件慣例時，選擇合適的 `docs/<topic>-design.md`，不要覆寫不相關文件。若目前環境限制寫檔，先在對話交付完整 Markdown，明確說明尚未存檔，不自行變更 CLI 權限或模式。
 
-## 文件內容
+## 文件內容與閱讀主線
 
-先建立不熟悉 repository 的 reviewer 所需的理解，再呈現取捨與計畫。依規模選擇有用的內容，不強迫每份文件都有相同章節：
+Design document 是 synthesis artifact，不按 investigation 順序傾倒證據。Reviewer 應先理解：
 
-只呈現已有材料。Target architecture 或 migration strategy 尚未形成時，可省略對應章節並說明原因。PREMISE REJECTED 的文件保留證據、實際責任邊界與較窄的未決問題，不虛構變更來補滿章節。
+1. **Why：**為何值得改。
+2. **What：**current → target 的核心差異。
+3. **Why this direction：**主要理由與限制。
+4. **Work：**預計工作與 implementation shape。
+5. **Outcome：**完成後應有的具體結果。
+6. **Pending：**影響實作的未決事項。
 
-1. **目的與範圍：**具體問題、預期結果、scope／out-of-scope、文件狀態。
-2. **Current architecture：**短說明、mental model、元件責任、ownership、重要 flows 與 code mapping。
-3. **Proposed architecture：**target 與 current 的差異、責任與依賴變化、state／data ownership、contracts、lifecycle／failure handling。
-4. **Decisions／alternatives：**已確認的選擇及理由、有實質意義的其他方案與未採用理由。沿用既有比較，不製造假選項。
-5. **Migration／plan：**已有的階段、前置條件、相容性、過渡狀態、failure／recovery 與 cleanup。尚未能規劃的部分保留待決原因。
-6. **Verification：**相關現有 tests、必要新增驗證、實際檢查結果與限制。
-7. **Risks／open questions：**尚未解決的問題、其影響與需要 reviewer 判斷的具體事項。
+適合時在前段放小型 **CURRENT → TARGET** 圖。Draft / Pending Decisions 也在前段指出 blocking decisions；不要要求讀者先讀完整 current architecture 才知道要改什麼。
+
+再以 progressive disclosure 提供 current evidence、protocols、flows、alternatives、migration、verification、history 與 risks。只保留能回答 scope 內架構問題的細節，不讓 supporting detail 搶過設計主線。
+
+不強迫固定章節。Target architecture 或 migration 尚未形成時可省略並說明原因。PREMISE REJECTED 保留證據、實際責任邊界與較窄的未決問題，不虛構 target 來補滿文件。
 
 文件以 structure、behavior 與 state 保存已有架構知識；下列規則只改變表達方式，不改變 `architecture` 的推理流程、decision gates 或完成契約。Confirmed decisions 與 explicitly unresolved knowledge 均可呈現，不為補齊圖或 protocol 說明自行做架構決策。
 
