@@ -105,7 +105,7 @@ Repository 可以回答的問題先查 code。產品意圖、歷史限制、owne
 
 ### DESIGN / PLAN / VERIFY
 
-只有請求範圍需要，且相關前提與 decisions 足夠時，才形成 target design 或 plan。對仍未選定的方向，保留 alternatives 與影響；只安排不依賴該決策的工作，不補造後續步驟。
+只有請求範圍需要，且相關前提與 decisions 足夠時，才形成 target design 或 plan。Target 若依賴新增或改變 technical boundaries，需提出足以 review 的 ownership、layers、dependencies 與 candidate interfaces／types；必要時用簡短 API shape 說明 contract。現有 helper 或 concrete type 足夠時，不為抽象而新增 protocol。對仍未選定的方向，保留 alternatives 與影響；可提出 technical candidates 供 decision gate review，但不把未接受方案寫成 target，也不補造依賴該決策的 execution steps。
 
 需要 target design 或 execution planning 時，按需讀取 [planning 指引](references/planning.md)。Refactor 的 migration 與 regression 要求沿用先前讀取的 refactoring 指引；前提被拒絕時不進入這些階段。
 
