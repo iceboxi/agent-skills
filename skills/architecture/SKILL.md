@@ -50,6 +50,16 @@ Architecture 可交付 current model、alternatives comparison、confirmed／unr
 
 使用者回答或校正後，只修正受影響的模型、假設、圖與方案。保留仍有效的 evidence 和 decisions。若前提失效，指出受影響的決策並重開該 decision gate，不重新開始整套分析。
 
+## 互動圖表與文件輸出邊界
+
+互動 CLI 討論使用 ASCII diagrams，涵蓋 current／proposed architecture、dependency direction、ownership、data flow、sequence／call ordering、lifecycle、state transitions，以及 current vs proposed 比較。正常互動不產生 Mermaid；只有使用者明確要求時才使用。
+
+ASCII 是暫時的推理工具。優先讓 terminal 閱讀快速、使用者容易校正、範圍小、視覺複雜度低。使用數張各回答一個問題的小圖，不用一張巨型圖涵蓋整個系統；圖中的未知關係保持未知，不為完整外觀補造內容。
+
+互動依序以 repository evidence 建立 mental model，用 ASCII 呈現，接受使用者校正，再修正模型。Mermaid 不是推理或完成條件；有用的 ASCII 圖也不會自動觸發存檔。
+
+使用者要求 documentation 時，交接已修正的模型給 `design-doc`。Markdown 文件的圖表格式由該 skill 處理，預設 Mermaid。轉換只改變表示方式，不重新設計架構；保留 evidence、決策狀態與 unresolved questions。
+
 ## 流程與 decision gates
 
 ```text
