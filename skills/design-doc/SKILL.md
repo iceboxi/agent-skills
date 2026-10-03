@@ -36,7 +36,7 @@ Design document 是 synthesis artifact，不按 investigation 順序傾倒證據
 
 再以 progressive disclosure 提供 current evidence、protocols、flows、alternatives、migration、verification、history 與 risks。只保留能回答 scope 內架構問題的細節，不讓 supporting detail 搶過設計主線。
 
-不強迫固定章節。Target architecture 或 migration 尚未形成時可省略並說明原因。PREMISE REJECTED 保留證據、實際責任邊界與較窄的未決問題，不虛構 target 來補滿文件。
+不強迫固定章節。已有 proposed technical boundaries 時，呈現重要 ownership、layers、interfaces／types 及其關係，並區分 conceptual target、PROPOSED API 與 CONFIRMED TARGET API；沒有上游設計時不自行補造。Target architecture 或 migration 尚未形成時可省略並說明原因。PREMISE REJECTED 保留證據、實際責任邊界與較窄的未決問題，不虛構 target 來補滿文件。
 
 文件以 structure、behavior 與 state 保存已有架構知識；下列規則只改變表達方式，不改變 `architecture` 的推理流程、decision gates 或完成契約。Confirmed decisions 與 explicitly unresolved knowledge 均可呈現，不為補齊圖或 protocol 說明自行做架構決策。
 
