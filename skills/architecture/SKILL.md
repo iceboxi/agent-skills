@@ -99,7 +99,7 @@ Refactor 在此階段先讀取 [refactoring 指引](references/refactoring.md)�
 
 Repository 可以回答的問題先查 code。產品意圖、歷史限制、ownership 語意、相容性需求與可接受 migration cost 無法從 code 確定時，詢問使用者。每輪只問會改變下一步的問題，不一次發出完整問卷。
 
-提問後，依賴答案的工作等待實際回覆。可繼續獨立查證，也可交付 Draft / Pending Decisions，明列尚未選定的方向與受阻工作。時間經過、未回覆或 UI 預選不代表採納建議。
+將 unresolved questions 區分為 **design-blocking** 與可延後的 implementation／verification details。Design-blocking question 會決定 target 的 responsibility、ownership、dependency 或 contract；先查 repository evidence，仍需選擇時提出 viable alternatives 與 recommendation，主動進入 decision gate，不只因可記為 Pending 就停止。只有使用者延後決定、必要 evidence 不可得，或該選擇合理依賴後續 validation 時，才以 Draft / Pending Decisions 停在 design-blocking question；明列它阻止的 target design 與下一個 decision。時間經過、未回覆或 UI 預選不代表採納建議。
 
 有實質替代方案時，每個選項比較 idea、advantages、disadvantages、coupling、state ownership、migration impact 與 regression risk。可提出推薦並說明理由；重大取捨需要使用者確認，推薦本身不是決策。只有一個合理方向時，說明理由與限制，不製造假選項。已明確選定的方向不重問。
 
