@@ -32,11 +32,11 @@ Design document 是 synthesis artifact，不按 investigation 順序傾倒證據
 5. **Outcome：**完成後應有的具體結果。
 6. **Pending：**影響實作的未決事項。
 
-適合時在前段放小型 **CURRENT → TARGET** 圖。Draft / Pending Decisions 也在前段指出 blocking decisions；不要要求讀者先讀完整 current architecture 才知道要改什麼。
+Architecture-change proposal 必須在前段包含 **Target Architecture Overview**，整合完成後主要 components、boundaries、dependencies 與 ownership；可同時呈現 confirmed 與 proposed elements，但狀態必須明確。PREMISE REJECTED 或明確的 current-state documentation 不要求 target overview。不要因 concrete API 尚未定案而省略已有足夠 evidence 支持的 conceptual target。
 
 再以 progressive disclosure 提供 current evidence、protocols、flows、alternatives、migration、verification、history 與 risks。只保留能回答 scope 內架構問題的細節，不讓 supporting detail 搶過設計主線。
 
-不強迫固定章節。已有 proposed technical boundaries 時，呈現重要 ownership、layers、interfaces／types 及其關係，並區分 conceptual target、PROPOSED API 與 CONFIRMED TARGET API；沒有上游設計時不自行補造。Target architecture 或 migration 尚未形成時可省略並說明原因。PREMISE REJECTED 保留證據、實際責任邊界與較窄的未決問題，不虛構 target 來補滿文件。
+不強迫其他固定章節。已有 proposed technical boundaries 時，呈現重要 ownership、layers、interfaces／types 及其關係，並區分 conceptual target、PROPOSED API 與 CONFIRMED TARGET API；沒有上游設計時不自行補造。若仍有會決定 target responsibility、ownership、dependency 或 contract 的 design-blocking decisions，文件必須標為 **Draft / Pending Decisions**，不能當成 final target design；回到 `architecture` 推進 decision gate，除非使用者明確延後、必要 evidence 不可得，或決策合理依賴後續 validation。
 
 文件以 structure、behavior 與 state 保存已有架構知識；下列規則只改變表達方式，不改變 `architecture` 的推理流程、decision gates 或完成契約。Confirmed decisions 與 explicitly unresolved knowledge 均可呈現，不為補齊圖或 protocol 說明自行做架構決策。
 
