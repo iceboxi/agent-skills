@@ -1,0 +1,6 @@
+interface:
+  display_name: "Technical Design Review"
+  short_description: "Challenge technical designs against repository evidence"
+  default_prompt: "使用 $review 對既有 technical design 做獨立 evidence-based review，嘗試證偽並給出 acceptance verdict。"
+policy:
+  allow_implicit_invocation: true

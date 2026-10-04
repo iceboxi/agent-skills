@@ -5,9 +5,9 @@
 | Skill | 用途 |
 | --- | --- |
 | `architecture` | 先查 code、建立 current model，再逐步澄清、比較方案、確認決策與規劃。包含 explore、plan、refactor 模式。 |
-| `design-doc` | 將已有模型、evidence 與決策整理成可獨立 review 的 Markdown 文件。 |
+| `design-doc` | 將已有模型、evidence 與決策整理成可獨立 review 的 Markdown 文件。 |\n| `review` | 對既有 technical design、Design Doc 或 implementation plan 做獨立 evidence-based acceptance review。 |
 
-`architecture` 按需載入 planning 與 refactoring 指引。規劃可以交付 Resolved、Draft / Pending Decisions 或 Blocked；refactor 先驗證 premise，PREMISE REJECTED 也是成功結果。只有明確要求文件，或接受保存建議時，才交接給 `design-doc`，沿用同一份模型與決策。Reasoning completion 與文件產出獨立；實作需要使用者另行要求。
+`architecture` 按需載入 planning 與 refactoring 指引。`review` 將 proposal 視為尚未受信任，對照 confirmed constraints 與 repository evidence 主動嘗試證偽，輸出 ACCEPT、ACCEPT WITH NON-BLOCKING NOTES、REVISE 或 BLOCKED；它不自行 redesign 或開始實作。\n\n`architecture` 按需載入 planning 與 refactoring 指引。規劃可以交付 Resolved、Draft / Pending Decisions 或 Blocked；refactor 先驗證 premise，PREMISE REJECTED 也是成功結果。只有明確要求文件，或接受保存建議時，才交接給 `design-doc`，沿用同一份模型與決策。Reasoning completion 與文件產出獨立；實作需要使用者另行要求。
 
 ```text
 agent-skills/
@@ -52,12 +52,12 @@ Installer 依目前電腦的 home 與 clone 位置建立連結。不要從其他
         |
         | directory symlinks
         v
-<clone>/skills/{architecture,design-doc}
+<clone>/skills/{architecture,design-doc,review}
 ```
 
 各入口都指向同一份內容。保留整個 repository，兩個 skills 的相對引用需要相鄰目錄。安裝後重新載入 CLI 的 skills，必要時開啟新的 session。
 
-可由任務意圖自動選擇，也可明確指定。例如在 Codex 使用 `$architecture` 或 `$design-doc`；在 Claude Code 使用 `/architecture` 或 `/design-doc`。
+可由任務意圖自動選擇，也可明確指定。例如在 Codex 使用 `$architecture`、`$design-doc` 或 `$review`；在 Claude Code 使用 `/architecture`、`/design-doc` 或 `/review`。
 
 Global／project `AGENTS.md`、`CLAUDE.md` 與專案 architecture 文件仍由各自環境管理。
 
