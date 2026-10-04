@@ -30,18 +30,31 @@ class InstallerTests(unittest.TestCase):
             "---\nname: beta\ndescription: Second fixture skill.\n---\n"
             "[Sibling](../alpha/SKILL.md)\n"
         )
+        self.common = self.skills.parent / "instructions/common.md"
+        self.common.parent.mkdir()
+        self.common.write_text(
+            "# Engineering Rules\n\n- Inspect relevant code.\n\n"
+            "# Code Navigation\n\n- Use native search.\n"
+        )
 
-    def actions(self, adopt=False):
-        return install.plan_install(self.skills, self.home, adopt)
+    def actions(self, adopt=False, adopt_instructions=False):
+        return install.plan_install(self.skills, self.home, adopt, adopt_instructions)
 
     def destinations(self):
         return [self.home / root / name for root in ROOTS
-                for name in ("alpha", "beta")]
+                for name in ("alpha", "beta")] + self.instruction_destinations()
+
+    def instruction_destinations(self):
+        return [self.home / target for target in install.INSTRUCTION_TARGETS]
 
     def assert_installed(self):
         for destination in self.destinations():
             self.assertTrue(destination.is_symlink())
-            self.assertEqual(destination.resolve(), self.skills / destination.name)
+            if destination in self.instruction_destinations():
+                self.assertEqual(destination.resolve(), self.common)
+                self.assertEqual(destination.read_bytes(), self.common.read_bytes())
+            else:
+                self.assertEqual(destination.resolve(), self.skills / destination.name)
         for root in ROOTS:
             alpha = self.home / root / "alpha"
             self.assertTrue((alpha / "references/planning.md").is_file())
@@ -71,6 +84,9 @@ class InstallerTests(unittest.TestCase):
         document.write_text(updated)
         for root in ROOTS:
             self.assertEqual((self.home / root / "alpha/SKILL.md").read_text(), updated)
+        self.common.write_text(self.common.read_text() + "\n- Verify side effects.\n")
+        for destination in self.instruction_destinations():
+            self.assertEqual(destination.read_bytes(), self.common.read_bytes())
 
     def test_conflict_is_found_before_any_link_is_created(self):
         conflict = self.home / ".cursor/skills/beta"
@@ -186,6 +202,148 @@ class InstallerTests(unittest.TestCase):
             self.actions()
         self.assertFalse((self.home / ".agents").exists())
         self.assertTrue(parent.is_symlink())
+
+    def write_existing_instruction(self, text, target=".claude/CLAUDE.md"):
+        destination = self.home / target
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(text)
+        return destination
+
+    def test_instruction_conflict_stops_before_skill_links_are_created(self):
+        existing = self.write_existing_instruction("- Preserve my local rule.\n")
+        with self.assertRaises(install.InstallError):
+            self.actions()
+        self.assertEqual(existing.read_text(), "- Preserve my local rule.\n")
+        self.assertFalse((self.home / ".agents").exists())
+
+    def test_identical_instruction_requires_explicit_adoption(self):
+        existing = self.write_existing_instruction(self.common.read_text())
+        with self.assertRaises(install.InstallError):
+            self.actions()
+        backup = install.apply_install(self.actions(adopt=True), self.home)
+        self.assert_installed()
+        saved = backup / existing.relative_to(self.home)
+        self.assertFalse(saved.is_symlink())
+        self.assertEqual(saved.read_bytes(), self.common.read_bytes())
+
+    def test_contained_instruction_is_backed_up_before_adoption(self):
+        old_text = "# Code Navigation\n\n- Use native search.\n"
+        existing = self.write_existing_instruction(old_text)
+        with self.assertRaises(install.InstallError):
+            self.actions(adopt=True)
+        backup = install.apply_install(self.actions(adopt_instructions=True), self.home)
+        self.assert_installed()
+        self.assertEqual((backup / existing.relative_to(self.home)).read_text(), old_text)
+        self.common.write_text(self.common.read_text() + "\n- Verify side effects.\n")
+        self.assertEqual((backup / existing.relative_to(self.home)).read_text(), old_text)
+
+    def test_instruction_adoption_preserves_file_alias_in_backup(self):
+        original = self.root / "old-common.md"
+        original.write_text(self.common.read_text())
+        alias = self.home / ".claude/CLAUDE.md"
+        alias.parent.mkdir(parents=True)
+        alias.symlink_to(original)
+        backup = install.apply_install(self.actions(adopt_instructions=True), self.home)
+        self.assert_installed()
+        self.assertTrue((backup / ".claude/CLAUDE.md").is_symlink())
+        self.assertEqual(original.read_bytes(), self.common.read_bytes())
+
+    def test_unrepresented_instruction_cannot_be_adopted(self):
+        existing = self.write_existing_instruction("- Use native search.\n- Keep another rule.\n")
+        with self.assertRaises(install.InstallError):
+            self.actions(adopt_instructions=True)
+        self.assertTrue(existing.read_text().endswith("- Keep another rule.\n"))
+        self.assertFalse((self.home / ".agents").exists())
+
+    def test_instruction_adoption_requires_a_whole_text_block(self):
+        self.common.write_text("- Never remove local rules.\n")
+        existing = self.write_existing_instruction("remove local rules.")
+        with self.assertRaises(install.InstallError):
+            self.actions(adopt_instructions=True)
+        self.assertEqual(existing.read_text(), "remove local rules.")
+
+    def test_empty_instruction_is_not_silently_adopted(self):
+        existing = self.write_existing_instruction("\n")
+        with self.assertRaises(install.InstallError):
+            self.actions(adopt_instructions=True)
+        self.assertEqual(existing.read_text(), "\n")
+
+    def test_instruction_flag_does_not_adopt_existing_skills(self):
+        existing = self.home / ".codex/skills/alpha"
+        shutil.copytree(self.skills / "alpha", existing)
+        with self.assertRaises(install.InstallError):
+            self.actions(adopt_instructions=True)
+        self.assertFalse(existing.is_symlink())
+
+    def test_missing_or_invalid_common_instructions_stop_before_writes(self):
+        self.common.unlink()
+        with self.assertRaises(install.InstallError):
+            self.actions()
+        self.common.write_text("\n")
+        with self.assertRaises(install.InstallError):
+            self.actions()
+        self.common.unlink()
+        external = self.root / "external.md"
+        external.write_text("- External instruction.\n")
+        self.common.symlink_to(external)
+        with self.assertRaises(install.InstallError):
+            self.actions()
+        self.assertFalse(self.home.exists())
+
+    def test_dangling_instruction_symlink_cannot_be_adopted(self):
+        existing = self.home / ".claude/CLAUDE.md"
+        existing.parent.mkdir(parents=True)
+        existing.symlink_to(self.root / "missing.md")
+        with self.assertRaises(install.InstallError):
+            self.actions(adopt=True, adopt_instructions=True)
+        self.assertTrue(existing.is_symlink())
+        self.assertFalse((self.home / ".agents").exists())
+
+    def test_adoption_dry_run_preserves_original_instruction(self):
+        old_text = "# Code Navigation\n\n- Use native search.\n"
+        existing = self.write_existing_instruction(old_text)
+        script = self.skills.parent / "install.py"
+        shutil.copyfile(install.__file__, script)
+        with patch.object(install, "__file__", str(script)), \
+                patch("sys.argv", ["install.py", "--home", str(self.home),
+                                   "--adopt-instructions", "--dry-run"]), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(install.main(), 0)
+        self.assertFalse(existing.is_symlink())
+        self.assertEqual(existing.read_text(), old_text)
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertFalse((self.home / ".local").exists())
+
+    def test_failed_instruction_install_restores_both_global_files_and_skills(self):
+        originals = {}
+        for target in install.INSTRUCTION_TARGETS:
+            old_text = "# Code Navigation\n\n- Use native search.\n"
+            originals[self.write_existing_instruction(old_text, target)] = old_text
+        real_symlink_to = Path.symlink_to
+
+        def fail_at_last_instruction(path, target, target_is_directory=False):
+            if path == self.home / ".claude/CLAUDE.md":
+                raise OSError("simulated global instruction failure")
+            return real_symlink_to(path, target, target_is_directory=target_is_directory)
+
+        with patch.object(Path, "symlink_to", fail_at_last_instruction):
+            with self.assertRaisesRegex(OSError, "simulated global instruction failure"):
+                install.apply_install(self.actions(adopt_instructions=True), self.home)
+        for destination, old_text in originals.items():
+            self.assertFalse(destination.is_symlink())
+            self.assertEqual(destination.read_text(), old_text)
+        self.assertTrue(all(not destination.is_symlink() for destination in self.destinations()))
+
+    def test_instruction_edited_after_preflight_is_preserved(self):
+        existing = self.write_existing_instruction(self.common.read_text())
+        actions = self.actions(adopt=True)
+        changed = self.common.read_text() + "\n- New local rule.\n"
+        existing.write_text(changed)
+        with self.assertRaisesRegex(install.InstallError, "changed after preflight"):
+            install.apply_install(actions, self.home)
+        self.assertFalse(existing.is_symlink())
+        self.assertEqual(existing.read_text(), changed)
+        self.assertTrue(all(not destination.is_symlink() for destination in self.destinations()))
 
 
 if __name__ == "__main__":

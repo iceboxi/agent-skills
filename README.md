@@ -1,16 +1,20 @@
-# Agent Skills
+# Agent Environment
 
-個人使用的架構探索、規劃與設計文件 skills。核心內容與 CLI 無關，使用繁體中文說明，保留 code identifiers、API names 與 technical terminology。
+個人的跨裝置 agent 規則與 skills。Repository 名稱維持 `agent-skills`。共用規則與工作流程各自只有一份來源，由 installer 建立本機 symlinks。
 
-| Skill | 用途 |
+| 內容 | 用途 |
 | --- | --- |
-| `architecture` | 先查 code、建立 current model，再逐步澄清、比較方案、確認決策與規劃。包含 explore、plan、refactor 模式。 |
-| `design-doc` | 將已有模型、evidence 與決策整理成可獨立 review 的 Markdown 文件。 |\n| `review` | 對既有 technical design、Design Doc 或 implementation plan 做獨立 evidence-based acceptance review。 |
+| `instructions/common.md` | 每個專案都適用的 Engineering Rules、繁體中文偏好與 Code Navigation。 |
+| `skills/architecture` | 從 repository evidence 建立模型，逐步澄清、比較方案、確認決策與規劃。 |
+| `skills/design-doc` | 將已有模型、evidence 與決策整理成可獨立 review 的 Markdown 文件。 |
+| `skills/review` | 對既有設計或計畫做獨立、以 evidence 為依據的 acceptance review。 |
 
-`architecture` 按需載入 planning 與 refactoring 指引。`review` 將 proposal 視為尚未受信任，對照 confirmed constraints 與 repository evidence 主動嘗試證偽，輸出 ACCEPT、ACCEPT WITH NON-BLOCKING NOTES、REVISE 或 BLOCKED；它不自行 redesign 或開始實作。\n\n`architecture` 按需載入 planning 與 refactoring 指引。規劃可以交付 Resolved、Draft / Pending Decisions 或 Blocked；refactor 先驗證 premise，PREMISE REJECTED 也是成功結果。只有明確要求文件，或接受保存建議時，才交接給 `design-doc`，沿用同一份模型與決策。Reasoning completion 與文件產出獨立；實作需要使用者另行要求。
+架構探索的詳細流程留在 skill。專案的 ownership、建置指令與專案限制留在各專案的 `AGENTS.md`，跟著該專案版本更新。CLI 設定、登入憑證、裝置路徑與專案信任設定仍由本機管理。只有實際需要時，才加入可攜的設定範本或工具 bootstrap。
 
 ```text
 agent-skills/
+  instructions/
+    common.md
   skills/
     architecture/
       SKILL.md
@@ -21,13 +25,16 @@ agent-skills/
     design-doc/
       SKILL.md
       agents/openai.yaml
+    review/
+      SKILL.md
+      agents/openai.yaml
   install.py
   tests/test_install.py
 ```
 
-## 新電腦安裝
+## 新裝置安裝
 
-需要 Git、Python 3.10+，以及能讀取此 private repository 的 GitHub 帳號。Installer 使用 Python standard library。安裝方式使用 directory symlinks，適用 macOS 與 Linux。
+需要 Git、Python 3.10+，以及可讀取此 private repository 的 GitHub SSH 設定。Installer 使用 Python standard library；symlinks 安裝適用 macOS 與 Linux。各 CLI 本身與帳號登入另行設定。
 
 ```sh
 git clone git@github.com:iceboxi/agent-skills.git ~/Documents/agent-skills
@@ -42,49 +49,71 @@ python3 install.py
 gh repo clone iceboxi/agent-skills ~/Documents/agent-skills
 ```
 
-Installer 依目前電腦的 home 與 clone 位置建立連結。不要從其他電腦複製舊的絕對路徑 symlinks。
+Installer 依目前裝置的 home 與 clone 位置建立連結。不要從其他裝置複製舊的絕對路徑 symlinks。保留整個 repository 與穩定的 clone 位置，供連結及 skills 的相對引用使用。
 
-```text
-~/.agents/skills/   (Codex)
-~/.codex/skills/    (Codex 相容路徑)
-~/.claude/skills/   (Claude Code)
-~/.cursor/skills/   (Cursor)
-        |
-        | directory symlinks
-        v
-<clone>/skills/{architecture,design-doc,review}
+| 安裝入口 | 指向 |
+| --- | --- |
+| `~/.agents/skills/<name>` | `<clone>/skills/<name>` |
+| `~/.codex/skills/<name>` | `<clone>/skills/<name>`，保留既有 Codex 相容入口。 |
+| `~/.claude/skills/<name>` | `<clone>/skills/<name>` |
+| `~/.cursor/skills/<name>` | `<clone>/skills/<name>` |
+| `~/.codex/AGENTS.md` | `<clone>/instructions/common.md` |
+| `~/.claude/CLAUDE.md` | `<clone>/instructions/common.md` |
+
+上述 Codex 入口使用預設 `CODEX_HOME`；若使用自訂 profile，需另外設定其入口。`--home <path>` 可對指定 home 安裝，或在 temporary directory 驗證安裝結果。
+
+Codex 在 session 開始時載入全域與專案指引；更新全域規則後開啟新 session。若 `AGENTS.override.md` 存在，它會優先於同層 `AGENTS.md`。見 [Codex AGENTS.md 官方說明](https://learn.chatgpt.com/docs/agent-configuration/agents-md)。
+
+Claude Code 從 `~/.claude/CLAUDE.md` 載入跨專案個人指引；更新後開啟新 session，可用 `/context` 確認載入的 memory files。這裡的安裝目標是 Claude Code CLI；Cowork desktop sessions 對工作目錄外的 symlinks 有額外限制。見 [Claude Code memory 官方說明](https://code.claude.com/docs/en/memory)。
+
+### Cursor 全域規則
+
+Skills 由 installer 安裝。全域規則使用 Cursor 官方文件中的 `Customize → Rules → User Rules` 入口：
+
+```sh
+cat instructions/common.md
 ```
 
-各入口都指向同一份內容。保留整個 repository，兩個 skills 的相對引用需要相鄰目錄。安裝後重新載入 CLI 的 skills，必要時開啟新的 session。
+將輸出的全文貼入一項專用的 User Rule，保留其他已有規則。更新 `common.md` 後，同步更新該 User Rule 的內容。Installer 不寫入 Cursor 的設定資料庫，也不將 `~/.cursor/AGENTS.md` 當成已確認的自動載入入口。見 [Cursor Rules 官方說明](https://cursor.com/docs/rules)。
 
-可由任務意圖自動選擇，也可明確指定。例如在 Codex 使用 `$architecture`、`$design-doc` 或 `$review`；在 Claude Code 使用 `/architecture`、`/design-doc` 或 `/review`。
-
-Global／project `AGENTS.md`、`CLAUDE.md` 與專案 architecture 文件仍由各自環境管理。
-
-## 更新與跨電腦同步
+## 更新與跨裝置同步
 
 ```sh
 cd ~/Documents/agent-skills
 git pull --ff-only
 python3 install.py --dry-run
+python3 install.py
 ```
 
-Skill 內容透過 symlinks 更新。新增 skill 時再執行 `python3 install.py`。重跑安裝會保留已正確指向此 repository 的連結。
+既有 skills 與 Codex／Claude 全域指引會透過 symlinks 取得新內容。執行 installer 也會安裝新增 skills；重跑會保留正確的既有連結。Cursor 的 User Rule 依上節同步更新。
 
-在任何電腦修改 `skills/` 後，以一般 Git commit／push 同步；其他電腦再 pull。保留穩定的 clone 位置。若改用另一個 clone 位置，先保留原 clone，再以 `--adopt-identical` 移轉相同內容的既有連結。
+在任何裝置修改共用內容後，以一般 Git commit／push 同步；其他裝置再 pull。專案 `AGENTS.md` 由各專案自己的 repository 同步。
 
-## 移轉現有安裝
+## 移轉既有安裝
 
-預設遇到同名的既有目錄或不同連結就停止，並在全部目的路徑檢查完成前不寫入。只有內容完全相同時，才可以明確移轉：
+預設遇到同名目錄、檔案或不同連結就停止；全部目的路徑通過檢查前不寫入。Installer 不提供強制覆寫，也不自動合併不同規則。
+
+內容完全相同的 skills 目錄或全域指引檔案，可明確移轉：
 
 ```sh
 python3 install.py --adopt-identical --dry-run
 python3 install.py --adopt-identical
 ```
 
-移轉會比較全部檔案與目錄，先把原項目移到 `~/.local/share/agent-skills/backups/<timestamp>/`，再建立新連結。內容不同、dangling symlink 或內部另含 symlinks 的項目會停止移轉。Installer 不提供強制覆寫。
+如果舊的全域指引是 `common.md` 已完整包含的一個文字區塊，可以使用：
 
-如果安裝過程發生錯誤，installer 會嘗試還原此次已修改的項目。成功移轉後保留備份；確認各 CLI 可以使用後，再自行整理。
+```sh
+python3 install.py --adopt-instructions --dry-run
+python3 install.py --adopt-instructions
+```
+
+`--adopt-instructions` 只適用 Codex／Claude 的全域指引。它要求舊文件的完整非空文字按原順序出現在 `common.md` 中，並符合整行邊界；只忽略文件兩端空白。不會挑出幾條規則後丟棄其餘內容。如果兩種移轉都有需要，可以同時使用兩個 flags。
+
+其他不同內容會保留並阻擋安裝。先比較規則，再決定哪些應納入共用來源。新內容無法符合上述檢查時，先手動備份並處理既有入口，再重跑安裝。
+
+移轉會把原項目移至 `~/.local/share/agent-skills/backups/<timestamp>/`，再建立新連結。一般檔案的備份保存原始 bytes；既有 symlink 的備份保存原連結。檔案若在 preflight 後被修改，installer 會停止該次移轉。安裝失敗時會嘗試還原本次修改的項目。
+
+內容不同、dangling symlink 或 skills 內另含 symlinks 的項目會停止移轉。成功移轉後保留備份，確認各 CLI 可以使用後，再自行整理。若變更 clone 位置，先保留原 clone，再以 `--adopt-identical` 移轉相同內容的既有連結。
 
 ## 驗證
 
@@ -93,4 +122,4 @@ python3 -m unittest discover -s tests -v
 python3 install.py --dry-run
 ```
 
-Tests 在 temporary directories 驗證首次安裝、重跑、來源更新、同名衝突、相同內容移轉、備份、安裝錯誤回復與相對引用。它們不會修改真實的 CLI 設定，也不代表 skills 的多輪模型行為已實測。
+Tests 在 temporary directories 驗證首次安裝、重跑、來源更新、相對引用、全域指引衝突、相同或已包含指引的移轉、備份、preflight 後的編輯，以及安裝錯誤回復。它們不修改真實 CLI 設定，也不代表多輪模型行為已實測。
