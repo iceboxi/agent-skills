@@ -86,8 +86,12 @@ def plan_action(
     for parent in destination.parents:
         if (parent.exists() or parent.is_symlink()) and not parent.is_dir():
             raise InstallError(f"Parent path is not a directory: {parent}")
-    if destination.is_symlink() and destination.resolve() == source:
-        return Action(source, destination, "unchanged")
+    if destination.is_symlink():
+        try:
+            if destination.resolve() == source:
+                return Action(source, destination, "unchanged")
+        except (OSError, RuntimeError) as error:
+            raise InstallError(f"Existing symlink cannot be resolved: {destination}") from error
     if not destination.exists() and not destination.is_symlink():
         return Action(source, destination, "create")
     if source.is_dir() and adopt_identical and destination.is_dir():
@@ -130,6 +134,23 @@ def plan_install(
     return actions
 
 
+def verify_install(actions: list[Action]) -> None:
+    """Every managed entry must be a live symlink to its repository source."""
+    for action in actions:
+        destination = action.destination
+        if not destination.is_symlink():
+            raise InstallError(f"Installed entry is not a symlink: {destination}")
+        try:
+            target = destination.resolve(strict=True)
+        except (OSError, RuntimeError) as error:
+            raise InstallError(f"Installed symlink cannot be resolved: {destination}") from error
+        if target != action.source:
+            raise InstallError(
+                f"Installed symlink points to the wrong source: {destination}\n"
+                f"Expected: {action.source}\nActual: {target}"
+            )
+
+
 def apply_install(actions: list[Action], home: Path) -> Path | None:
     backup_root = None
     if any(action.kind == "adopt" for action in actions):
@@ -154,9 +175,7 @@ def apply_install(actions: list[Action], home: Path) -> Path | None:
             changes.append((destination, backup, False))
             destination.symlink_to(action.source, target_is_directory=action.source.is_dir())
             changes[-1] = (destination, backup, True)
-        for action in actions:
-            if not action.destination.is_symlink() or action.destination.resolve() != action.source:
-                raise InstallError(f"Installed link failed verification: {action.destination}")
+        verify_install(actions)
     except BaseException as error:
         rollback_errors = []
         for destination, backup, created in reversed(changes):
@@ -178,7 +197,12 @@ def apply_install(actions: list[Action], home: Path) -> Path | None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--home", type=Path, default=Path.home(), help="Install for this home directory.")
-    parser.add_argument("--dry-run", action="store_true", help="Validate and show the plan without writing.")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--dry-run", action="store_true", help="Validate and show the plan without writing.")
+    mode.add_argument(
+        "--verify", action="store_true",
+        help="Check that all installed entries are live symlinks to this repository; do not write.",
+    )
     parser.add_argument(
         "--adopt-identical", action="store_true",
         help="Back up and replace existing entries only when all contents are identical.",
@@ -189,10 +213,16 @@ def main() -> int:
              "text is already contained in instructions/common.md.",
     )
     args = parser.parse_args()
+    if args.verify and (args.adopt_identical or args.adopt_instructions):
+        parser.error("--verify cannot be combined with adoption options.")
     home = args.home.expanduser().resolve()
     skills_root = Path(__file__).resolve().parent / "skills"
     try:
         actions = plan_install(skills_root, home, args.adopt_identical, args.adopt_instructions)
+        if args.verify:
+            verify_install(actions)
+            print(f"Verified {len(actions)} symlinks (skills and global instructions); no changes made.")
+            return 0
         for action in actions:
             print(f"{action.kind:9} {action.destination} -> {action.source}")
         if args.dry_run:
@@ -201,7 +231,7 @@ def main() -> int:
         backup_root = apply_install(actions, home)
         if backup_root is not None:
             print(f"Previous entries backed up to: {backup_root}")
-        print(f"Verified {len(actions)} links (skills and global instructions).")
+        print(f"Verified {len(actions)} symlinks (skills and global instructions).")
         return 0
     except (InstallError, OSError, ValueError) as error:
         print(f"Installation stopped: {error}", file=sys.stderr)

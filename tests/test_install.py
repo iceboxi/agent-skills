@@ -345,6 +345,84 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(existing.read_text(), changed)
         self.assertTrue(all(not destination.is_symlink() for destination in self.destinations()))
 
+    def run_verify_cli(self):
+        script = self.skills.parent / "install.py"
+        shutil.copyfile(install.__file__, script)
+        with patch.object(install, "__file__", str(script)), \
+                patch("sys.argv", ["install.py", "--home", str(self.home), "--verify"]), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            return install.main()
+
+    def test_verify_is_read_only_and_preserves_existing_links(self):
+        install.apply_install(self.actions(), self.home)
+        before = [p.lstat().st_ino for p in self.destinations()]
+        self.assertEqual(self.run_verify_cli(), 0)
+        self.assertEqual(before, [p.lstat().st_ino for p in self.destinations()])
+        self.assertFalse((self.home / ".local/share/agent-skills/backups").exists())
+
+    def test_verify_does_not_install_missing_entries(self):
+        self.assertEqual(self.run_verify_cli(), 1)
+        self.assertFalse(self.home.exists())
+
+    def test_verify_rejects_circular_symlinks_without_changing_them(self):
+        install.apply_install(self.actions(), self.home)
+        destination = self.home / ".cursor/skills/alpha"
+        destination.unlink()
+        destination.symlink_to(destination, target_is_directory=True)
+        self.assertEqual(self.run_verify_cli(), 1)
+        self.assertEqual(destination.readlink(), destination)
+        self.assertFalse((self.home / ".local/share/agent-skills/backups").exists())
+
+    def test_verify_rejects_skill_copies_even_when_contents_match(self):
+        install.apply_install(self.actions(), self.home)
+        copied = self.home / ".claude/skills/alpha"
+        copied.unlink()
+        shutil.copytree(self.skills / "alpha", copied)
+        self.assertEqual(self.run_verify_cli(), 1)
+        self.assertFalse(copied.is_symlink())
+        self.assertEqual(install.tree_signature(copied), install.tree_signature(self.skills / "alpha"))
+        self.assertFalse((self.home / ".local/share/agent-skills/backups").exists())
+
+    def test_verify_rejects_global_instruction_copies_even_when_contents_match(self):
+        install.apply_install(self.actions(), self.home)
+        copied = self.home / ".codex/AGENTS.md"
+        copied.unlink()
+        shutil.copyfile(self.common, copied)
+        self.assertEqual(self.run_verify_cli(), 1)
+        self.assertFalse(copied.is_symlink())
+        self.assertEqual(copied.read_bytes(), self.common.read_bytes())
+        self.assertFalse((self.home / ".local/share/agent-skills/backups").exists())
+
+    def test_verifier_detects_wrong_and_dangling_symlink_targets(self):
+        actions = self.actions()
+        install.apply_install(actions, self.home)
+        destination = self.home / ".cursor/skills/alpha"
+        for target in (self.skills / "beta", self.root / "missing"):
+            with self.subTest(target=target):
+                destination.unlink()
+                destination.symlink_to(target, target_is_directory=True)
+                with self.assertRaises(install.InstallError):
+                    install.verify_install(actions)
+                self.assertEqual(destination.readlink(), target)
+
+    def test_install_verification_rejects_repository_source_removed_after_preflight(self):
+        actions = self.actions()
+        install.apply_install(actions, self.home)
+        self.common.unlink()
+        with self.assertRaisesRegex(install.InstallError, "cannot be resolved"):
+            install.verify_install(actions)
+
+    def test_failed_final_verification_rolls_back_new_links_and_adopted_files(self):
+        existing = self.write_existing_instruction(self.common.read_text())
+        original = existing.read_bytes()
+        with patch.object(install, "verify_install", side_effect=install.InstallError("verification failure")):
+            with self.assertRaisesRegex(install.InstallError, "verification failure"):
+                install.apply_install(self.actions(adopt=True), self.home)
+        self.assertFalse(existing.is_symlink())
+        self.assertEqual(existing.read_bytes(), original)
+        self.assertTrue(all(not destination.is_symlink() for destination in self.destinations()))
+
 
 if __name__ == "__main__":
     unittest.main()

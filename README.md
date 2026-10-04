@@ -51,6 +51,10 @@ gh repo clone iceboxi/agent-skills ~/Documents/agent-skills
 
 Installer 依目前裝置的 home 與 clone 位置建立連結。不要從其他裝置複製舊的絕對路徑 symlinks。保留整個 repository 與穩定的 clone 位置，供連結及 skills 的相對引用使用。
 
+所有由 installer 管理的入口都必須使用 symlink。Skills 連結整個目錄；Codex／Claude 的全域指引連結單一檔案。Installer 不以複製作為安裝方式或失敗時的替代方案，並在安裝結束時檢查每個連結可解析且指向此 repository。檢查失敗會觸發本次安裝的回復。
+
+透過任一已安裝入口修改 `SKILL.md`、supporting files 或全域指引，都會直接修改 repository 的工作目錄。Symlink 不會自動 commit／push；修改完成後仍須提交並同步到遠端。
+
 | 安裝入口 | 指向 |
 | --- | --- |
 | `~/.agents/skills/<name>` | `<clone>/skills/<name>` |
@@ -120,6 +124,9 @@ python3 install.py --adopt-instructions
 ```sh
 python3 -m unittest discover -s tests -v
 python3 install.py --dry-run
+python3 install.py --verify
 ```
 
-Tests 在 temporary directories 驗證首次安裝、重跑、來源更新、相對引用、全域指引衝突、相同或已包含指引的移轉、備份、preflight 後的編輯，以及安裝錯誤回復。它們不修改真實 CLI 設定，也不代表多輪模型行為已實測。
+`--dry-run` 顯示需要安裝或移轉的項目；`--verify` 只檢查已安裝結果，不建立連結、不移轉既有項目，也不建立備份。缺少入口、一般副本、錯誤目標或失效 symlink 都會失敗，即使副本內容與 repository 完全相同。可在各裝置更新後執行此檢查。`--verify` 不可與 `--dry-run` 或移轉 flags 同時使用。
+
+Tests 在 temporary directories 驗證首次安裝、重跑、來源更新、相對引用、全域指引衝突、相同或已包含指引的移轉、備份、preflight 後的編輯、安裝錯誤回復，以及唯讀 symlink 驗證。它們不修改真實 CLI 設定，也不代表多輪模型行為已實測。
