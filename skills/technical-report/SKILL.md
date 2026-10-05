@@ -53,25 +53,57 @@ explicitly labeled assumptions / unknowns
 
 **Terminology：**沿用 authoritative Design 與使用者已確認的 domain vocabulary。Report 不自行正規化、翻譯或重新命名 domain concepts；若命名本身有問題，應在 Design/source-of-truth 階段修正，而不是由 report 層建立第二套 terminology。
 
-## 先決資訊與輸出媒介
+## Communication dimensions
 
-開始前確認下列資訊是否已由請求或上下文提供：
+開始前將請求拆成三個彼此獨立的維度。不要把 Presentation、Document、Web 當成同一種分類；「產物扮演什麼角色」與「最後用什麼格式交付」不是同一件事。
 
-1. **Subject / purpose**：這次要讓 audience 理解、review 或決定什麼。
-2. **Audience**：
-   - `manager`：先說 outcome、scope、estimate、risk、decision impact。
-   - `engineering`：可更早進入 ownership、interfaces、flows、validation。
-   - `mixed`：manager framing 在前，再逐步 drill down technical detail。
-3. **Delivery context**：若已知，包含時間限制、正式 review／status briefing 等。
-4. **Output mode**：Presentation、Document、Web 或 Outline。
+### 1. Role — 這份產物要完成什麼溝通任務
 
-若 output mode 未指定，而且不同媒介會明顯改變內容結構，詢問使用者：
+Role 先於 medium，並真正決定 narrative、detail selection 與 section emphasis。常見角色：
 
-> 這次希望產出投影片、文件、網頁，還是先產生一份大綱？
+- **Review / Presentation**：用於 architecture review、implementation review、technical briefing。重點是 decision context、why、outcome、architecture、migration、estimate/risk、validation 與 next decision。
+- **Reference Report**：用於會後閱讀或正式技術說明。可保留更多 rationale、evidence、constraints、phase detail 與 supporting context。
+- **Implementation Handoff**：用於把已確認 design/plan 交給執行者。重點是 work packages、dependencies、gates、acceptance criteria、reopen conditions 與 implementation boundaries。
 
-若使用者要求「先大綱」，輸出 **media-neutral Content Specification**，供後續 artifact skill 使用。若媒介已明確，不要重問。
+這些是 communication roles，不是固定 template。若目的已清楚可推斷 role，不要為了分類而重問；只有 role 真正不明確且會大幅改變內容時才詢問。
 
-Artifact generation 與 communication planning 是兩個階段。使用者只要求 outline 時，不自行產生 PPTX／DOCX／HTML。
+### 2. Audience — 誰需要理解或做決策
+
+預設 audience 為 **manager-first, engineering-aware**：主管能快速理解 outcome、scope、estimate、risk 與 decision impact，同時 technical topology 與重要 constraints 不因簡化而失真。
+
+只有在使用者或 context 明確需要時覆寫：
+
+- **manager-first**：outcome、scope、estimate、risk、decision impact 優先。
+- **engineering**：可更早進入 ownership、interfaces、flows、validation、edge conditions。
+- **mixed**：manager framing 在前，再逐步 drill down engineering detail。
+
+Audience 決定 abstraction level 與資訊排序，不決定檔案格式。
+
+### 3. Medium — 用什麼載體交付
+
+Medium 是 downstream delivery choice，例如 HTML、PPTX、DOCX、PDF、Markdown / Outline。
+
+Medium 主要影響 rendering、pagination、interaction 與閱讀方式；**不得反過來重新定義 report role 或 architecture semantics**。
+
+例如同一份 Review role 可以輸出成 PPTX，也可以輸出成 HTML。HTML renderer 可以提供 Slide View、Reading View，或同一 artifact 的 dual mode；這些只是 presentation behavior，不代表產生兩份不同角色的 report。若同一 HTML 有多種 view，應共用同一份 technical content 與 diagram specification，避免內容漂移。
+
+### Selection order
+
+```text
+Subject / purpose
+      ↓
+Role
+      ↓
+Audience
+      ↓
+Content Specification
+      ↓
+Medium adaptation / renderer
+```
+
+Delivery context（正式 review、會議時間、會後閱讀、offline requirement 等）可影響 Content Specification 與 medium adaptation，但不要讓 medium 過早主導 technical narrative。
+
+若使用者只要求「先大綱」，輸出 **media-neutral Content Specification**。Artifact generation 與 communication planning 是兩個階段；只要求 outline 時，不自行產生 PPTX／DOCX／HTML。
 
 ## 工作模型
 
@@ -145,7 +177,7 @@ Outline mode 不只列 section titles。每個 section／slide 應視需要提�
 - **Detail level / suppressions**：哪些細節不要進主 artifact。
 - **Evidence notes**：需要 presenter/reviewer 回查時保留 source locations。
 
-Presentation mode 應偏 speaker-ready，而不是只給極簡 keywords；Document/Web 可保留更多 prose。不要因媒介不同改變 architecture semantics。
+Content density 先由 **Role + Audience** 決定，再由 medium 做 presentation adaptation。Review / Presentation role 應 speaker-ready，而不是只給極簡 keywords；Reference Report 可保留更多 prose；Implementation Handoff 應讓 execution boundaries 與 gates 可直接使用。不要因 medium 不同改變 architecture semantics。
 
 ## Visual specification
 
@@ -271,23 +303,38 @@ Source code 可以證明 complexity、dependency 與 behavior；**legacy class�
 
 Content Specification 通過使用者 review 後，才交給 downstream artifact generation。交接至少包含：
 
-- audience / purpose / delivery context
-- ordered sections/slides
+- **role**
+- **audience**
+- purpose / delivery context
+- requested **medium**
+- ordered sections / narrative units
 - key message + supporting points
 - exact diagram specifications
 - estimate / risks / testing content
 - detail suppressions
 - optional Presenter Pack（若有）
 
+Renderer 的責任是把同一 communication specification 適配到 medium，而不是重新決定 communication role。PPTX、DOCX、HTML、PDF 都只是可能的載體。
+
+若 HTML renderer 同時提供 Slide View 與 Reading View：
+
+- 兩種 view 應共用同一份 technical content source；
+- Mermaid / diagram topology 必須共用；
+- Reading View 可以展開已存在的 supporting detail；
+- Slide View 可以 suppress supporting detail；
+- 不應讓兩種 view 各自演化成不同 conclusions、estimate 或 architecture。
+
 Presentation renderer 不應自行改變 technical topology；Document/Web renderer 不應重新選 architecture conclusions。若 renderer 發現 layout 不適合，應改 presentation，而不是改 semantics。
 
-本 skill 本身不要求同時產生 PPTX、DOCX、HTML。使用者選一種就只產該種；也可以只停在 Outline。
+Hosting / publishing 不屬於本 skill。產生 HTML 不代表自動取得可分享 URL；本地開啟、local server、GitHub Pages、Cloudflare Pages 或其他部署方式屬 downstream publishing workflow。
+
+本 skill 本身不要求同時產生 PPTX、DOCX、HTML。使用者可以指定一種或多種 medium，也可以只停在 Outline。
 
 ## Completion check
 
 交付前檢查：
 
-1. 是否清楚知道 audience、purpose 與 output mode？
+1. 是否清楚知道 purpose、Role、Audience 與 requested Medium（若有）？
 2. 是否遵守 source authority，沒有把 draft/proposal 寫成 confirmed implementation？
 3. 是否重新組織 narrative，而非照 Design Doc 目錄摘要？
 4. Manager/mixed audience 是否早期看到 outcome 與可用 estimate？
