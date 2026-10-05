@@ -8,6 +8,7 @@
 | `skills/architecture` | 從 repository evidence 建立模型，逐步澄清、比較方案、確認決策與規劃。 |
 | `skills/design-doc` | 將已有模型、evidence 與決策整理成可獨立 review 的 Markdown 文件。 |
 | `skills/review` | 對既有設計或計畫做獨立、以 evidence 為依據的 acceptance review。 |
+| `skills/technical-report` | 將已確認的 Design／Implementation Plan 與必要 evidence 重組成適合 manager、engineering 或 mixed audience 的 technical report content specification。 |
 
 架構探索的詳細流程留在 skill。專案的 ownership、建置指令與專案限制留在各專案的 `AGENTS.md`，跟著該專案版本更新。CLI 設定、登入憑證、裝置路徑與專案信任設定仍由本機管理。只有實際需要時，才加入可攜的設定範本或工具 bootstrap。
 
@@ -26,6 +27,9 @@ agent-skills/
       SKILL.md
       agents/openai.yaml
     review/
+      SKILL.md
+      agents/openai.yaml
+    technical-report/
       SKILL.md
       agents/openai.yaml
   install.py
