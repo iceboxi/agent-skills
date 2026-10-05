@@ -92,12 +92,11 @@ Medium adaptation / renderer
 
 ## Terminology 與語言
 
-- 說明文字預設使用繁體中文與台灣軟體工程語境。
-- **工程用語避免硬直譯。** API、type、method、framework、architecture pattern、protocol、callback、workflow、state、snapshot、cache、payload、codec、timeout、retry、commit、rollback 等，若英文原詞在台灣工程團隊更自然，保留英文或採台灣常用寫法，不為了全中文而生造翻譯。
-- **避免中國大陸慣用工程譯詞**；若台灣常用語、source terminology 或英文原詞更自然，優先使用它們。
-- 專案 source／Design／Plan 已有穩定術語時，優先沿用，不擅自換成同義詞。
-- 使用者明確指定 terminology replacement 時視為本次輸出的最高優先詞彙要求。例如指定「自動素材應改為自動同步」，則 report 的 audience-facing wording 使用「自動同步」；必要時可在首次出現補充 source 中原稱，但不要反覆混用。
-- 不修改 code identifier 或引用內容來配合自然語言詞彙；identifier 保持原樣。
+遵循 shared `instructions/common.md` 的 language / terminology rules。Report-specific 補充：
+
+- audience-facing report 必須一致套用使用者明確指定的 terminology replacement；
+- 若 source 使用不同舊稱，只有在避免誤解所必需時才於首次出現補充來源稱呼，後續使用使用者指定詞彙；
+- 不因 audience 是主管就把自然的 engineering terms 強制翻成中文，也不修改 code identifier。
 
 
 ## 工作模型
