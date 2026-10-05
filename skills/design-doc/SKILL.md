@@ -1,13 +1,15 @@
 ---
 name: design-doc
-description: Create or update a review-ready Markdown architecture or refactoring document when documentation is requested or an offer to document results is accepted. Present existing evidence, models, proposals, decisions, and rejected premises; do not select architecture or implement changes.
+description: Create or update an independently reviewable Markdown Design Doc that synthesizes existing architecture or refactoring evidence, models, proposals, decisions, and rejected premises. Use when a Design Doc is requested or an offer to document architecture results is accepted; do not select this skill merely to persist another workflow's artifact.
 ---
 
 # Design Document
 
 將已有的架構理解與決策整理成可獨立 review 的 Markdown 文件。主要讀者是不熟悉 repository 的工程師，同時讓熟悉 code 的 reviewer 與其他 AI／CLI 能查證。
 
-這是 downstream presentation／persistence skill。Architecture reasoning 可以先完成，不要求文件；只有明確的文件請求或使用者已接受的保存建議才啟用，不把有用的 planning 停點當成自動觸發。
+這是 downstream architecture synthesis／persistence skill。Architecture reasoning 可以先完成，不要求文件；只有明確要求 Design Doc／architecture document，或使用者已接受將 architecture 結果整理成 Design Doc 的建議時才啟用，不把有用的 planning 停點當成自動觸發。
+
+**Selection boundary：** 不因其他 workflow 的輸出需要寫成 Markdown、保存到 `docs/`、格式化或持久化，就選用此 skill。Implementation plan、execution plan、review report 或其他 workflow artifact 仍屬產生它的 workflow；建立、整理、更新或保存這些 artifact，本身不構成 Design Doc 工作。只有使用者另外要求把既有 architecture evidence／decisions／boundaries／unresolved questions 綜整成可獨立 review 的 Design Doc 時，才使用本 skill。
 
 ## 輸入與邊界
 
