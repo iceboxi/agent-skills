@@ -53,57 +53,52 @@ explicitly labeled assumptions / unknowns
 
 **Terminology：**沿用 authoritative Design 與使用者已確認的 domain vocabulary。Report 不自行正規化、翻譯或重新命名 domain concepts；若命名本身有問題，應在 Design/source-of-truth 階段修正，而不是由 report 層建立第二套 terminology。
 
-## Communication dimensions
+## Intent inference 與 communication dimensions
 
-開始前將請求拆成三個彼此獨立的維度。不要把 Presentation、Document、Web 當成同一種分類；「產物扮演什麼角色」與「最後用什麼格式交付」不是同一件事。
+使用者應以自然語句描述需求，不要求理解 Role／Audience／Medium taxonomy。例如「根據這份 plan，出一份給主管的展示報告，以 HTML 輸出」已足夠。
 
-### 1. Role — 這份產物要完成什麼溝通任務
+內部仍可拆成 Role、Audience、Medium 三個維度來規劃內容，但它們是 reasoning model，不是必填操作介面：
 
-Role 先於 medium，並真正決定 narrative、detail selection 與 section emphasis。常見角色：
+- **Role**：產物要完成的溝通任務，例如展示／說明、會後 reference、implementation handoff。
+- **Audience**：誰需要理解或做決策。未特別指定時，以 **manager-first, engineering-aware** 為預設。
+- **Medium**：HTML、PPTX、DOCX、PDF、Markdown / Outline 等交付載體。
 
-- **Review / Presentation**：用於 architecture review、implementation review、technical briefing。重點是 decision context、why、outcome、architecture、migration、estimate/risk、validation 與 next decision。
-- **Reference Report**：用於會後閱讀或正式技術說明。可保留更多 rationale、evidence、constraints、phase detail 與 supporting context。
-- **Implementation Handoff**：用於把已確認 design/plan 交給執行者。重點是 work packages、dependencies、gates、acceptance criteria、reopen conditions 與 implementation boundaries。
+### Natural-language intent first
 
-這些是 communication roles，不是固定 template。若目的已清楚可推斷 role，不要為了分類而重問；只有 role 真正不明確且會大幅改變內容時才詢問。
+1. 優先從使用者原句推斷目的、對象與載體；資訊足夠就直接執行，不重問 taxonomy。
+2. 「給主管 review」、「給主管看」、「給主管的報告」通常描述 audience／delivery context，**不得只因出現 review 一詞就推斷成 technical review、architecture review 或要求產生 verdict**。
+3. 只有 unresolved choice 會實質改變內容或 artifact 時才詢問，而且用使用者能直接選擇的實際選項，不詢問抽象分類。例如：
+   - 「要輸出 HTML、PowerPoint，還是先看大綱？」
+   - 「這份報告主要是會議展示，還是會後詳細閱讀？」
+4. 若使用者已指定「展示報告」，預設採 presentation-oriented narrative；若指定「接手實作」，則偏 implementation handoff；若指定「完整說明／會後閱讀」，則偏 reference。不要要求使用者輸入 Role 名稱。
+5. Medium 不重新定義內容角色。同一份主管展示報告可輸出 PPTX 或 HTML；HTML 的 Slide View／Reading View 是 renderer presentation behavior，不是兩份不同角色的 report。
+6. 若 HTML renderer 提供 dual mode，兩種 view 共用同一份 technical content 與 diagram specification；Reading View 可展開 supporting detail，Slide View 可 suppress detail，但 conclusions、estimate、architecture 不得分叉。
 
-### 2. Audience — 誰需要理解或做決策
-
-預設 audience 為 **manager-first, engineering-aware**：主管能快速理解 outcome、scope、estimate、risk 與 decision impact，同時 technical topology 與重要 constraints 不因簡化而失真。
-
-只有在使用者或 context 明確需要時覆寫：
-
-- **manager-first**：outcome、scope、estimate、risk、decision impact 優先。
-- **engineering**：可更早進入 ownership、interfaces、flows、validation、edge conditions。
-- **mixed**：manager framing 在前，再逐步 drill down engineering detail。
-
-Audience 決定 abstraction level 與資訊排序，不決定檔案格式。
-
-### 3. Medium — 用什麼載體交付
-
-Medium 是 downstream delivery choice，例如 HTML、PPTX、DOCX、PDF、Markdown / Outline。
-
-Medium 主要影響 rendering、pagination、interaction 與閱讀方式；**不得反過來重新定義 report role 或 architecture semantics**。
-
-例如同一份 Review role 可以輸出成 PPTX，也可以輸出成 HTML。HTML renderer 可以提供 Slide View、Reading View，或同一 artifact 的 dual mode；這些只是 presentation behavior，不代表產生兩份不同角色的 report。若同一 HTML 有多種 view，應共用同一份 technical content 與 diagram specification，避免內容漂移。
-
-### Selection order
+內部 selection order 可維持：
 
 ```text
-Subject / purpose
+User intent / purpose
       ↓
-Role
+Infer communication role
       ↓
-Audience
+Infer audience
       ↓
 Content Specification
       ↓
 Medium adaptation / renderer
 ```
 
-Delivery context（正式 review、會議時間、會後閱讀、offline requirement 等）可影響 Content Specification 與 medium adaptation，但不要讓 medium 過早主導 technical narrative。
+若使用者只要求「先大綱」，輸出 media-neutral Content Specification，不自行產生 artifact。
 
-若使用者只要求「先大綱」，輸出 **media-neutral Content Specification**。Artifact generation 與 communication planning 是兩個階段；只要求 outline 時，不自行產生 PPTX／DOCX／HTML。
+## Terminology 與語言
+
+- 說明文字預設使用繁體中文與台灣軟體工程語境。
+- **工程用語避免硬直譯。** API、type、method、framework、architecture pattern、protocol、callback、workflow、state、snapshot、cache、payload、codec、timeout、retry、commit、rollback 等，若英文原詞在台灣工程團隊更自然，保留英文或採台灣常用寫法，不為了全中文而生造翻譯。
+- **避免中國大陸慣用工程譯詞**；若台灣常用語、source terminology 或英文原詞更自然，優先使用它們。
+- 專案 source／Design／Plan 已有穩定術語時，優先沿用，不擅自換成同義詞。
+- 使用者明確指定 terminology replacement 時視為本次輸出的最高優先詞彙要求。例如指定「自動素材應改為自動同步」，則 report 的 audience-facing wording 使用「自動同步」；必要時可在首次出現補充 source 中原稱，但不要反覆混用。
+- 不修改 code identifier 或引用內容來配合自然語言詞彙；identifier 保持原樣。
+
 
 ## 工作模型
 
@@ -334,7 +329,7 @@ Hosting / publishing 不屬於本 skill。產生 HTML 不代表自動取得可�
 
 交付前檢查：
 
-1. 是否清楚知道 purpose、Role、Audience 與 requested Medium（若有）？
+1. 是否已從自然語句取得足夠的 purpose、audience 與 requested medium；若資訊足夠，是否避免不必要追問？
 2. 是否遵守 source authority，沒有把 draft/proposal 寫成 confirmed implementation？
 3. 是否重新組織 narrative，而非照 Design Doc 目錄摘要？
 4. Manager/mixed audience 是否早期看到 outcome 與可用 estimate？
