@@ -188,6 +188,20 @@ Architecture、dependency、ownership、data/event flow、migration dependency�
 
 **Diagram topology 屬於 technical content。** Downstream artifact renderer 可以改 typography、spacing、theme 與 visual styling，但不應自行增刪或重解釋 node/edge/hierarchy。若提供 Mermaid，應把它視為 diagram specification，而不是裝飾性草稿。Renderer 如何嵌入 Mermaid/SVG/PNG 屬 downstream concern，不是本 skill 的完成條件。
 
+### Diagram preservation
+
+若 source 已有 architecture、ownership、sequence、dependency 或 state diagram，而且該圖直接支撐 report 的主要 narrative，**不得因 audience 是主管、內容需要精簡，或 renderer 偏好 cards / infographic，就把 diagram topology 省略或降級成純文字。**
+
+- Content Specification 必須明確攜帶這些關鍵 diagram specification，並標示它回答的問題。
+- Audience adaptation 可以減少次要 node、annotation 或 supporting detail，但只能在不改變 source semantics、ownership、ordering 與 dependency 的前提下進行。
+- Current architecture 與 target architecture 若都是理解變更必要資訊，應分別呈現；不要只畫 target 而讓「為什麼要改」失去結構證據。
+- Source 中的關鍵 sequence 若用來定義 commit / ACK / persistence / event ordering，應保留為 sequence diagram 或等價 topology，不以 bullet list 取代。
+- Migration phases 若存在正式 dependency，應以 dependency diagram 呈現；timeline/card 可作輔助，但不是 topology 的替代品。
+- HTML 若使用 Mermaid，Slide View 與 Reading View 必須共用同一 Mermaid source；renderer 只調整 layout / scale / theme。
+- Decorative cards、metrics、timelines 可輔助溝通，但不能取代 report model 中必要的 technical diagrams。
+
+Completion check 應確認：source 中對主要 narrative 有價值的 diagram 是否已保留；若未保留，必須有內容層理由，而不是單純因 medium 或 audience 而省略。
+
 ## Testing strategy 是正式內容
 
 對 architecture/refactor report，testing 不應只藏在 implementation appendix。若變更目標包含 decoupling、ownership migration 或 behavior preservation，主報告應說明「什麼會被直接測試」。
