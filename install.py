@@ -15,6 +15,7 @@ from pathlib import Path
 
 TARGET_ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
 INSTRUCTION_TARGETS = (".codex/AGENTS.md", ".claude/CLAUDE.md")
+RETIRED_SKILLS = ("architecture", "design-doc", "technical-report")
 
 
 class InstallError(Exception):
@@ -194,6 +195,30 @@ def apply_install(actions: list[Action], home: Path) -> Path | None:
     return backup_root
 
 
+def find_retired_skill_links(home: Path, repository_root: Path) -> list[Path]:
+    """Return only retired symlinks that still point into this repository."""
+    retired = []
+    for target_root in TARGET_ROOTS:
+        for name in RETIRED_SKILLS:
+            destination = home / target_root / name
+            if not destination.is_symlink():
+                continue
+            raw_target = destination.readlink()
+            resolved = (
+                raw_target if raw_target.is_absolute()
+                else destination.parent / raw_target
+            ).resolve(strict=False)
+            expected = (repository_root / "skills" / name).resolve(strict=False)
+            if resolved == expected:
+                retired.append(destination)
+    return retired
+
+
+def remove_retired_skill_links(paths: list[Path]) -> None:
+    for path in paths:
+        path.unlink()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--home", type=Path, default=Path.home(), help="Install for this home directory.")
@@ -216,19 +241,26 @@ def main() -> int:
     if args.verify and (args.adopt_identical or args.adopt_instructions):
         parser.error("--verify cannot be combined with adoption options.")
     home = args.home.expanduser().resolve()
-    skills_root = Path(__file__).resolve().parent / "skills"
+    repository_root = Path(__file__).resolve().parent
+    skills_root = repository_root / "skills"
     try:
         actions = plan_install(skills_root, home, args.adopt_identical, args.adopt_instructions)
+        retired_links = find_retired_skill_links(home, repository_root)
         if args.verify:
             verify_install(actions)
+            if retired_links:
+                raise InstallError("Retired skill symlinks remain: " + ", ".join(map(str, retired_links)))
             print(f"Verified {len(actions)} symlinks (skills and global instructions); no changes made.")
             return 0
         for action in actions:
             print(f"{action.kind:9} {action.destination} -> {action.source}")
+        for destination in retired_links:
+            print(f"{'retire':9} {destination}")
         if args.dry_run:
             print("Dry run complete; no changes made.")
             return 0
         backup_root = apply_install(actions, home)
+        remove_retired_skill_links(retired_links)
         if backup_root is not None:
             print(f"Previous entries backed up to: {backup_root}")
         print(f"Verified {len(actions)} symlinks (skills and global instructions).")
