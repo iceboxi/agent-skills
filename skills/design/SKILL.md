@@ -49,7 +49,7 @@ Design 必須：
 6. 只有在確實解決 boundary / testability / extensibility 問題時才引入 abstraction / protocol / pattern。
 7. 提供 concrete protocols / interfaces / type sketches。
 8. 說明每個重要 abstraction 為什麼存在、解決什麼問題、誰 consume、誰 implement。
-9. 讓每個 protocol / type 都能在適當的 architecture / realization / runtime view 中找到位置。
+9. 讓每個 protocol / type 都能在適當的 architecture / realization / runtime / integration / migration view 中找到位置。
 10. 對 refactor 提供 Current → Target 對照與 migration。
 11. 從 architecture dependency 與 migration safety 推導 implementation phases。
 12. 提供可驗證的 acceptance / regression strategy。
@@ -270,13 +270,15 @@ Owner-only mutation、ingress、persistence coordination、migration control 預
 
 ### No orphan abstraction
 
-每個新 protocol / type 必須至少出現在：
+每個新 protocol / type 必須至少出現在與其角色相符的 view：
 
 - Target Architecture Diagram，或
 - Design Realization Diagram，或
-- Runtime / Sequence Flow
+- Runtime / Sequence Flow，或
+- Integration View，或
+- Migration / Transitional View
 
-之一。
+之一。Migration-only adapter / facade / bridge 只出現在 Migration View 是合理的；既有 infrastructure adapter 只出現在 Integration View 也不算 orphan。
 
 如果 reader 看完 protocol 還不知道「它在系統哪裡、誰用它」，design 不完整。
 
@@ -288,7 +290,7 @@ Markdown Design Doc 預設使用 Mermaid。
 
 Target Architecture Overview 應先畫 minimal architectural spine；supporting collaborators、capability protocols、integration details 與 transitional components分別放到對應 view。Overview 優先讓 reader 一眼看出 **layer / ownership / dependency direction**，不是列出所有合法 dependency。
 
-Integration View 只畫到必要的 existing-system boundary；未修改的 legacy tree 不展開。若 reader 需要知道 boundary 後實際由哪些舊 classes / tasks / APIs 落實，用文字、表格或 appendix 說明，不把它們全部搬進主圖。
+Integration View 只畫到必要的 existing-system boundary；**未修改且其 internal ownership / ordering / contract / replacement 不屬於本次 design decision 的 legacy tree 不展開**。若既有 internal 雖不修改，但其 ordering 或 contract 是設計成立的必要條件，可展開到足以表達該 decision 的程度。其餘由哪些舊 classes / tasks / APIs 落實，用文字、表格或 appendix 說明，不把它們全部搬進主圖。
 
 Diagram 若需要一句以上文字解釋「看起來有 cycle，但其實不是」、「這個 dependency 只是 runtime call」或「這些 nodes 其實不是同一層」，優先重新檢查 view / dependency direction，而不是只補註解。若實際沒有 dependency cycle，但圖因 layers 被 flatten 而看起來有 cycle，重畫成 layer-oriented view；不要把視覺混亂當成架構複雜度本身。
 
@@ -494,7 +496,7 @@ failure / stop condition
 - target architecture 的 minimal spine 是什麼？Overview 是否以 responsibility layers 呈現，沒有把 capability protocols、realization / integration / migration details 錯塞成 peer nodes？
 - responsibility / state / workflow / policy / integration owner 怎麼分？
 - 每個新 protocol 為什麼存在？其 capability surface 是否只包含 consumer 真正需要的操作？
-- protocol 在 architecture / realization / runtime view 哪裡？只有真正的長期 architecture boundary 才需要升到 Overview 嗎？
+- protocol / type 在 architecture / realization / runtime / integration / migration view 哪裡？是否依角色落在正確 view，而不是被誤判為 orphan？只有真正的長期 architecture boundary 才需要升到 Overview 嗎？
 - Integration View 是否停在 existing infrastructure boundary，而不是展開與本次設計無關的 legacy internals？
 - important runtime flow 怎麼走？
 - failure / lifecycle 怎麼處理？
