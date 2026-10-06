@@ -34,9 +34,11 @@ Report 不重新探索 repository、不重新設計 architecture、不建立第�
 2. **Accepted review result**：若有，提供 acceptance status 與 non-blocking risks。
 3. Repository evidence 只在 source 明顯衝突或使用者要求 refresh / verify 時回查。
 
-開始提取前，辨識 Design Doc 的版本或基準，以及使用者或專案既定流程接受該版本的核准依據。既有對話或文件已有明確核准時直接沿用，不重新要求確認；「已完成」、CURRENT 標記或作者自行宣稱 approved，不單獨構成核准依據。Review 的 ACCEPT 類型是 technical verdict，依既定流程判斷是否構成核准，不自行替使用者核准。
+本 skill 的 **Approved Design Doc** 預設指已有 technical acceptance 的版本：`review` 的 `ACCEPT` / `ACCEPT WITH NON-BLOCKING NOTES`，或既有使用者對該版本的明確接受。只有使用者或專案流程明定需要額外 business / process approval 時，才加上該條件；不因名稱中的 Approved 預設第二層 gate。
 
-核准依據不明時，先整理 source 與待確認事項，再針對該版本詢問；已有明確核准則繼續交付。若核准後改動 technical decisions，或該版本仍有 unresolved blocking findings，回 `design` / `review` 處理；不得把其他版本的核准套用到目前內容。
+開始提取前，辨識 Design Doc 的版本或基準與 acceptance basis，確認 review verdict 涵蓋目前版本及所需內容。既有對話或文件已有相符的 acceptance 時直接沿用並繼續交付，不重新要求確認；「已完成」、CURRENT 標記或作者自行宣稱 approved，不單獨構成依據。
+
+依據不明時先查既有 source / review result；確實缺少該版本的 acceptance，或明定的額外 approval 尚未取得時，才針對缺少的依據詢問。若接受後改動 technical decisions，或該版本仍有 unresolved blocking findings，回 `design` / `review` 處理受影響範圍；不得把其他版本或局部 section 的 acceptance 套用到整份內容。
 
 若 Design Doc 缺少必要 technical content 或與 evidence 有實質衝突，指出受影響內容並交回 `design` 補正；Report 只調整呈現方式，不自行修正設計。
 
@@ -74,7 +76,7 @@ Why
 
 若 Design Doc 有 overview，優先提取作為開場，保留問題、預期成果、Current → Target、遷移順序與最大風險，再展開 technical anchors。按 audience 與 scope 保留核准的價值證明、重大 go/no-go、delivery milestones 與 rollout / monitoring 限制。開場優先使用 source 的 overview 圖，詳細圖放後續頁；圖仍遵守第 7 節 Diagram handling。
 
-缺少所需的收益、feasibility gate 或 delivery decision 時，指出 source gap 並交回 `design`；Report 不自行計算 ROI、選 rollout 策略或替風險下新的結論。
+只提取 scope 與 confirmed goals 適用的價值證明、feasibility gates 或 delivery decisions；未觸發相關 planning 的小型設計，不因缺少 ROI、rollout 或外部資源 planning 而要求補件。適用卻缺少必要內容時，指出 source gap 並交回 `design`；Report 不自行計算 ROI、選 rollout 策略或替風險下新的結論。
 
 ## 4. Architecture → protocol continuity
 
@@ -179,9 +181,9 @@ Detailed file/task list 不進主 presentation，除非 audience 需要 implemen
 
 不要把所有 edge case 都搬進 slides。
 
-## 11. Handoff to renderer
+## 11. Rendering contract
 
-Content handoff 至少包含：
+Report 在 rendering 前應建立：
 
 - ordered slide messages
 - selected Design Doc sections
@@ -194,7 +196,7 @@ Content handoff 至少包含：
 - completion criteria
 - fixed slide size / medium
 
-Renderer 只負責 layout、typography、pagination、visual rendering，不重新決定 technical content。
+Report 使用 rendering 工具處理 layout、typography、pagination 與 visual rendering，不重新決定 technical content；extraction、rendering 與成品驗證的 ownership 都在 Report。
 
 Report 負責將 extraction 與 rendering 完成至可交付成品；只有 handoff specification、slide outline 或內容摘要，不代表任務完成。除非使用者明確只要求 outline / renderer handoff，否則依指定格式產出 HTML 或 slides / PPTX 檔案；未指定格式時依已有需求選擇並說明。
 
@@ -213,7 +215,7 @@ Report 負責將 extraction 與 rendering 完成至可交付成品；只有 hand
 9. Diagram semantics 與 source 一致。
 10. Audience 不打開 Design Doc 也能理解主線。
     若 source 有價值證明、重大 gates 與 delivery milestones，已依 audience 提取，未把未知資源或 provisional estimate 呈現為承諾。
-11. 在交付說明或成品 metadata 標示 source Design Doc 的版本或基準與核准依據，讓 technical content 可追溯。
+11. 在交付說明或成品 metadata 標示 source Design Doc 的版本或基準、acceptance basis，以及明定的額外 approval（若有），讓 technical content 可追溯。
 12. 以對應 browser / presentation renderer 實際開啟成品，檢查每頁文字、code、圖表是否可讀、無 clipping / overflow、資源載入正常；交付檔案位置與驗證結果。無法完成 rendering verification 時明確列出原因與未驗證範圍，不宣稱已通過或完整交付。
 
 完成代表 presentation extraction、rendering 與成品驗證已完成，不代表 architecture 被重新 review 或 implementation 已完成。

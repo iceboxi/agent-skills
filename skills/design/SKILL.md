@@ -33,7 +33,7 @@ Design Doc
 
 預設使用繁體中文，保留 code identifiers、API names 與 repository terminology。
 
-## 1. Core responsibility
+## 1. Core Design Contract
 
 Design 必須：
 
@@ -51,6 +51,21 @@ Design 必須：
 12. 主動透過 explore / 提問釐清影響設計的 uncertain decisions，不只列為 Pending。
 13. 提供各 phase / work package 與整體的工時預估，說明 assumptions、dependencies 與不確定性。
 14. 產出容易 review 的正式 Markdown Design Doc，依規模提供 overview 與詳細 evidence；Design Doc 是 design 的產物，不是另一個 downstream skill。
+
+### Scale-dependent Planning
+
+Core Design Contract 適用於每個設計，描述深度依 scope 調整；小型變更可用單一 bounded phase 與簡短 sizing。下列 planning 只在對應條件成立時展開，不是每份 Design Doc 的固定章節或提問清單：
+
+| Planning | 適用條件 |
+| --- | --- |
+| Feasibility gates / fallback | 尚未驗證的關鍵假設若失敗，會改變 target、主要 contract、compatibility、migration 或主要 estimate；小型任務也適用。 |
+| Progressive / shadow validation | 高風險的 behavior preservation 或 owner 切換，需要切換前的比較 evidence；依成本選方法，不強制 shadow mode。 |
+| Branch / integration strategy | 較長、跨多人或共用修改點需要協調的變更。 |
+| Release checkpoints / rollout / monitoring | 跨 release、分批切換或正式環境觀測與回復限制會影響交付安全。 |
+| External resource readiness | 設計或驗證實際依賴 device、account、data 或其他外部資源。 |
+| Extension exercise / outcome metrics | Confirmed goals 包含需代表性 exercise 驗收的可讀性、擴充能力或 UI separation，或要求可量測改善、ROI 等成果證明。 |
+
+依 evidence 與 confirmed goals 判斷適用性；後續章節與 completion checks 沿用這個規則。未觸發的項目直接省略，不要求逐項填 N/A 或為形式詢問。一般 acceptance / regression、工時預估與影響設計的 uncertainty 仍屬核心責任。
 
 ## 2. Do not design by pattern name
 
@@ -284,6 +299,8 @@ Refactor 優先使用 before → after 對照。
 
 ### Risk-first feasibility gates
 
+僅在上述關鍵假設尚未驗證時建立 gate；已有足夠 code / test evidence 支持可行性時，不為形式新增 spike 或 go/no-go。
+
 依假設不成立的影響分類：若會改變 target、主要 contract、compatibility strategy、migration path 或主要 estimate，必須在投入依賴它的工作前安排 go/no-go；不能因需求已明確，就把技術上的關鍵假設降成 implementation detail。
 
 每個重大 gate 說明要查證的假設、所需 evidence / spike、通過與停止標準、最早驗證時點，以及失敗時的 decision / fallback 與重估範圍。Fallback 必須足以評估受影響的接線、遷移與成本，不只寫「改用其他方案」。
@@ -296,7 +313,7 @@ Implementation-only details 不需要阻塞 Design Doc。
 
 ## 11. Implementation phases are part of design
 
-Implementation plan 不再是另一隻 skill。
+Implementation / migration sections 與 phases 屬於 Design Doc，不要求另一份 standalone implementation plan。
 
 Phase 必須從 architecture dependencies、migration safety 與 validation gates 推導，而不是隨意分 P1 / P2 / P3。
 
@@ -317,13 +334,15 @@ Phase 必須從 architecture dependencies、migration safety 與 validation gate
 
 若某個 phase 需要 temporary bridge，明確說明其 scope、owner、retirement condition。
 
-### Progressive validation and delivery
+### Progressive validation
 
 對高風險的行為保留或 owner 切換，評估切換前可取得 evidence 的方法，例如 golden fixtures、differential tests、trace replay 或 read-only shadow compare；依 side effects、輸入可重現性與整合成本選擇，不強制每案加入 shadow mode。
 
 單一 writer 的 invariant 不等於只允許一條計算路徑。若採 shadow compare，明列相同輸入、前置 state / identity / ordering、比較欄位、允許差異、差異記錄與停止條件；shadow 只操作隔離的複本或 derived result，不送 command、不寫入正式 storage、不通知正式 consumers，也不成為可寫的 live state owner。說明執行環境、額外負擔與移除條件；read-only compare、只啟用一條正式路徑的 feature flag、以及同時啟用雙 writer 必須分開判斷。
 
-較長、跨多人或跨 release 的變更，依 scope 提供 delivery plan：
+### Delivery planning
+
+依第 1 節的適用條件，只展開與本次變更相關的 delivery planning：
 
 - branch / integration 策略、共用大檔的修改協調與 merge conflict 處理責任。
 - 可 build / 可 release 的 checkpoints、rollout 單位與順序；內部 phase 不自動等於可獨立 release。
@@ -372,11 +391,11 @@ failure / stop condition
 
 ### Outcome and extension acceptance
 
-將 confirmed goals 對應至 observable acceptance evidence。可讀性、可擴充性或 UI separation 等目標，需代表性的 extension / integration exercise：選定 scenario、baseline、預期修改範圍、驗證方法與完成標準，證明新的接點能支援所承諾的能力，而不只檢查 type 已建立或 legacy symbols 已刪除。
+每個設計都將 confirmed goals 對應至 observable acceptance evidence。若 goals 包含可讀性、可擴充性或 UI separation 等能力，再以代表性的 extension / integration exercise 驗收：選定 scenario、baseline、預期修改範圍、驗證方法與完成標準，證明新的接點能支援所承諾的能力，而不只檢查 type 已建立或 legacy symbols 已刪除。
 
 可依任務使用最小 command / 頁面接線、替代 consumer 或 test harness；先確認 scenario 的 scope 與外部支援，不強制新增 production 功能或變更 firmware。若能力本身影響核心方案可行性，提早以最小 slice 驗證，最終驗收仍需完整 evidence。
 
-說明預期收益與投入為何合理；有資料才量化，沒有 baseline 時列出採集方法、預期改善指標與驗收方式，不虛構 ROI 或改善百分比。Planned exercise 不代表已完成的成果。
+說明預期收益與投入為何合理，不要求每個設計都有 ROI 或量化指標。若 confirmed goals 要求可量測改善或 ROI，有資料才量化；缺少 baseline 時列出採集方法、指標與驗收方式，不虛構改善百分比。Planned exercise 不代表已完成的成果。
 
 ## 13. Design Doc output contract
 
@@ -386,7 +405,7 @@ failure / stop condition
 
 正文聚焦 design decisions、contracts 與驗證方式；詳細 caller 清冊、完整 code sketches、line references 與補充 traces 可放附錄，正文保留關鍵 `file:line` 或可追查的 evidence links。摘要、正文、圖與附錄必須使用一致的 component 名稱與 decision status，不因壓縮篇幅省略 blocker。
 
-章節可依任務調整，但 reviewer 最終必須能回答：
+章節可依任務調整。Core Design Contract 的完成檢查必須能回答與本次設計相關的問題：
 
 - 為什麼要做？
 - scope / non-goals 是什麼？
@@ -404,14 +423,25 @@ failure / stop condition
 - 每階段怎麼驗證？
 - 哪些 decision / limitation 仍 unresolved？
 - 不確定決策做過哪些 explore / 提問 / validation？哪些仍會阻塞設計？
-- 新增複雜度與核心元件的 responsibility 警戒條件是什麼？
-- 重大假設何時 go/no-go？失敗後怎麼調整 target、migration 與 sizing？
-- 依任務規模，integration / release / rollout / monitoring 與外部資源怎麼安排？
-- 成果如何證明 confirmed goals、擴充能力與預期收益？
+- 新增複雜度為何合理？核心元件涵蓋多組 policy / behavior 時，responsibility 警戒條件是什麼？
+- 驗收如何證明 confirmed goals？預期收益與投入為何合理？
 
-若這些問題無法回答，Design Doc 尚未完成。
+Scale-dependent Planning 僅在第 1 節對應條件成立時補充檢查：
 
-將 Design Doc 寫成 Markdown 檔案並交付路徑，標示文件版本或基準與狀態。只有使用者或專案既定核准流程明確接受該版本，才能標為已核准；個別 CONFIRMED DECISION 不代表整份文件已核准。
+- 有重大未驗證假設時，何時 go/no-go？失敗後怎麼調整 target、migration 與 sizing？
+- 有高風險行為保留或 owner 切換時，切換前如何取得 evidence？
+- 有交付協調或 release 風險時，相關 integration / release / rollout / monitoring 怎麼安排？
+- 依賴外部驗證資源時，到位狀態、責任與所需時點是什麼？
+- 承諾需 exercise 驗收的能力或量化成果時，exercise / metrics 如何證明達標？
+
+核心與已觸發的條件式問題若無法回答，Design Doc 尚未完成；未觸發的 planning 不構成缺漏。
+
+將 Design Doc 寫成 Markdown 檔案並交付路徑，標示文件版本或基準與狀態，以及 acceptance basis：
+
+- **Technical acceptance**：對該版本 Design Doc 的 `ACCEPT` / `ACCEPT WITH NON-BLOCKING NOTES` review，預設即建立 accepted baseline；既有使用者對整份版本的明確接受也可作為依據。
+- **Business / process approval**：只有使用者或專案流程明定需要另一層 approval 時，才在相應交接前取得；不預設再問一次「是否 approve」。
+
+預設 accepted Design Doc 即 `report` 所稱的 Approved Design Doc。作者自行宣稱完成、個別 CONFIRMED DECISION 或其他版本的 acceptance，不代表目前整份文件已接受；technical decisions 改動後，受影響範圍須重新 review / 接受。
 
 ## 14. Handoff
 
@@ -421,18 +451,14 @@ failure / stop condition
 design
    ↕
  review
-   ↓
-implementation
-
-Approved Design Doc
-   ↓
- report
-   ↓
-presentation
+   ↓ ACCEPT / ACCEPT WITH NON-BLOCKING NOTES
+Accepted Design Doc
+   ├──→ implementation
+   └──→ report → presentation
 ```
 
 `review` 是獨立 acceptance gate；若 verdict = REVISE，回到 design 修正受影響的 decision / section，而不是由 reviewer 重做 target。
 
-`report` 只能從已核准版本的 Design Doc 提取 presentation，不重新設計 architecture；尚未核准時先完成 review / 核准，既有明確核准不需重問。
+`report` 只能從已接受版本的 Design Doc 提取 presentation，不重新設計 architecture。沿用該版本既有 acceptance，不加第二層 gate；只有明定的 business / process approval 尚未取得時，才補足該程序。
 
 本 skill 不授權 production code implementation、migration、branch、commit 或 release；除非使用者另行明確要求。

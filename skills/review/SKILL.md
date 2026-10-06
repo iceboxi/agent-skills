@@ -1,11 +1,11 @@
 ---
 name: review
-description: Independently review an existing technical design, technical design proposal, Design Doc, or implementation plan against repository evidence and confirmed goals. Use as an acceptance gate; challenge the proposal, classify findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign, implement, or perform routine code review.
+description: Independently review an existing technical design, technical design proposal, or Design Doc, including its implementation/migration sections, against repository evidence and confirmed goals. Use as an acceptance gate; challenge the proposal, classify findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign, implement, or perform routine code review.
 ---
 
 # Technical Design Review
 
-對既有 technical design、technical design proposal、Design Doc 或 implementation plan 做獨立、evidence-based review。目標不是延續作者的 reasoning，而是判斷既有 proposal 是否有足夠依據可以接受並進入下一階段。
+對既有 technical design、technical design proposal 或 Design Doc（含 implementation / migration sections）做獨立、evidence-based review。目標不是延續作者的 reasoning，而是判斷既有 proposal 是否有足夠依據可以接受並進入下一階段。
 
 **把 proposal 視為尚未受信任，直到 repository evidence 支持它。不要替 proposal 辯護；主動嘗試證偽。**
 
@@ -17,7 +17,8 @@ description: Independently review an existing technical design, technical design
 
 - technical design proposal 或 target technical design；
 - `design` 產生的文件；
-- 已有 architecture decisions 的 implementation plan；
+- Design Doc 的 implementation / migration sections；
+- 使用者另外提供、用於實現 accepted architecture 的 execution plan（額外輸入，不是必要的 downstream artifact）；
 - 使用者要求「review／驗證／accept 這份設計」且重點是 technical boundaries、ownership、contracts、migration 或 regression strategy。
 
 不適用：
@@ -67,6 +68,8 @@ VERDICT
 ### 1. IDENTIFY SUBJECT
 
 先確認 review 的 artifact／proposal、版本或基準，以及 review scope。已有清楚 subject 時直接開始，不要求形式上的重新確認。
+
+對 Design Doc 區分 Core Design Contract 與 Scale-dependent Planning；後者只查核 scope、風險或 confirmed goals 已觸發的項目。未觸發相關 planning 的小型 feature，不因缺少 branch / rollout / monitoring / resource plan 或 ROI 而產生 finding；仍會改變 target 的重大未驗證假設不因規模小而免除。
 
 若文件標示 CURRENT／PROPOSED／CONFIRMED TARGET／Pending，保留這些狀態。不要把 proposal 的自我標記當成 acceptance evidence。
 
@@ -135,7 +138,7 @@ VERDICT
 
 ### 6. CHECK ACCEPTANCE READINESS
 
-在 verdict 前逐項對照：
+在 verdict 前對照與 review scope 相關的核心及已觸發的條件式要求：
 
 1. Confirmed goals／scope／decisions 都有被 target 滿足或明確指出 blocker。
 2. 主要 ownership、dependency、technical boundary 有 repository evidence 支持。
@@ -145,7 +148,7 @@ VERDICT
 6. 文件沒有把未執行的 tests、prototype、compatibility 或 implementation 描述成已驗證。
 7. Remaining items 確實是 implementation／verification detail，或已清楚標示會觸發 architecture reopen 的條件。
 8. 若 review subject 是 Design Doc，確認有與 phases / work packages 對應的工時區間、總 effort、估算依據與 uncertainty；若提供 calendar duration，已區分人力與 dependency assumptions。缺漏時指出影響並交回 `design`，不由 reviewer 補估或重排 phases。
-9. 依 scope，重大 go/no-go、fallback、delivery checkpoints、外部資源與停止 / 回復條件可執行，沒有把會改 target 的假設延後到大量實作後才驗證。
+9. 已觸發的重大 go/no-go、fallback、delivery checkpoints、外部資源與停止 / 回復條件可執行，沒有把會改 target 的假設延後到大量實作後才驗證；未觸發的 planning 不列為缺漏。
 10. 成果驗收能證明 confirmed goals；overview 與主要 claims 忠於詳細內容，planned evidence 沒有被寫成已完成。
 
 ## Verdict
@@ -170,6 +173,8 @@ VERDICT
 
 Verdict 是 review 結果，不代表 production code 已實作、tests 已通過或 release 已核准。
 
+`ACCEPT` / `ACCEPT WITH NON-BLOCKING NOTES` 是 technical acceptance，預設即建立該版本與 review scope 的 accepted baseline，可供已授權的 implementation / report 使用，不要求使用者再接受一次 review 結果。只有使用者或專案明定另一層 business / process approval 時，才在相應交接前取得；technical acceptance 不取代這類明定程序，也不擴大執行授權。局部 section 的 ACCEPT 不代表未 review 的整份 Design Doc 已接受。
+
 ## 輸出格式
 
 先給 verdict 與一段短理由，再列 findings。沒有 finding 時明確寫 `Blocking findings: 0`。建議格式：
@@ -190,7 +195,7 @@ Notes: <n>
 - **Acceptance basis**：哪些 confirmed constraints 與 evidence 支持 verdict；
 - **Remaining implementation / verification details**：可延後事項；
 - **Reopen conditions**：哪些後續 evidence 會使 design 必須重新 review；
-- **Next step**：ACCEPT 類型可進 implementation；REVISE 回 design；BLOCKED 補 evidence／decision。
+- **Next step**：ACCEPT 類型可交接已授權的 implementation / report；明定的額外 approval 仍依流程處理；REVISE 回 design；BLOCKED 補 evidence／decision。
 
 輸出不要求產生另一份 Markdown artifact。使用者要求保存 review 時才寫檔；不要預設建立「review report」。
 
@@ -200,17 +205,19 @@ Notes: <n>
 design
     ↓
 review
- ┌──┼───────────────┐
- │  │               │
-ACCEPT           REVISE / BLOCKED
- │                  │
- ▼                  ▼
-implementation     design
+ ┌──┴─────────────────────────┐
+ │                            │
+ACCEPT 類型                REVISE / BLOCKED
+ │                            │
+ ▼                            ▼
+Accepted Design Doc          design
+ ├──→ implementation
+ └──→ report → presentation
 ```
 
-`review` 不因 ACCEPT 自動開始 implementation，也不修改 Design Doc 的 decision labels。使用者接受 review 結果後，才把 accepted baseline 交給 implementation。
+`review` 不因 ACCEPT 自動開始 implementation / report，也不修改 Design Doc 的 decision labels。交付時記錄受 review 的版本或基準、scope、verdict 與 reopen conditions；後續 workflow 沿用該 acceptance basis，不另設人工確認。
 
-若 review subject 是 implementation plan，驗證 plan 是否忠實實現 accepted architecture、是否有可驗證的 bounded steps、regression／rollback gates，以及是否偷帶新的 architecture decisions；不要重新 review 已接受 architecture，除非 plan 暴露 contradiction。
+若 review scope 是 Design Doc 的 implementation / migration sections，或使用者另外提供 execution plan，驗證其是否忠實實現文件的 target architecture（已有 accepted baseline 時沿用）、是否有可驗證的 bounded steps、regression／rollback gates，以及是否偷帶新的 architecture decisions；不要重新 review 已接受 architecture，除非該 section / plan 暴露 contradiction。這不要求 design 另外產出 standalone plan。
 
 ## Review discipline
 
