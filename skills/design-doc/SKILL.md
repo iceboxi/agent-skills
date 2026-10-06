@@ -50,11 +50,13 @@ Design Doc 不要求固定章節名稱，但必須依 scope 回答足以 review 
 3. **Current**：目前 responsibility、dependency、runtime behavior 與 state 怎麼運作？
 4. **Target**：完成後 components、boundaries、ownership 與 dependency 怎麼變？
 5. **Change Scope**：哪些 responsibility / state / flow 會搬？哪些刻意維持原位？
-6. **Behavior**：runtime ordering、success / failure / recovery、callbacks / events 怎麼走？
-7. **State**：有哪些 meaningful state？誰擁有？何時建立、失效、提交、恢復？
-8. **Implementation Mechanics**：哪些具體 type / function / algorithm / synchronization 機制是證明設計可落地所必需？
-9. **Verification**：如何證明 target 符合設計，且 behavior-preserving refactor 沒有改壞既有 contract？
-10. **Pending / Open Questions**：哪些問題仍會影響實作或需要 validation？
+6. **Interfaces / Dependencies**：重要 module、protocol、API、hardware / software boundary 如何互動？
+7. **Behavior / Scenarios**：代表 runtime scenario 的 ordering、success / failure / recovery、callbacks / events 怎麼走？
+8. **State**：有哪些 meaningful state？誰擁有？何時建立、失效、提交、恢復？
+9. **Implementation Mechanics**：哪些具體 type / function / algorithm / synchronization 機制是證明設計可落地所必需？
+10. **Verification**：如何證明 target 符合設計，且 behavior-preserving refactor 沒有改壞既有 contract？
+11. **Constraints / Known Limitations**：哪些限制是設計必須接受、不能假裝不存在？
+12. **Pending / Open Questions**：哪些問題仍會影響實作或需要 validation？
 
 Architecture-change proposal 必須在前段提供 **Target Architecture Overview**。不要因 concrete API 尚未定案就省略已有足夠 evidence 支持的 conceptual target。
 
@@ -67,6 +69,7 @@ Core Design Questions 是共同骨架；依變更型態增加真正需要的內�
 可視需要包含：
 
 - UX / user journey
+- representative user scenarios
 - screen / component hierarchy
 - UI flow
 - view / presentation state
@@ -80,7 +83,9 @@ Core Design Questions 是共同骨架；依變更型態增加真正需要的內�
 - current → target architecture
 - **What moves / What stays**
 - ownership / responsibility boundaries
+- module / package boundaries（若 dependency structure 會影響 design）
 - representative before → after cases
+- representative runtime scenarios
 - compatibility invariants
 - migration boundary
 - behavior parity / regression strategy
@@ -201,7 +206,9 @@ State ownership 是一級設計問題。不要只畫「A 呼叫 B」，還要回
 
 同一份 state 不應因文件方便而被描述成多個 canonical owner。
 
-## Diagrams
+## Diagram strategy
+
+Diagram 是 review 的共同語言，不是 UML compliance checklist。**先判斷 reviewer 需要看懂哪一種關係，再選圖。** 如果 table、code sketch 或短 prose 更清楚，就不要為了湊 diagram type 強行畫圖。
 
 Markdown Design Doc 預設使用 Mermaid fenced blocks，讓 topology 可 review、可 diff、可長期維護。
 
@@ -211,23 +218,99 @@ Markdown Design Doc 預設使用 Mermaid fenced blocks，讓 topology 可 review
 - **PROPOSED — NOT YET ACCEPTED**：尚未接受的候選。
 - **CONFIRMED TARGET**：已確認 target；仍需說明是否已實作。
 
-常用：
+### Choose the diagram by the design question
 
-| 問題 | Mermaid |
+| Reviewer 要理解的問題 | 建議表示 |
 | --- | --- |
-| component / dependency / ownership | `flowchart` |
-| data flow | `flowchart` |
-| ordering / interaction | `sequenceDiagram` |
-| meaningful state transition | `stateDiagram-v2` |
+| system / component role、dependency、ownership | component / block-style `flowchart` |
+| module / package / target boundary | `flowchart` + `subgraph`，表達 logical package / module 而非目錄樹 |
+| static type / interface / inheritance / composition relationship | `classDiagram` |
+| data movement / persistence path | `flowchart` |
+| runtime ordering / callbacks / events / async interaction | `sequenceDiagram` |
+| meaningful lifecycle / state transition | `stateDiagram-v2` |
+| representative user / system scenario | ordering 重要時用 `sequenceDiagram`；branch / routing 為主時用 `flowchart` |
+| current → target change | 優先分成 current / target 兩張結構圖，再用 What moves / What stays 表補差異 |
 
-規則：
+### Component / block diagram
+
+用來回答「有哪些主要 parts、各自負責什麼、dependency 朝哪裡走」。
+
+- component 可代表 layer、service、repository、manager、hardware boundary 或 external system；
+- node label 應表達 responsibility，不只是 class name；
+- 若同一圖同時出現 dependency、ownership、runtime flow，必須以 edge style / label 或拆圖避免混淆；
+- 不把所有 classes 塞進 component diagram。
+
+### Class / type relationship diagram
+
+只有當 static type relationship 本身會影響 design review 時使用 `classDiagram`，例如：
+
+- protocol / implementation 關係；
+- inheritance / composition；
+- value type 與 state owner；
+- domain object / DTO / snapshot 的關係。
+
+不要把 repository 全部 models 轉成 class diagram。只放會影響 boundary、ownership、API 或 lifecycle 的 types；只列有設計意義的 fields / methods。
+
+### Module / package boundary diagram
+
+當 module、target、package 或 feature boundary 會影響 dependency direction、build isolation 或 ownership 時，應把它畫出來。
+
+Mermaid 沒有必要硬套 UML Package Diagram；可用 `flowchart` + `subgraph` 表達 logical modules / targets。目的不是複製 folder tree，而是讓 reviewer看到：
+
+- 哪個 module owns 哪些 responsibilities；
+- 哪些 dependency 被允許；
+- 哪些 dependency 應被移除或禁止；
+- public boundary 在哪裡。
+
+### Sequence / scenario diagram
+
+Sequence diagram 不只是「列 function calls」，而是驗證 runtime contract：
+
+- 重要 participants；
+- message / event ordering；
+- sync / async boundary；
+- callback / delegate / notification；
+- success / failure / recovery branch；
+- commit / persistence / ACK 等有語意的先後。
+
+對代表 scenario，優先畫能暴露 design risk 的流程，不必把所有 happy path 都畫成 diagram。
+
+### State diagram
+
+只在存在 meaningful persistent / lifecycle state 時使用。
+
+- 明確標示 state owner；
+- 標示 trigger、guard、failure / recovery；
+- transient control-flow step 不自動升格為 state；
+- 不從 implementation naming 推定新的 domain state。
+
+### Minimal but sufficient diagram set
+
+不要預設每份 Design Doc 都需要 Component、Class、Sequence、State、Package 全套。
+
+常見 architecture/refactor 至少考慮：
+
+1. Current structure（如果沒有圖很難說清楚現況）；
+2. Target structure；
+3. 一個最能暴露 ordering / ownership 的 representative sequence。
+
+再依真正需要加入：
+
+- class diagram：static type / protocol relationship 是 review 重點；
+- module/package diagram：dependency boundary 是 review 重點；
+- state diagram：state ownership / transition 是 review 重點。
+
+如果一張圖沒有回答新的 design question，就不要為視覺完整性增加它。
+
+### Diagram consistency
 
 - 每張圖回答一個主要問題。
 - 不為完整補造 node / edge / state / message / ownership。
 - Current 與 Target 若 behavior 不同，分開畫。
-- 箭頭意義不明時，在相鄰 prose 說明是 dependency、ownership 還是 runtime flow。
-- sequence 只畫有設計意義的 messages / failure branches，不列每個 function call。
-- state diagram 必須指出 owner；sequential steps 不自動等於 persistent state machine。
+- 圖旁要能說明「這張圖要 reviewer 看什麼」；不要只丟 diagram。
+- Arrow semantics 不明時，說明是 dependency、ownership 還是 runtime flow。
+- Diagram、prose、protocol contract、code sketch 必須描述同一套 architecture。
+- 若正式 UML notation 反而讓文件難懂，可使用較簡單的 block / flow representation；清楚且符合專案比形式上的 UML 完整更重要。
 
 Design Doc 以 Mermaid source 為 authoritative diagram representation。Static SVG / PNG 可作 preview 或 downstream artifact，但不取代 Mermaid source-of-truth。
 
@@ -436,8 +519,11 @@ Reviewer 應能回答：
 6. Protocol / API status 是否區分 current / proposed / confirmed target？
 7. Behavior-preserving refactor 是否有 Baseline → Invariant → Verification？
 8. Mermaid topology、prose、code sketch 是否一致？
-9. 重要 current claims 是否有可追查 evidence？
-10. Migration 是否停留在 architecture boundary，而沒有變成 implementation task list？
-11. Open questions 是否保持可見，且標明是否 block implementation？
+9. Diagram 是否各自回答明確的 design question，而不是為了湊 UML / 圖表種類？
+10. 若 static type、module boundary 或 runtime scenario 是 review 重點，是否選了適合的 class / module / sequence representation？
+11. 重要 current claims 是否有可追查 evidence？
+12. Known limitations / constraints 是否保持可見？
+13. Migration 是否停留在 architecture boundary，而沒有變成 implementation task list？
+14. Open questions 是否保持可見，且標明是否 block implementation？
 
 完成 Design Doc 不代表 implementation 已開始、tests 已執行或 external review 已通過。
