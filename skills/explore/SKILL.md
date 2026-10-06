@@ -1,6 +1,6 @@
 ---
 name: explore
-description: Inspect an unfamiliar or relevant part of a repository and build an evidence-based current-state model of responsibilities, dependencies, state ownership, runtime flows, constraints, tests, and unknowns. Use to understand how the system works before design or implementation; do not propose target architecture unless explicitly asked to transition into design.
+description: Inspect an unfamiliar or relevant part of a repository and build an evidence-based current-state model of responsibilities, dependencies, state ownership, runtime flows, constraints, tests, and unknowns. Use to understand how the system works before design or implementation; hand target design requests to design.
 ---
 
 # Explore
@@ -25,7 +25,7 @@ Explore 應：
 
 Explore 不應：
 
-- 因為看到問題就自動設計 target architecture；
+- 提出 target architecture；需要設計時交給 `design`；
 - 自動導入 Clean Architecture、MVVM、Repository、Coordinator、Factory 或其他 pattern；
 - 為了「解耦」憑空新增 protocol；
 - 產生 migration phases 或 implementation plan；
@@ -60,10 +60,15 @@ Explore 不應：
 - failure / recovery / retry behavior
 - identity / lifecycle
 - existing protocols / interfaces / extension seams
+- relevant inheritance：inherited state、instance / factory entry points、未覆寫方法的 side effects
+- cross-language boundaries：實際 callers、同步 return、thread / callback contract 與匯入限制；語言可行性需要 compiler / tooling 查證時，不以搜尋結果代替
 - tests / fixtures / characterization coverage
+- existing build / test tooling 與可用的 device、account、data 等外部驗證資源
 - project instructions / invariants
 
 不要套固定 checklist；只展開與問題有關的部分。
+
+區分已存在的保護網、可離線驗證的範圍，以及必須使用外部資源的範圍。資源可用性只能依已查證資訊或使用者確認描述；尚未確認就列為 unknown，不推定已到位。Explore 交付 constraints / evidence，不替 design 決定相容方案或 release 策略。
 
 ## 4. Refactor premise validation
 
@@ -91,7 +96,7 @@ Explore 的輸出不要求固定章節名稱，但應足以回答：
 5. Runtime flow：代表性 request / event / command 怎麼走？
 6. State ownership：哪些 state 是 canonical、temporary、derived？
 7. External boundaries：network / DB / hardware / OS / framework 在哪裡？
-8. Tests / validation points：目前有哪些保護網？
+8. Tests / validation points：目前有哪些保護網、tooling 與已確認／未確認的外部資源？
 9. Constraints / special cases：哪些條件會限制後續設計？
 10. Unknowns：哪些問題 repository 尚不能回答？
 

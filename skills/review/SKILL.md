@@ -107,6 +107,13 @@ VERDICT
 - Regression strategy 是否真的能偵測 semantic differences，而不只是兩個 implementation 得到相同錯誤結果？
 - Proposal 是否新增沒有 evidence 支持的 abstraction、protocol、state owner 或 workflow language？
 - Review subject 是否聲稱 tests／prototype／compatibility 已通過，但沒有實際 execution evidence？
+- 依文件規模，overview 是否忠於正文，讓 reviewer 能追查 Current → Target、遷移順序與重大風險？
+- 新增元件與 legacy compatibility 的成本是否有理由？單一 owner 是否吸收了無關 policy / workflow；拆檔是否只是掩蓋責任集中？
+- 關鍵假設失敗是否會改 target / contract / migration / estimate，卻被列為 implementation gate？Go/no-go 是否早於依賴它的投入；fallback 是否可評估？
+- 高風險 phase 的工作包、整合、可行性驗證與 regression 是否能支持工時區間，而不只是列出 phase 總數？
+- Owner 切換前的 evidence 是否足夠？是否誤把 read-only compare 當 dual writer、讓 shadow 產生正式 side effects，或讓 feature flag 同時啟用兩條有 side effects 的路徑？
+- 依 scope，integration / release / rollout / monitoring 與外部資源是否可執行；rollback 是否忽略 in-flight operation 或已發布版本的限制？
+- 可讀性、擴充性或 UI separation 的成果是否有代表性驗收方法；ROI / 改善數字是否有 baseline 支持？
 
 不要為了顯得嚴格而製造 finding。沒有 evidence 支持的疑慮標為 unknown 或 review note，不當成已證實缺陷。
 
@@ -116,11 +123,13 @@ VERDICT
 
 | Severity | 意義 |
 | --- | --- |
-| **BLOCKING** | Proposal 違反 confirmed goal／invariant，ownership 或 contract 不成立，或缺少會改變 target 的必要 decision。不能進入 implementation planning。 |
+| **BLOCKING** | Proposal 違反 confirmed goal／invariant，ownership 或 contract 不成立，或缺少會改變 target 的必要 decision。不能接受為 implementation baseline。 |
 | **NON-BLOCKING** | Target architecture 仍可接受；需要 prototype、implementation review、characterization 或局部 clarification，但不改變主要 ownership／dependency／contract。 |
 | **NOTE** | 有價值的 observation、implementation caution 或 coverage gap，不影響 acceptance。 |
 
 不要把 naming、generic shape、access level、private type 拆分等一般 implementation detail 升格為 blocker，除非它實際改變 architecture contract。
+
+依 scope 與失敗影響判斷，不把所有文件都套成大型 migration。摘要、排版或拆檔建議通常是 non-blocking；若缺口阻止 confirmed goal 的驗收、核心可行性判斷或安全遷移，就按既有 severity / verdict 規則處理。列了 Pending、planned spike 或 fallback，本身不代表風險已降為 non-blocking。
 
 若 finding 需要新 alternatives／ownership／contract decision，required action 是「回到 design 的相關 decision」，不是 reviewer 自己選方案。
 
@@ -135,6 +144,9 @@ VERDICT
 5. Migration 與 regression strategy 足以在 observable behavior 改變時偵測並停下。
 6. 文件沒有把未執行的 tests、prototype、compatibility 或 implementation 描述成已驗證。
 7. Remaining items 確實是 implementation／verification detail，或已清楚標示會觸發 architecture reopen 的條件。
+8. 若 review subject 是 Design Doc，確認有與 phases / work packages 對應的工時區間、總 effort、估算依據與 uncertainty；若提供 calendar duration，已區分人力與 dependency assumptions。缺漏時指出影響並交回 `design`，不由 reviewer 補估或重排 phases。
+9. 依 scope，重大 go/no-go、fallback、delivery checkpoints、外部資源與停止 / 回復條件可執行，沒有把會改 target 的假設延後到大量實作後才驗證。
+10. 成果驗收能證明 confirmed goals；overview 與主要 claims 忠於詳細內容，planned evidence 沒有被寫成已完成。
 
 ## Verdict
 

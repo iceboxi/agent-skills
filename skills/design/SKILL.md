@@ -1,6 +1,6 @@
 ---
 name: design
-description: Design a concrete, implementable software solution for a new feature or refactor from repository evidence and requirements. Produces the Design Doc itself: current-state analysis when relevant, target architecture, responsibility boundaries, protocols/interfaces, runtime flows, migration strategy, implementation phases, and verification. Use before implementation; do not merely reformat an already-decided design.
+description: Design a concrete, implementable software solution for a new feature or refactor from repository evidence and requirements. Actively resolve uncertain decisions through exploration and questions. Produce a Markdown Design Doc with target architecture, responsibilities, protocols/interfaces, runtime flows, migration, implementation phases, engineering estimates, and verification. Use before implementation; do not merely reformat an already-decided design.
 ---
 
 # Software Design
@@ -24,7 +24,7 @@ Target architecture
     ↓
 Protocols / interfaces / runtime flows
     ↓
-Migration / implementation phases
+Migration / implementation phases / engineering estimate
     ↓
 Verification
     ↓
@@ -48,7 +48,9 @@ Design 必須：
 9. 對 refactor 提供 Current → Target 對照與 migration。
 10. 從 architecture dependency 與 migration safety 推導 implementation phases。
 11. 提供可驗證的 acceptance / regression strategy。
-12. 產出正式 Markdown Design Doc；Design Doc 是 design 的產物，不是另一個 downstream skill。
+12. 主動透過 explore / 提問釐清影響設計的 uncertain decisions，不只列為 Pending。
+13. 提供各 phase / work package 與整體的工時預估，說明 assumptions、dependencies 與不確定性。
+14. 產出容易 review 的正式 Markdown Design Doc，依規模提供 overview 與詳細 evidence；Design Doc 是 design 的產物，不是另一個 downstream skill。
 
 ## 2. Do not design by pattern name
 
@@ -107,6 +109,7 @@ Project-specific technical conclusion 必須來自 repository evidence。
 - failure / recovery semantics
 - impact on existing components
 - implementation phases
+- engineering estimate
 - verification
 
 新功能不一定需要完整 Current Architecture，但必須清楚說明「新功能插進現有系統哪裡」。
@@ -126,6 +129,7 @@ Project-specific technical conclusion 必須來自 repository evidence。
 - migration / transitional architecture
 - behavior invariants
 - implementation phases
+- engineering estimate
 - regression strategy
 
 若 premise 被 evidence 推翻，交付 PREMISE REJECTED，不虛構 refactor target。
@@ -146,6 +150,14 @@ Target design 必須回答：
 - 未來增加相似功能時，修改點在哪裡？
 
 優先最簡單、可讀、可驗證、可擴充的方案，而不是理論上最純的方案。
+
+### Complexity and implementation organization
+
+方案的複雜度必須有具體依據：區分 canonical state owner、純 helper / value type、boundary、workflow 與 temporary bridge；說明新增元件的收益、接線與維護成本，以及現有 type 為何不足。不能單以 class / protocol 數量判定過度設計，也不能只宣稱「少數 concrete types」就省略成本說明。
+
+核心元件涵蓋多組 policy / behavior 時，提出具體的檔案、extension 或方法分組、允許承擔的責任，以及何時需要重新檢查 responsibility boundary。邏輯上的單一 owner 不代表所有 implementation 都集中在一個檔案；拆檔也不自動解決 god object。警戒條件可包含無關 workflow 持續加入、每個新 feature 都需修改核心 policy、或 side effects 開始跨越既定 boundary；不設定通用行數或元件數上限。
+
+終態仍保留的 legacy inheritance / adapter dependency，明列用途、可觸及的 API、限制與退役條件；不能因 live facade 已刪除，就把剩餘相容成本視為不存在。
 
 ## 6. Protocol / interface contract
 
@@ -258,7 +270,27 @@ Refactor 優先使用 before → after 對照。
 
 不要為了形式製造假選項。
 
-重大 design-blocking choice 如果 repository 無法決定，提出 recommendation 與理由，保留為 Pending，除非使用者已明確授權你做該 engineering trade-off。
+### Uncertain decisions
+
+遇到會影響 scope、architecture、ownership、contract、compatibility、migration 或工時的 uncertainty，主動縮小未知範圍：
+
+- **Repository facts / current behavior**：先做有明確問題與範圍的 explore，查 relevant code、callers、tests、config 與 runtime path；不要請使用者猜 repository 可以查證的答案。Explore 只交付 current-state evidence，target decision 仍由 design 負責。
+- **Requirement / product / engineering trade-off**：repository 無法決定時，儘早提問，說明待決定事項、可行選項、recommendation、理由，以及對 behavior、compatibility、migration 或工時的影響。使用者已有答案或已授權該 engineering trade-off 時沿用既有授權，不重新要求確認。
+- **Technical feasibility**：先查既有 implementation / tests；仍不足時，依任務授權執行有範圍的 spike / prototype，或列出具體 validation plan、判定標準與 reopen condition。未執行的 validation 不得寫成已解決。
+
+使用可用的提問工具；沒有時直接提出具體問題。等待答案時繼續不依賴該答案的查證與設計，不把未回覆當成同意，也不先落定受影響的 target。
+
+重要 decision 保留問題、evidence / options、採用結果或 Pending 原因、影響範圍與解除條件。若問題尚無法解決，明確標示是否 design-blocking，以及下一個 explore、提問或 validation action。
+
+### Risk-first feasibility gates
+
+依假設不成立的影響分類：若會改變 target、主要 contract、compatibility strategy、migration path 或主要 estimate，必須在投入依賴它的工作前安排 go/no-go；不能因需求已明確，就把技術上的關鍵假設降成 implementation detail。
+
+每個重大 gate 說明要查證的假設、所需 evidence / spike、通過與停止標準、最早驗證時點，以及失敗時的 decision / fallback 與重估範圍。Fallback 必須足以評估受影響的接線、遷移與成本，不只寫「改用其他方案」。
+
+核心方案可行性尚無足夠依據時維持 draft 並主動 explore / 提問。可延後的 validation 必須有明確的 stop / reopen condition；不要求所有 implementation 或 device regression 在設計前完成。
+
+仍有 design-blocking Pending 時，只能交付清楚標示 blocker 的 draft，不得宣稱 Design Doc 已完成、可實作或已核准。不要用未確認的 assumption 填滿 target 來繞過提問。
 
 Implementation-only details 不需要阻塞 Design Doc。
 
@@ -279,10 +311,40 @@ Phase 必須從 architecture dependencies、migration safety 與 validation gate
 - Migration / compatibility
 - Rollback / stop condition
 - Dependency on earlier phases
+- Engineering estimate / sizing assumptions
 
 避免 big-bang；但也不要為了「incremental」製造 dual owner / dual writer。
 
 若某個 phase 需要 temporary bridge，明確說明其 scope、owner、retirement condition。
+
+### Progressive validation and delivery
+
+對高風險的行為保留或 owner 切換，評估切換前可取得 evidence 的方法，例如 golden fixtures、differential tests、trace replay 或 read-only shadow compare；依 side effects、輸入可重現性與整合成本選擇，不強制每案加入 shadow mode。
+
+單一 writer 的 invariant 不等於只允許一條計算路徑。若採 shadow compare，明列相同輸入、前置 state / identity / ordering、比較欄位、允許差異、差異記錄與停止條件；shadow 只操作隔離的複本或 derived result，不送 command、不寫入正式 storage、不通知正式 consumers，也不成為可寫的 live state owner。說明執行環境、額外負擔與移除條件；read-only compare、只啟用一條正式路徑的 feature flag、以及同時啟用雙 writer 必須分開判斷。
+
+較長、跨多人或跨 release 的變更，依 scope 提供 delivery plan：
+
+- branch / integration 策略、共用大檔的修改協調與 merge conflict 處理責任。
+- 可 build / 可 release 的 checkpoints、rollout 單位與順序；內部 phase 不自動等於可獨立 release。
+- 相關 crash / 行為監控、基準、停止與回復條件；區分 code rollback、in-flight operation 停止，以及已發布版本的回復限制。
+- 外部驗證資源的到位狀態、確認責任與所需時點；缺少時可繼續哪些工作、何時必須停止整合或切換。
+
+沿用既有交付與監控能力。未知的資源或 release 決策主動查證 / 提問，不預設新建 infrastructure；planning 不授權實際 branch、release 或外部操作。
+
+### Engineering estimate
+
+Design Doc 必須包含可追溯至 phases / work packages 的工時預估：
+
+- 各 phase / major work package 的 effort range 與整體總 effort，使用一致的人時或人日單位；使用人日時說明每日工時基準。
+- 說明估算依據與 assumptions，例如修改範圍、既有可重用機制、技術熟悉度，以及所需 exploration / spike、implementation、review、regression、device validation 與 migration 工作。
+- 列出主要 dependencies、可平行工作、等待外部資源的時間，以及會改變 estimate 的 risks / unknowns；避免重複計入共用工作。
+- 區分 **effort** 與 **calendar duration**。若提供完成時程，另列人力配置、工作日與 dependency assumptions；不得把人日總和直接當完成日期。
+- Estimate 是依目前 evidence 推估的 planning range，不是實測結果或承諾；標示不確定性與需要重新 sizing 的條件，不製造假精確數字。
+
+高風險或一次跨多個 boundary 的 phase，將 major work packages 分開 sizing，讓 implementation、整合、可行性驗證與 regression 的成本可追查；只有 phase 總區間不足以支持 estimate。說明未知項目是否已涵蓋、若 gate 失敗哪些工作要重估；不套固定 buffer 百分比。
+
+若 uncertainty 會實質改變估算，主動 explore / 提問。可依明示 assumptions 提供 provisional range；連合理區間都無法估計時，列出缺少的資訊與取得方式，交付 draft 並標示 sizing 尚未完成，不省略 estimate 就宣稱 Design Doc 完成。
 
 ## 12. Verification
 
@@ -308,7 +370,21 @@ verification method
 failure / stop condition
 ```
 
+### Outcome and extension acceptance
+
+將 confirmed goals 對應至 observable acceptance evidence。可讀性、可擴充性或 UI separation 等目標，需代表性的 extension / integration exercise：選定 scenario、baseline、預期修改範圍、驗證方法與完成標準，證明新的接點能支援所承諾的能力，而不只檢查 type 已建立或 legacy symbols 已刪除。
+
+可依任務使用最小 command / 頁面接線、替代 consumer 或 test harness；先確認 scenario 的 scope 與外部支援，不強制新增 production 功能或變更 firmware。若能力本身影響核心方案可行性，提早以最小 slice 驗證，最終驗收仍需完整 evidence。
+
+說明預期收益與投入為何合理；有資料才量化，沒有 baseline 時列出採集方法、預期改善指標與驗收方式，不虛構 ROI 或改善百分比。Planned exercise 不代表已完成的成果。
+
 ## 13. Design Doc output contract
+
+### Layered reading
+
+有一定規模的設計，最前面提供約一頁 overview：問題與預期成果、scope、Current → Target / integration context 一張圖、遷移順序、總 effort、最大風險 / go-no-go 與待決事項，讓 reviewer 先理解從哪到哪、怎麼走。簡單設計可用短摘要，不硬湊一頁或重複正文。
+
+正文聚焦 design decisions、contracts 與驗證方式；詳細 caller 清冊、完整 code sketches、line references 與補充 traces 可放附錄，正文保留關鍵 `file:line` 或可追查的 evidence links。摘要、正文、圖與附錄必須使用一致的 component 名稱與 decision status，不因壓縮篇幅省略 blocker。
 
 章節可依任務調整，但 reviewer 最終必須能回答：
 
@@ -324,10 +400,18 @@ failure / stop condition
 - failure / lifecycle 怎麼處理？
 - refactor 怎麼安全遷移？
 - implementation 如何分階段？
+- 各 phase / work package 與總工時是多少？估算依據、單位與 uncertainty 是什麼？
 - 每階段怎麼驗證？
 - 哪些 decision / limitation 仍 unresolved？
+- 不確定決策做過哪些 explore / 提問 / validation？哪些仍會阻塞設計？
+- 新增複雜度與核心元件的 responsibility 警戒條件是什麼？
+- 重大假設何時 go/no-go？失敗後怎麼調整 target、migration 與 sizing？
+- 依任務規模，integration / release / rollout / monitoring 與外部資源怎麼安排？
+- 成果如何證明 confirmed goals、擴充能力與預期收益？
 
 若這些問題無法回答，Design Doc 尚未完成。
+
+將 Design Doc 寫成 Markdown 檔案並交付路徑，標示文件版本或基準與狀態。只有使用者或專案既定核准流程明確接受該版本，才能標為已核准；個別 CONFIRMED DECISION 不代表整份文件已核准。
 
 ## 14. Handoff
 
@@ -340,7 +424,7 @@ design
    ↓
 implementation
 
-Design Doc
+Approved Design Doc
    ↓
  report
    ↓
@@ -349,6 +433,6 @@ presentation
 
 `review` 是獨立 acceptance gate；若 verdict = REVISE，回到 design 修正受影響的 decision / section，而不是由 reviewer 重做 target。
 
-`report` 只能從 Design Doc 提取 presentation，不重新設計 architecture。
+`report` 只能從已核准版本的 Design Doc 提取 presentation，不重新設計 architecture；尚未核准時先完成 review / 核准，既有明確核准不需重問。
 
 本 skill 不授權 production code implementation、migration、branch、commit 或 release；除非使用者另行明確要求。

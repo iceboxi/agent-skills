@@ -1,11 +1,11 @@
 ---
 name: report
-description: Extract an approved Design Doc into a concise technical presentation focused on why, goals, current/target architecture, design realization, key protocols/code sketches, migration phases, engineering estimate, risks, and completion criteria. Use for HTML/slides/PPTX communication; never redesign architecture or invent missing technical decisions.
+description: Extract an approved Design Doc into a concise, rendered HTML/slides/PPTX artifact covering goals, current/target architecture, design realization, core protocols, migration phases, estimates, risks, and completion criteria. Deliver the presentation file and verify rendering; never redesign architecture or invent missing technical decisions.
 ---
 
 # Technical Report
 
-將已完成、可作為 source of truth 的 Design Doc 轉成適合口頭報告或主管/工程溝通的 technical presentation。
+將已核准版本的 Design Doc 轉成適合口頭報告或主管/工程溝通的 HTML / slides / PPTX 成品，交付可開啟的檔案。
 
 **Design Doc 是 technical source of truth；Report 是 presentation extraction。**
 
@@ -30,9 +30,15 @@ Report 不重新探索 repository、不重新設計 architecture、不建立第�
 
 ## 2. Source authority
 
-1. **Approved / current Design Doc**：architecture、ownership、contracts、behavior、state、implementation phases、constraints。
+1. **Approved Design Doc**：architecture、ownership、contracts、behavior、state、implementation phases、engineering estimate、constraints。
 2. **Accepted review result**：若有，提供 acceptance status 與 non-blocking risks。
 3. Repository evidence 只在 source 明顯衝突或使用者要求 refresh / verify 時回查。
+
+開始提取前，辨識 Design Doc 的版本或基準，以及使用者或專案既定流程接受該版本的核准依據。既有對話或文件已有明確核准時直接沿用，不重新要求確認；「已完成」、CURRENT 標記或作者自行宣稱 approved，不單獨構成核准依據。Review 的 ACCEPT 類型是 technical verdict，依既定流程判斷是否構成核准，不自行替使用者核准。
+
+核准依據不明時，先整理 source 與待確認事項，再針對該版本詢問；已有明確核准則繼續交付。若核准後改動 technical decisions，或該版本仍有 unresolved blocking findings，回 `design` / `review` 處理；不得把其他版本的核准套用到目前內容。
+
+若 Design Doc 缺少必要 technical content 或與 evidence 有實質衝突，指出受影響內容並交回 `design` 補正；Report 只調整呈現方式，不自行修正設計。
 
 Report 不得：
 
@@ -65,6 +71,10 @@ Why
 ```
 
 這不是「一項 = 一張 slide」。內容需要多頁就拆多頁。
+
+若 Design Doc 有 overview，優先提取作為開場，保留問題、預期成果、Current → Target、遷移順序與最大風險，再展開 technical anchors。按 audience 與 scope 保留核准的價值證明、重大 go/no-go、delivery milestones 與 rollout / monitoring 限制。開場優先使用 source 的 overview 圖，詳細圖放後續頁；圖仍遵守第 7 節 Diagram handling。
+
+缺少所需的收益、feasibility gate 或 delivery decision 時，指出 source gap 並交回 `design`；Report 不自行計算 ROI、選 rollout 策略或替風險下新的結論。
 
 ## 4. Architecture → protocol continuity
 
@@ -148,11 +158,12 @@ Migration presentation 聚焦：
 - dependency
 - architecture / validation gate
 - major work package
-- estimate（若 Design Doc / accepted planning source 有可信數字）
+- estimate（沿用已核准 Design Doc 的數字、單位、assumptions 與 uncertainty；其他 planning source 必須已被該版本引用並接受）
+- 與 audience 相關的 go/no-go、可交付 milestones、rollout 與外部資源限制；保留 internal phase 與可 release checkpoint 的區別
 
 Detailed file/task list 不進主 presentation，除非 audience 需要 implementation handoff。
 
-若沒有 accepted estimate，明確標示 pending sizing；Report 不自行 invent。
+若已核准的 source 明確保留 pending sizing，忠實標示該狀態；若 estimate 是必要內容卻未提供，回 `design` 補足。Report 不自行估算，也不把 provisional range 改寫成承諾。
 
 ## 10. Risks / validation
 
@@ -185,6 +196,8 @@ Content handoff 至少包含：
 
 Renderer 只負責 layout、typography、pagination、visual rendering，不重新決定 technical content。
 
+Report 負責將 extraction 與 rendering 完成至可交付成品；只有 handoff specification、slide outline 或內容摘要，不代表任務完成。除非使用者明確只要求 outline / renderer handoff，否則依指定格式產出 HTML 或 slides / PPTX 檔案；未指定格式時依已有需求選擇並說明。
+
 ## 12. Completion check
 
 交付前確認：
@@ -199,5 +212,8 @@ Renderer 只負責 layout、typography、pagination、visual rendering，不重�
 8. Phase / estimate / risks / completion criteria 可被 audience 理解。
 9. Diagram semantics 與 source 一致。
 10. Audience 不打開 Design Doc 也能理解主線。
+    若 source 有價值證明、重大 gates 與 delivery milestones，已依 audience 提取，未把未知資源或 provisional estimate 呈現為承諾。
+11. 在交付說明或成品 metadata 標示 source Design Doc 的版本或基準與核准依據，讓 technical content 可追溯。
+12. 以對應 browser / presentation renderer 實際開啟成品，檢查每頁文字、code、圖表是否可讀、無 clipping / overflow、資源載入正常；交付檔案位置與驗證結果。無法完成 rendering verification 時明確列出原因與未驗證範圍，不宣稱已通過或完整交付。
 
-完成代表 presentation extraction 完成，不代表 architecture 被重新 review 或 implementation 已完成。
+完成代表 presentation extraction、rendering 與成品驗證已完成，不代表 architecture 被重新 review 或 implementation 已完成。
