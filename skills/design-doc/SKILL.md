@@ -47,14 +47,15 @@ Design Doc 不要求固定章節名稱，但依 scope 必須回答足以 review 
 2. **Scope / Non-goals**：改什麼、不改什麼？
 3. **Current**：目前 responsibility、dependency、runtime behavior、state 怎麼運作？
 4. **Target**：完成後 components、boundaries、ownership、dependency 怎麼變？
-5. **Change Scope**：哪些 responsibility / state / flow 會搬？哪些刻意不動？
-6. **Interfaces / Dependencies**：重要 module、protocol、API、hardware / software boundary 怎麼互動？
-7. **Behavior / Scenarios**：代表 runtime scenario 的 ordering、success / failure / recovery、callbacks / events 怎麼走？
-8. **State**：有哪些 meaningful state？誰擁有？何時建立、失效、提交、恢復？
-9. **Implementation Mechanics**：哪些 type / function / algorithm / synchronization 細節是證明 design 可落地所必需？
-10. **Verification**：怎麼證明 target 成立，behavior-preserving refactor 沒改壞既有 contract？
-11. **Constraints / Known Limitations**：哪些限制必須接受？
-12. **Pending / Open Questions**：哪些問題仍影響實作？
+5. **Design Realization**：Target architecture 如何落到 concrete protocols、types、functions、events 與 consumers？
+6. **Change Scope**：哪些 responsibility / state / flow 會搬？哪些刻意不動？
+7. **Interfaces / Dependencies**：重要 module、protocol、API、hardware / software boundary 怎麼互動？
+8. **Behavior / Scenarios**：代表 runtime scenario 的 ordering、success / failure / recovery、callbacks / events 怎麼走？
+9. **State**：有哪些 meaningful state？誰擁有？何時建立、失效、提交、恢復？
+10. **Implementation Mechanics**：哪些 type / function / algorithm / synchronization 細節是證明 design 可落地所必需？
+11. **Verification**：怎麼證明 target 成立，behavior-preserving refactor 沒改壞既有 contract？
+12. **Constraints / Known Limitations**：哪些限制必須接受？
+13. **Pending / Open Questions**：哪些問題仍影響實作？
 
 Architecture-change proposal 應在前段提供 **Target Architecture Overview**。不要因 exact API 尚未定案就省略 conceptual target。
 
@@ -107,6 +108,7 @@ Why / Problem
 → Scope / Non-goals
 → Current
 → Target
+→ Design realization map
 → What moves / What stays
 → Representative before → after
 → Contracts / behavior / state
@@ -184,6 +186,7 @@ Markdown Design Doc 預設使用 Mermaid fenced blocks，讓 topology 可 review
 | component / dependency / ownership | block-style `flowchart` |
 | module / package / target boundary | `flowchart` + `subgraph` |
 | type / protocol / inheritance / composition | `classDiagram` |
+| target component → protocol / type / function realization | `classDiagram` 或 grouped `flowchart` |
 | data / persistence path | `flowchart` |
 | runtime ordering / callback / async interaction | `sequenceDiagram` |
 | lifecycle / meaningful state transition | `stateDiagram-v2` |
@@ -206,6 +209,26 @@ Guidelines：
 Architecture/refactor 至少考慮 Current structure、Target structure、以及一個最能暴露 ordering / ownership 的 representative sequence；其他圖只有在回答新的 design question 時才加入。
 
 Design Doc 以 Mermaid source 為 authoritative diagram representation。SVG / PNG 可作 preview 或 downstream artifact，但不取代 source-of-truth。
+
+### Architecture → implementation realization map
+
+當文件開始介紹 concrete protocol、type、function、event 或 code sketch 時，必須讓 reviewer 看得出它們如何實現前面的 Target Architecture。不要讓 protocol / code 成為脫離 architecture 的孤立資訊。
+
+至少回答：
+
+- 這個 protocol / type 落在哪個 target component / layer？
+- 誰 implement？誰 consume？
+- 哪些 key functions / events 穿過 boundary？
+- state owner 與 operation owner 分別在哪裡？
+- 這些 concrete elements 對應 Target Architecture 的哪一條 dependency / responsibility？
+
+適合用一張 **design realization / interface relationship diagram** 串接 conceptual architecture 與 concrete design：
+
+- static protocol / implementation / composition：`classDiagram`；
+- component 內部 types + component 間 key calls：grouped `flowchart` + `subgraph`；
+- ordering 本身重要：另用 `sequenceDiagram`，不要把 call sequence 硬塞進 class diagram。
+
+只放會影響 review 的 protocols / types / key operations，不列全部 methods。若一個 protocol 或 code sketch 無法連回 Target Architecture 的 component / responsibility，先補 mapping 或重新確認它是否真的屬於 design。
 
 ## 7. Protocols and implementation sketches
 
@@ -331,12 +354,13 @@ Structure、behavior、state、protocol、diagram、code sketch、verification �
 1. Reviewer 無須讀原對話即可理解 Why、Scope、Current、Target。
 2. What moves / What stays 與 state ownership 是否清楚？
 3. Representative before → after 是否足以證明 target model 可落地？
-4. Critical implementation mechanics 是否有足夠 code sketch / pseudocode？
-5. Protocol / API status 是否準確？
-6. Behavior parity 是否有 Baseline → Invariant → Verification？
-7. Diagram 是否各自回答明確問題，且與 prose / code sketch 一致？
-8. 重要 current claims 是否有可追查 evidence？
-9. Constraints / known limitations / open questions 是否保持可見？
-10. Migration 是否停在 architecture boundary，而沒有變成 task list？
+4. Target Architecture 到 concrete protocol / type / function 是否有清楚 realization mapping？
+5. Critical implementation mechanics 是否有足夠 code sketch / pseudocode？
+6. Protocol / API status 是否準確？
+7. Behavior parity 是否有 Baseline → Invariant → Verification？
+8. Diagram 是否各自回答明確問題，且與 prose / code sketch 一致？
+9. 重要 current claims 是否有可追查 evidence？
+10. Constraints / known limitations / open questions 是否保持可見？
+11. Migration 是否停在 architecture boundary，而沒有變成 task list？
 
 完成 Design Doc 不代表 implementation 已開始、tests 已執行或 external review 已通過。
