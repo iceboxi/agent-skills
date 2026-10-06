@@ -20,7 +20,11 @@ Current model / integration context
     ↓
 Design decisions
     ↓
-Target architecture
+Target responsibility model
+    ↓
+Minimal architectural spine
+    ↓
+Architecture views
     ↓
 Protocols / interfaces / runtime flows
     ↓
@@ -40,17 +44,18 @@ Design 必須：
 1. 理解需求、scope、non-goals 與 compatibility constraints。
 2. 讀取 relevant repository code；若缺 current model，先完成必要的 explore 工作。
 3. 找出 responsibilities、dependencies、state ownership、extension points 與主要 runtime flows。
-4. 根據實際問題提出 target architecture。
-5. 只有在確實解決 boundary / testability / extensibility 問題時才引入 abstraction / protocol / pattern。
-6. 提供 concrete protocols / interfaces / type sketches。
-7. 說明每個重要 abstraction 為什麼存在、解決什麼問題、誰 consume、誰 implement。
-8. 讓每個 protocol / type 都能在 target architecture 或 interaction flow 中找到位置。
-9. 對 refactor 提供 Current → Target 對照與 migration。
-10. 從 architecture dependency 與 migration safety 推導 implementation phases。
-11. 提供可驗證的 acceptance / regression strategy。
-12. 主動透過 explore / 提問釐清影響設計的 uncertain decisions，不只列為 Pending。
-13. 提供各 phase / work package 與整體的工時預估，說明 assumptions、dependencies 與不確定性。
-14. 產出容易 review 的正式 Markdown Design Doc，依規模提供 overview 與詳細 evidence；Design Doc 是 design 的產物，不是另一個 downstream skill。
+4. 先建立 target responsibility model，再抽出最小 architectural spine；不要從所有候選 types 直接組 architecture diagram。
+5. 將 Target Architecture、Design Realization、Runtime Flow、Integration、Migration 分成不同 view；每個 view 只回答一個主要問題。
+6. 只有在確實解決 boundary / testability / extensibility 問題時才引入 abstraction / protocol / pattern。
+7. 提供 concrete protocols / interfaces / type sketches。
+8. 說明每個重要 abstraction 為什麼存在、解決什麼問題、誰 consume、誰 implement。
+9. 讓每個 protocol / type 都能在適當的 architecture / realization / runtime view 中找到位置。
+10. 對 refactor 提供 Current → Target 對照與 migration。
+11. 從 architecture dependency 與 migration safety 推導 implementation phases。
+12. 提供可驗證的 acceptance / regression strategy。
+13. 主動透過 explore / 提問釐清影響設計的 uncertain decisions，不只列為 Pending。
+14. 提供各 phase / work package 與整體的工時預估，說明 assumptions、dependencies 與不確定性。
+15. 產出容易 review 的正式 Markdown Design Doc，依規模提供 overview 與詳細 evidence；Design Doc 是 design 的產物，不是另一個 downstream skill。
 
 ### Scale-dependent Planning
 
@@ -166,6 +171,50 @@ Target design 必須回答：
 
 優先最簡單、可讀、可驗證、可擴充的方案，而不是理論上最純的方案。
 
+### Architecture view discipline
+
+先找出 **minimal architectural spine**：只保留理解長期 responsibility ownership 與 dependency direction 所必需的節點。若拿掉某個 type 後，核心 responsibility model 完全不變，它通常不應出現在 Target Architecture Overview，而應下沉到 realization / integration / migration view。
+
+Target Architecture Overview 預設只呈現：
+
+- 主要 consumers / entry boundary；
+- 核心 application / domain owner；
+- canonical state owner；
+- 主要 input / output ports；
+- 長期 dependency direction。
+
+不要把 pure helper、value type、codec、catalog、factory、legacy adapter、framework singleton、DB task、API class、temporary bridge 等全部提升成 peer architecture components。
+
+不同 abstraction levels 必須有明確分層。必要時可以出現在同一張圖，但必須視覺分組，且該圖仍只能回答一個主要 architecture question；不得把 call graph 當成 architecture diagram。
+
+至少概念上區分下列 views，依 scope 選擇需要的圖，不要求每案都各畫一張：
+
+| View | 回答的問題 |
+| --- | --- |
+| **Target Architecture Overview** | 長期 responsibility boundaries 與 dependency direction 是什麼？ |
+| **Design Realization** | architecture boundary 由哪些 protocols / concrete types 落實？ |
+| **Runtime / Sequence Flow** | 一個 representative scenario 實際怎麼流動？ |
+| **Integration View** | target 如何接既有 framework / DB / network / BLE / system infrastructure？ |
+| **Migration / Transitional View** | current 如何安全走到 target？哪些 facade / bridge / adapter 只是過渡？ |
+
+**Target Architecture 不等於 Design Realization，也不等於 runtime call graph。**
+
+Migration-only facade、bridge、dual-read / shadow helper、temporary adapter 不得出現在 Target Architecture Overview；放入 Migration / Transitional View。終態仍需保留的 legacy adapter 可出現在 Integration View，但只有當它本身是長期 responsibility boundary 時才升到 Overview。
+
+### Ownership dimensions
+
+不要把「同一 domain」誤解成「同一 owner」。設計時分別檢查：
+
+- **State ownership**：誰持有 canonical state？
+- **Workflow ownership**：誰負責 operation / sequence / retry / progress？
+- **Policy ownership**：誰決定 business / feature-specific behavior？
+- **Integration ownership**：誰接 legacy framework、DB、network、BLE、OS？
+- **Presentation ownership**：誰管理 UI state / draft / rendering / interaction？
+
+**Single canonical state owner does not imply ownership of every workflow that operates on that state.**
+
+如果一個核心 service 開始同時吸收 unrelated workflows、UI sequencing、feature-specific policy、migration mechanics 與 infrastructure details，應重新檢查 boundary；不要只是靠 extensions / 多檔案把 god object 拆散。
+
 ### Complexity and implementation organization
 
 方案的複雜度必須有具體依據：區分 canonical state owner、純 helper / value type、boundary、workflow 與 temporary bridge；說明新增元件的收益、接線與維護成本，以及現有 type 為何不足。不能單以 class / protocol 數量判定過度設計，也不能只宣稱「少數 concrete types」就省略成本說明。
@@ -199,6 +248,22 @@ protocol ScooterSettingRepository {
 
 但 code sketch 必須服務 architecture，不要求把完整 implementation 寫進 Design Doc。
 
+### Capability-minimal boundaries
+
+Consumer-facing protocol 只暴露該 consumer 類別真正需要的 capability。不要因為同一 service 內部支援某操作，就自動把它加入共用 client protocol。
+
+逐一檢查 public / shared boundary 的 operations：
+
+- 哪些 consumer 真的需要它？
+- 它是一般 consumer capability，還是 owner-only mutation？
+- 它是 runtime ingress / hydration / callback handling 嗎？
+- 它是 persistence / upload / migration / administrative operation 嗎？
+- 暴露後是否讓 UI / feature code 可以繞過 intended owner 或 invariant？
+
+Owner-only mutation、ingress、persistence coordination、migration control 預設保持 internal / narrower capability surface；只有多個真實 consumers 都需要時才提升到 shared protocol。
+
+避免建立「萬能 Client」：read、observe、command、canonical merge、persistence、upload、reset、migration control 不應只因屬於同一 domain 就全部暴露在一個 consumer-facing interface。
+
 ### No orphan abstraction
 
 每個新 protocol / type 必須至少出現在：
@@ -215,18 +280,25 @@ protocol ScooterSettingRepository {
 
 Markdown Design Doc 預設使用 Mermaid。
 
+先決定這張圖要回答哪個問題，再選節點。**不要從 type 清單出發畫圖。**
+
+Target Architecture Overview 應先畫 minimal architectural spine；supporting collaborators、integration details 與 transitional components 分別放到對應 view。Diagram 若需要一句以上文字解釋「看起來有 cycle，但其實不是」、「這個 dependency 只是 runtime call」或「這些 nodes 其實不是同一層」，優先重新檢查 view / dependency direction，而不是只補註解。
+
 依 scope 至少提供：
 
 ### Refactor
 - Current Architecture
-- Target Architecture
+- Target Architecture Overview（minimal architectural spine）
+- Design Realization（當 protocols / concrete types 是理解 target 所必要時）
 - Representative Current Flow
 - Equivalent Target Flow
 - Current → Target responsibility mapping
+- Migration / Transitional View（存在 temporary facade / bridge / adapter 時）
 
 ### New feature
 - Existing Integration Context
-- Target Architecture
+- Target Architecture Overview（minimal architectural spine）
+- Design Realization（需要說明 protocols / concrete types 的 placement 時）
 - Important Runtime / Sequence Flow
 
 若 lifecycle / state transition 重要，再加入 state diagram。
@@ -411,10 +483,10 @@ failure / stop condition
 - scope / non-goals 是什麼？
 - 現在怎麼運作？
 - current limitation 是什麼？
-- target architecture 是什麼？
-- responsibility / state owner 怎麼改？
-- 每個新 protocol 為什麼存在？
-- protocol 在 architecture 哪裡？
+- target architecture 的 minimal spine 是什麼？是否把 realization / integration / migration details 錯塞進 overview？
+- responsibility / state / workflow / policy / integration owner 怎麼分？
+- 每個新 protocol 為什麼存在？其 capability surface 是否只包含 consumer 真正需要的操作？
+- protocol 在 architecture / realization / runtime view 哪裡？
 - important runtime flow 怎麼走？
 - failure / lifecycle 怎麼處理？
 - refactor 怎麼安全遷移？
