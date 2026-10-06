@@ -1,0 +1,6 @@
+interface:
+  display_name: "Report"
+  short_description: "Turn an approved Design Doc into a technical presentation"
+  default_prompt: "使用 $report 從已完成的 Design Doc 提取 technical presentation，保留 Current/Target、design realization、核心 protocol/code sketch、phase、estimate 與驗證，不重新設計。"
+policy:
+  allow_implicit_invocation: true
