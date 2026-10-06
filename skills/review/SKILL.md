@@ -1,33 +1,33 @@
 ---
 name: review
-description: Independently review an existing technical design, architecture proposal, Design Doc, or implementation plan against repository evidence and confirmed goals. Use as an acceptance gate; challenge the proposal, classify findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign, implement, or perform routine code review.
+description: Independently review an existing technical design, technical design proposal, Design Doc, or implementation plan against repository evidence and confirmed goals. Use as an acceptance gate; challenge the proposal, classify findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign, implement, or perform routine code review.
 ---
 
 # Technical Design Review
 
-對既有 technical design、architecture proposal、Design Doc 或 implementation plan 做獨立、evidence-based review。目標不是延續作者的 reasoning，而是判斷既有 proposal 是否有足夠依據可以接受並進入下一階段。
+對既有 technical design、technical design proposal、Design Doc 或 implementation plan 做獨立、evidence-based review。目標不是延續作者的 reasoning，而是判斷既有 proposal 是否有足夠依據可以接受並進入下一階段。
 
 **把 proposal 視為尚未受信任，直到 repository evidence 支持它。不要替 proposal 辯護；主動嘗試證偽。**
 
-此 skill 是 acceptance gate，不是第二個 `architecture` skill，也不是 PR／code review skill。
+此 skill 是 acceptance gate，不是第二個 `design` skill，也不是 PR／code review skill。Review 不應替作者完成缺失的 target design。
 
 ## 範圍與邊界
 
 適用輸入：
 
-- architecture proposal 或 target technical design；
-- `design-doc` 產生的文件；
+- technical design proposal 或 target technical design；
+- `design` 產生的文件；
 - 已有 architecture decisions 的 implementation plan；
 - 使用者要求「review／驗證／accept 這份設計」且重點是 technical boundaries、ownership、contracts、migration 或 regression strategy。
 
 不適用：
 
-- 尚未形成 proposal、需要從零探索 target 的工作：使用 `architecture`；
-- 撰寫或重整 Design Doc：使用 `design-doc`；
+- 尚未形成 proposal、需要從零探索 target 的工作：使用 `design`；
+- 撰寫或重整 Design Doc：使用 `design`；
 - PR diff、局部 code quality、style、bug review：使用一般 code review workflow；
 - 實作、migration、branch、commit 或 production code 修改。
 
-Review 不自行重新設計。發現 design-blocking 問題時，指出問題、evidence、影響與需要重開的 decision；若需要 alternatives 或新的 architecture decision，交回 `architecture`。可以描述「哪個 boundary 不成立」，但不要在 review 中偷偷建立替代 target。
+Review 不自行重新設計。發現 design-blocking 問題時，指出問題、evidence、影響與需要重開的 decision；若需要 alternatives 或新的 architecture decision，交回 `design`。可以描述「哪個 boundary 不成立」，但不要在 review 中偷偷建立替代 target。
 
 讀取適用的 global／project instructions、review subject、其引用的 confirmed goals／scope／decisions，以及與主要 claims 相關的 repository code 和 tests。文件是 review subject，不是 current behavior 的權威來源；CURRENT claims 必須以 repository evidence 查證。
 
@@ -122,7 +122,7 @@ VERDICT
 
 不要把 naming、generic shape、access level、private type 拆分等一般 implementation detail 升格為 blocker，除非它實際改變 architecture contract。
 
-若 finding 需要新 alternatives／ownership／contract decision，required action 是「回到 architecture 的相關 decision gate」，不是 reviewer 自己選方案。
+若 finding 需要新 alternatives／ownership／contract decision，required action 是「回到 design 的相關 decision」，不是 reviewer 自己選方案。
 
 ### 6. CHECK ACCEPTANCE READINESS
 
@@ -146,11 +146,11 @@ VERDICT
 
 ### ACCEPT WITH NON-BLOCKING NOTES
 
-沒有 blocking finding，但有值得在 prototype、implementation 或 verification 階段明確追蹤的 technical risks。每個 note 要說明驗證方式與「什麼 evidence 會要求重新開 architecture review」。
+沒有 blocking finding，但有值得在 prototype、implementation 或 verification 階段明確追蹤的 technical risks。每個 note 要說明驗證方式與「什麼 evidence 會要求重新開 design review」。
 
 ### REVISE
 
-已有 evidence 證明 proposal 存在 design-blocking contradiction、gap 或 goal mismatch。列出 blocking findings，指出受影響的 sections／decisions，以及需回到 `architecture` 的哪個問題。不要在 review 中產生 replacement architecture。
+已有 evidence 證明 proposal 存在 design-blocking contradiction、gap 或 goal mismatch。列出 blocking findings，指出受影響的 sections／decisions，以及需回到 `design` 的哪個問題。不要在 review 中產生 replacement design。
 
 ### BLOCKED
 
@@ -178,16 +178,14 @@ Notes: <n>
 - **Acceptance basis**：哪些 confirmed constraints 與 evidence 支持 verdict；
 - **Remaining implementation / verification details**：可延後事項；
 - **Reopen conditions**：哪些後續 evidence 會使 architecture 必須重新 review；
-- **Next step**：ACCEPT 類型可進 implementation planning；REVISE 回 architecture；BLOCKED 補 evidence／decision。
+- **Next step**：ACCEPT 類型可進 implementation planning；REVISE 回 design；BLOCKED 補 evidence／decision。
 
 輸出不要求產生另一份 Markdown artifact。使用者要求保存 review 時才寫檔；不要預設建立「review report」。
 
 ## 與其他 skills 的交接
 
 ```text
-architecture
-    ↓
-design-doc
+design
     ↓
 review
  ┌──┼───────────────┐
