@@ -142,7 +142,7 @@ VERDICT
 
 ### ACCEPT
 
-沒有 blocking finding。Target design 足以作為 accepted baseline，並可進入 implementation planning。仍可列 NOTE，但不要因一般 implementation detail 降級 verdict。
+沒有 blocking finding。Target design 足以作為 accepted baseline，並可進入 implementation。仍可列 NOTE，但不要因一般 implementation detail 降級 verdict。
 
 ### ACCEPT WITH NON-BLOCKING NOTES
 
@@ -177,8 +177,8 @@ Notes: <n>
 
 - **Acceptance basis**：哪些 confirmed constraints 與 evidence 支持 verdict；
 - **Remaining implementation / verification details**：可延後事項；
-- **Reopen conditions**：哪些後續 evidence 會使 architecture 必須重新 review；
-- **Next step**：ACCEPT 類型可進 implementation planning；REVISE 回 design；BLOCKED 補 evidence／decision。
+- **Reopen conditions**：哪些後續 evidence 會使 design 必須重新 review；
+- **Next step**：ACCEPT 類型可進 implementation；REVISE 回 design；BLOCKED 補 evidence／decision。
 
 輸出不要求產生另一份 Markdown artifact。使用者要求保存 review 時才寫檔；不要預設建立「review report」。
 
@@ -193,11 +193,10 @@ review
 ACCEPT           REVISE / BLOCKED
  │                  │
  ▼                  ▼
-implementation   architecture
-planning         decision gate
+implementation     design
 ```
 
-`review` 不因 ACCEPT 自動開始 implementation，也不修改 Design Doc 的 decision labels。使用者接受 review 結果後，才把 accepted baseline 交給 implementation planning。
+`review` 不因 ACCEPT 自動開始 implementation，也不修改 Design Doc 的 decision labels。使用者接受 review 結果後，才把 accepted baseline 交給 implementation。
 
 若 review subject 是 implementation plan，驗證 plan 是否忠實實現 accepted architecture、是否有可驗證的 bounded steps、regression／rollback gates，以及是否偷帶新的 architecture decisions；不要重新 review 已接受 architecture，除非 plan 暴露 contradiction。
 
