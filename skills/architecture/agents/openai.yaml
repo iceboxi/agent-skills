@@ -1,6 +1,0 @@
-interface:
-  display_name: "Architecture"
-  short_description: "Explore architecture and plan changes collaboratively"
-  default_prompt: "使用 $architecture 探索目前架構，先展示 evidence 與 current model，再逐步澄清與規劃。"
-policy:
-  allow_implicit_invocation: true
