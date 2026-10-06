@@ -1,6 +1,6 @@
 interface:
   display_name: "Design"
   short_description: "Design implementable architecture from repository evidence"
-  default_prompt: "使用 $design 根據需求與 repository evidence 完成 software design：先建立 target responsibility model 與 minimal architectural spine，再分開 Target Architecture、Design Realization、Runtime、Integration、Migration views；限制 consumer-facing capability surface，產出含 protocol、flow、phases、工時與驗證的 Markdown Design Doc，並依 scope 展開 feasibility / delivery planning。"
+  default_prompt: "使用 $design 根據需求與 repository evidence 完成 software design：先建立 target responsibility model 與 minimal architectural spine，依 scope 選擇需要的 Target Architecture、Design Realization、Runtime、Integration、Migration views；限制 consumer-facing capability surface，產出含 protocol、flow、phases、工時與驗證的 Markdown Design Doc，並依 scope 展開 feasibility / delivery planning。"
 policy:
   allow_implicit_invocation: true
