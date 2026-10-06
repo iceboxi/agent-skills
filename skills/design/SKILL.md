@@ -45,11 +45,11 @@ Design 必須：
 2. 讀取 relevant repository code；若缺 current model，先完成必要的 explore 工作。
 3. 找出 responsibilities、dependencies、state ownership、extension points 與主要 runtime flows。
 4. 先建立 target responsibility model，再抽出最小 architectural spine；不要從所有候選 types 直接組 architecture diagram。
-5. 將 Target Architecture、Design Realization、Runtime Flow、Integration、Migration 分成不同 view；每個 view 只回答一個主要問題。
+5. 依 scope 選擇必要的 Target Architecture、Design Realization、Runtime Flow、Integration、Migration views；不同 view 的語意不可混用，每個 view 只回答一個主要問題。
 6. 只有在確實解決 boundary / testability / extensibility 問題時才引入 abstraction / protocol / pattern。
 7. 提供 concrete protocols / interfaces / type sketches。
 8. 說明每個重要 abstraction 為什麼存在、解決什麼問題、誰 consume、誰 implement。
-9. 讓每個 protocol / type 都能在適當的 architecture / realization / runtime / integration / migration view 中找到位置。
+9. 讓每個 significant protocol / type 都可從 Design Doc 追查其角色、consumer、implementer 與所在責任邊界；不要求每個 abstraction 都成為 diagram node。
 10. 對 refactor 提供 Current → Target 對照與 migration。
 11. 從 architecture dependency 與 migration safety 推導 implementation phases。
 12. 提供可驗證的 acceptance / regression strategy。
@@ -158,7 +158,7 @@ Project-specific technical conclusion 必須來自 repository evidence。
 
 Target design 必須回答：
 
-- 完成後有哪些 components？
+- 完成後有哪些主要 responsibility boundaries / owners？
 - 每個 component 的 responsibility 是什麼？
 - 誰依賴誰？
 - canonical state 在哪裡？
@@ -175,12 +175,16 @@ Target design 必須回答：
 
 先找出 **minimal architectural spine**：只保留理解長期 responsibility ownership 與 dependency direction 所必需的節點。若拿掉某個 type 後，核心 responsibility model 完全不變，它通常不應出現在 Target Architecture Overview，而應下沉到 realization / integration / migration view。
 
+**Architecture completeness ≠ diagram completeness.** Design 必須完整交代責任與 contract，但 diagram 只保留對該圖問題有辨識力的資訊。重要 abstraction 可以透過表格、mapping、code sketch、runtime flow 或正文被追查，不必全部變成 box / edge。
+
+Target Architecture Overview 可以刻意省略 read / events / command / persistence 等 capability-level details，只要省略後不會扭曲 ownership、boundary 或 dependency direction，且後續 Design Realization / Runtime / Integration 有完整承接。
+
 Target Architecture Overview 預設只呈現：
 
 - 主要 consumers / entry boundary；
 - 核心 application / domain owner；
 - canonical state owner；
-- 主要 input / output ports；
+- 對理解 dependency direction 必要的主要 input / output boundaries；
 - 長期 dependency direction。
 
 不要把 pure helper、value type、codec、catalog、factory、legacy adapter、framework singleton、DB task、API class、temporary bridge 等全部提升成 peer architecture components。
@@ -188,6 +192,8 @@ Target Architecture Overview 預設只呈現：
 不同 abstraction levels 必須有明確分層。必要時可以出現在同一張圖，但必須視覺分組，且該圖仍只能回答一個主要 architecture question；不得把 call graph 當成 architecture diagram。
 
 Target Architecture Overview 優先使用 **responsibility layers / owner groups** 表達長期結構，不把每個 capability protocol 都畫成 peer node。像 read、events、commands、persistence 這類 capability，若只是 realization detail，應留到 Design Realization；只有它本身代表一個需要被 reviewer 理解的長期 architecture boundary 時才升到 Overview。不要為了少畫 concrete types，反而創造沒有實際 owner / type / boundary semantics 的抽象節點。
+
+若多個 concrete types 扮演同一個 architecture role，在主圖合併成一個 responsibility node，並以 adjacent table / mapping 列出 concrete realizations。只有當 type 之間的差異本身影響 ownership、dependency 或重要 contract 時，才拆成多個 nodes。
 
 至少概念上區分下列 views，依 scope 選擇需要的圖，不要求每案都各畫一張：
 
@@ -268,19 +274,21 @@ Owner-only mutation、ingress、persistence coordination、migration control 預
 
 避免建立「萬能 Client」：read、observe、command、canonical merge、persistence、upload、reset、migration control 不應只因屬於同一 domain 就全部暴露在一個 consumer-facing interface。
 
-### No orphan abstraction
+### Abstraction traceability without diagram inflation
 
-每個新 protocol / type 必須至少出現在與其角色相符的 view：
+每個 significant protocol / type 必須可被追查，但不要求出現在 diagram。至少讓 reviewer 能從以下任一形式找到它的角色與接線：
 
-- Target Architecture Diagram，或
-- Design Realization Diagram，或
-- Runtime / Sequence Flow，或
-- Integration View，或
-- Migration / Transitional View
+- Target / Current responsibility mapping；
+- Design Realization diagram 或 table；
+- protocol / type contract table；
+- Runtime / Sequence Flow；
+- Integration mapping；
+- Migration / Transitional mapping；
+- 具體正文或 code sketch，且能指出 consumer / implementer / owner。
 
-之一。Migration-only adapter / facade / bridge 只出現在 Migration View 是合理的；既有 infrastructure adapter 只出現在 Integration View 也不算 orphan。
+Migration-only adapter / facade / bridge 只在 Migration mapping 中出現是合理的；existing infrastructure adapter 只在 Integration mapping 中出現也不算 orphan。
 
-如果 reader 看完 protocol 還不知道「它在系統哪裡、誰用它」，design 不完整。
+如果 reader 看完 abstraction 還不知道「為什麼存在、屬於哪個 responsibility、誰使用、誰實作／持有」，design 不完整。反之，已能透過 table / mapping 清楚追查時，不要為了形式再把它塞進 diagram。
 
 ## 7. Diagrams
 
@@ -288,34 +296,39 @@ Markdown Design Doc 預設使用 Mermaid。
 
 先決定這張圖要回答哪個問題，再選節點。**不要從 type 清單出發畫圖。**
 
-Target Architecture Overview 應先畫 minimal architectural spine；supporting collaborators、capability protocols、integration details 與 transitional components分別放到對應 view。Overview 優先讓 reader 一眼看出 **layer / ownership / dependency direction**，不是列出所有合法 dependency。
+Target Architecture Overview 應先畫 minimal architectural spine；supporting collaborators、capability protocols、integration details 與 transitional components 分別放到對應 view。Overview 優先讓 reader 一眼看出 **layer / ownership / dependency direction**，不是列出所有合法 dependency。
+
+Diagram 只畫對該問題有區辨力的 nodes / edges。多個 types 若共享同一 responsibility，先合併；具體成員、次要依賴與例外放 adjacent table / text。Design Realization 也不應退化成完整 wiring graph。
+
+Static dependency、runtime call、callback / event delivery、data flow 不得在同一張圖用同一種箭頭混合表達。若必須同圖呈現，使用明確 legend / line style；若需要長篇文字才能解釋箭頭方向，應拆 view 或改用 sequence diagram。
+
+Current Architecture 與 Integration View 都只展開到本次問題需要的深度。Current view 聚焦造成問題或限制 target 的 current responsibilities / dependencies，不必完整重畫整個 legacy system。
 
 Integration View 只畫到必要的 existing-system boundary；**未修改且其 internal ownership / ordering / contract / replacement 不屬於本次 design decision 的 legacy tree 不展開**。若既有 internal 雖不修改，但其 ordering 或 contract 是設計成立的必要條件，可展開到足以表達該 decision 的程度。其餘由哪些舊 classes / tasks / APIs 落實，用文字、表格或 appendix 說明，不把它們全部搬進主圖。
 
 Diagram 若需要一句以上文字解釋「看起來有 cycle，但其實不是」、「這個 dependency 只是 runtime call」或「這些 nodes 其實不是同一層」，優先重新檢查 view / dependency direction，而不是只補註解。若實際沒有 dependency cycle，但圖因 layers 被 flatten 而看起來有 cycle，重畫成 layer-oriented view；不要把視覺混亂當成架構複雜度本身。
 
-依 scope 至少提供：
+依 scope 選擇**最少但足夠**的 diagrams；不是每個 conceptual view 都必須有圖。若 table / mapping / code sketch 更清楚，就用它取代 diagram。
 
-### Refactor
-- Current Architecture
-- Target Architecture Overview（minimal architectural spine）
-- Design Realization（當 protocols / concrete types 是理解 target 所必要時）
-- Representative Current Flow
-- Equivalent Target Flow
-- Current → Target responsibility mapping
-- Migration / Transitional View（存在 temporary facade / bridge / adapter 時）
+### Refactor 常見需要
+- 一張 scoped Current Architecture **或** current responsibility mapping，足以說明 problem / coupling；
+- 一張 Target Architecture Overview，呈現 minimal architectural spine；
+- 一個 representative before → after runtime flow，當 behavior / ordering 是設計關鍵時；
+- Current → Target responsibility mapping；
+- 只有在 concrete placement 難以從表格理解時才加 Design Realization diagram；
+- 只有存在 temporary facade / bridge / adapter 且其遷移關係難以文字表達時才加 Migration / Transitional diagram。
 
-### New feature
-- Existing Integration Context
-- Target Architecture Overview（minimal architectural spine）
-- Design Realization（需要說明 protocols / concrete types 的 placement 時）
-- Important Runtime / Sequence Flow
+### New feature 常見需要
+- Existing Integration Context；
+- Target Architecture Overview；
+- Important Runtime / Sequence Flow（當 interaction / lifecycle / side effect 重要時）；
+- Design Realization diagram 只在 protocol / concrete placement 真正需要視覺化時加入。
 
-若 lifecycle / state transition 重要，再加入 state diagram。
+若 lifecycle / state transition 重要，再加入 state diagram。若同一資訊已由 table / sequence flow 清楚交代，不重複畫另一張 box diagram。
 
 圖中的 component / protocol 名稱要與本文與 code sketch 一致，不另造第二套 vocabulary。
 
-每張圖回答一個主要問題；不要把整個系統塞成一張巨型圖。
+每張圖回答一個主要問題；不要把整個系統塞成一張巨型圖，也不要為了滿足 traceability 把所有 types 都畫進去。
 
 ## 8. Current → Target mapping
 
@@ -483,7 +496,7 @@ failure / stop condition
 
 ### Layered reading
 
-有一定規模的設計，最前面提供約一頁 overview：問題與預期成果、scope、Current → Target / integration context 一張圖、遷移順序、總 effort、最大風險 / go-no-go 與待決事項，讓 reviewer 先理解從哪到哪、怎麼走。簡單設計可用短摘要，不硬湊一頁或重複正文。
+有一定規模的設計，最前面提供約一頁 overview：問題與預期成果、scope、最小 Current → Target / integration context（可用圖或短 mapping）、遷移順序、總 effort、最大風險 / go-no-go 與待決事項，讓 reviewer 先理解從哪到哪、怎麼走。簡單設計可用短摘要，不硬湊一頁或重複正文。
 
 正文聚焦 design decisions、contracts 與驗證方式；詳細 caller 清冊、完整 code sketches、line references 與補充 traces 可放附錄，正文保留關鍵 `file:line` 或可追查的 evidence links。摘要、正文、圖與附錄必須使用一致的 component 名稱與 decision status，不因壓縮篇幅省略 blocker。
 
@@ -493,11 +506,11 @@ failure / stop condition
 - scope / non-goals 是什麼？
 - 現在怎麼運作？
 - current limitation 是什麼？
-- target architecture 的 minimal spine 是什麼？Overview 是否以 responsibility layers 呈現，沒有把 capability protocols、realization / integration / migration details 錯塞成 peer nodes？
+- target architecture 的 minimal spine 是什麼？Overview 是否只保留理解 ownership / dependency direction 必要的資訊，沒有把 capability protocols、realization / integration / migration details 錯塞成 peer nodes？
 - responsibility / state / workflow / policy / integration owner 怎麼分？
 - 每個新 protocol 為什麼存在？其 capability surface 是否只包含 consumer 真正需要的操作？
-- protocol / type 在 architecture / realization / runtime / integration / migration view 哪裡？是否依角色落在正確 view，而不是被誤判為 orphan？只有真正的長期 architecture boundary 才需要升到 Overview 嗎？
-- Integration View 是否停在 existing infrastructure boundary，而不是展開與本次設計無關的 legacy internals？
+- significant protocol / type 是否可透過 diagram、table、mapping、contract 或 runtime flow 被追查？是否避免為 traceability 強迫每個 abstraction 成為 diagram node？
+- Current / Integration views 是否只展開到設計需要的深度，沒有把與本次 decision 無關的 legacy internals 畫成核心架構？
 - important runtime flow 怎麼走？
 - failure / lifecycle 怎麼處理？
 - refactor 怎麼安全遷移？
@@ -508,6 +521,7 @@ failure / stop condition
 - 不確定決策做過哪些 explore / 提問 / validation？哪些仍會阻塞設計？
 - 新增複雜度為何合理？核心元件涵蓋多組 policy / behavior 時，responsibility 警戒條件是什麼？
 - 驗收如何證明 confirmed goals？預期收益與投入為何合理？
+- 圖是否比正文更容易理解？若移除某些 nodes / edges 而不損失 architecture meaning，是否應改放 table / text？
 
 Scale-dependent Planning 僅在第 1 節對應條件成立時補充檢查：
 
