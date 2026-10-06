@@ -88,6 +88,44 @@ class InstallerTests(unittest.TestCase):
         for destination in self.instruction_destinations():
             self.assertEqual(destination.read_bytes(), self.common.read_bytes())
 
+    def test_stale_managed_skill_links_are_detected_and_removed(self):
+        managed = self.home / ".codex/skills/retired"
+        managed.parent.mkdir(parents=True, exist_ok=True)
+        managed.symlink_to(self.skills / "retired", target_is_directory=True)
+
+        unrelated_target = self.root / "other-skills" / "retired"
+        unrelated_target.parent.mkdir(parents=True)
+        unrelated_target.mkdir()
+        unrelated = self.home / ".claude/skills/retired"
+        unrelated.parent.mkdir(parents=True, exist_ok=True)
+        unrelated.symlink_to(unrelated_target, target_is_directory=True)
+
+        regular = self.home / ".cursor/skills/retired"
+        regular.mkdir(parents=True)
+        (regular / "keep.txt").write_text("keep")
+
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+
+        self.assertEqual(stale, [managed])
+        install.remove_stale_managed_skill_links(stale)
+        self.assertFalse(managed.is_symlink())
+        self.assertTrue(unrelated.is_symlink())
+        self.assertTrue(regular.is_dir())
+        self.assertEqual((regular / "keep.txt").read_text(), "keep")
+
+    def test_current_managed_skill_link_is_not_stale(self):
+        managed = self.home / ".agents/skills/alpha"
+        managed.parent.mkdir(parents=True, exist_ok=True)
+        managed.symlink_to(self.skills / "alpha", target_is_directory=True)
+
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+
+        self.assertEqual(stale, [])
+
     def test_conflict_is_found_before_any_link_is_created(self):
         conflict = self.home / ".cursor/skills/beta"
         conflict.mkdir(parents=True)
