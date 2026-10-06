@@ -1,139 +1,443 @@
 ---
 name: design-doc
-description: Create or update an independently reviewable Markdown Design Doc that synthesizes existing architecture or refactoring evidence, models, proposals, decisions, and rejected premises. Use when a Design Doc is requested or an offer to document architecture results is accepted; do not select this skill merely to persist another workflow's artifact.
+description: Create or update an independently reviewable Markdown Design Doc that synthesizes existing architecture or refactoring evidence, models, proposals, decisions, implementation mechanics, and verification strategy. Use when a Design Doc is requested or an offer to document architecture results is accepted; do not select this skill merely to persist another workflow's artifact.
 ---
 
 # Design Document
 
-將已有的架構理解與決策整理成可獨立 review 的 Markdown 文件。主要讀者是不熟悉 repository 的工程師，同時讓熟悉 code 的 reviewer 與其他 AI／CLI 能查證。
+將已有的 architecture understanding、decisions、evidence 與必要 implementation mechanics 整理成可獨立 review 的 Markdown Design Doc。主要讀者是不熟悉 repository 的工程師，同時讓熟悉 code 的 reviewer 與其他 AI／CLI 能追查 evidence。
 
-這是 downstream architecture synthesis／persistence skill。Architecture reasoning 可以先完成，不要求文件；只有明確要求 Design Doc／architecture document，或使用者已接受將 architecture 結果整理成 Design Doc 的建議時才啟用，不把有用的 planning 停點當成自動觸發。
+這是 downstream architecture synthesis / persistence skill。它保存並具體化已完成或已確認的 architecture reasoning，不自行重做選型，也不因其他 workflow 需要 Markdown 就自動啟用。
 
-**Selection boundary：** 不因其他 workflow 的輸出需要寫成 Markdown、保存到 `docs/`、格式化或持久化，就選用此 skill。Implementation plan、execution plan、review report 或其他 workflow artifact 仍屬產生它的 workflow；建立、整理、更新或保存這些 artifact，本身不構成 Design Doc 工作。只有使用者另外要求把既有 architecture evidence／decisions／boundaries／unresolved questions 綜整成可獨立 review 的 Design Doc 時，才使用本 skill。
+## Selection boundary
 
-## 輸入與邊界
+適用：
 
-接受使用者直接提供的材料，或 `architecture` 的已有成果：scope、current model、evidence、結果狀態、decisions、proposals、unknowns，以及已有的 migration／verification strategy。可以保存 explore、Resolved、Draft / Pending Decisions、Blocked 或 PREMISE REJECTED，不要求上游完成所有階段。資料充分時，不重跑已完成的訪談。
+- 使用者明確要求 Design Doc / architecture document；
+- 已接受把 architecture / refactor 結果整理成可 review 文件；
+- 需要把 current / target / ownership / behavior / state / implementation mechanics / verification 保存成長期技術文件。
 
-讀取適用的 agent instructions 與既有文件慣例。具體 codebase 的重要技術描述先對照相關 code；補查局部缺口，不為撰寫文件重新探索整個 repository。已提供的 code locations 可能過期，交付前重查重要 references 與 symbols。無法查證的內容標明來源、假設或限制。
+不適用：
 
-此 skill 呈現已有成果，不自行選擇架構。若要求的定稿需要尚未確認的決策，提出 focused questions，或回到 [architecture](../architecture/SKILL.md) 的受影響階段。也可保留 Draft / Pending Decisions 與受阻工作，不把 proposals 寫成 decisions，不為補齊文件重啟選型。
+- 只是保存 implementation plan、review report、technical report 或其他 workflow artifact；
+- 還需要決定 ownership、target architecture、contracts 或 alternatives：回到 `architecture`；
+- 只需要 execution order / batches / rollback / task tracking：使用 planning workflow。
 
-只寫入已請求或已接受保存建議的文件，不重問已提供的文件授權；位置沿用使用者指定或專案慣例。不得藉此修改 code、agent instructions、CLI settings，或開始實作、migration、commit、發布。
+不得藉此修改 production code、agent instructions、CLI settings、開始 migration、commit 或發布。
 
-沒有既有文件慣例時，選擇合適的 `docs/<topic>-design.md`，不要覆寫不相關文件。若目前環境限制寫檔，先在對話交付完整 Markdown，明確說明尚未存檔，不自行變更 CLI 權限或模式。
+## Source authority and evidence
 
-## 文件內容與閱讀主線
+接受使用者直接提供的材料，或 `architecture` 已有成果：scope、current model、evidence、decisions、proposals、unknowns、migration / verification strategy。
 
-Design document 是 synthesis artifact，不按 investigation 順序傾倒證據。Reviewer 應先理解：
+具體 codebase 的重要 technical claim 應對照相關 code；已提供的 code locations 可能過期，交付前重查重要 references / symbols。若無法查證，保留來源、assumption 或 limitation，不用一般知識補成 project fact。
 
-1. **Why：**為何值得改。
-2. **What：**current → target 的核心差異。
-3. **Why this direction：**主要理由與限制。
-4. **Work：**預計工作與 implementation shape。
-5. **Outcome：**完成後應有的具體結果。
-6. **Pending：**影響實作的未決事項。
+Design Doc 可以保存：
 
-Architecture-change proposal 必須在前段包含 **Target Architecture Overview**，整合完成後主要 components、boundaries、dependencies 與 ownership；可同時呈現 confirmed 與 proposed elements，但狀態必須明確。PREMISE REJECTED 或明確的 current-state documentation 不要求 target overview。不要因 concrete API 尚未定案而省略已有足夠 evidence 支持的 conceptual target。
+- Resolved
+- Draft / Pending Decisions
+- Blocked
+- PREMISE REJECTED
+- current-state documentation
 
-再以 progressive disclosure 提供 current evidence、protocols、flows、alternatives、migration、verification、history 與 risks。只保留能回答 scope 內架構問題的細節，不讓 supporting detail 搶過設計主線。
+但不得把 proposal、planned validation、未執行 tests 或未實作 target 寫成 current fact。
 
-不強迫其他固定章節。已有 proposed technical boundaries 時，呈現重要 ownership、layers、interfaces／types 及其關係，並區分 conceptual target、PROPOSED API 與 CONFIRMED TARGET API；沒有上游設計時不自行補造。若仍有會決定 target responsibility、ownership、dependency 或 contract 的 design-blocking decisions，文件必須標為 **Draft / Pending Decisions**，不能當成 final target design；回到 `architecture` 推進 decision gate，除非使用者明確延後、必要 evidence 不可得，或決策合理依賴後續 validation。
+## Core Design Questions
 
-文件以 structure、behavior 與 state 保存已有架構知識；下列規則只改變表達方式，不改變 `architecture` 的推理流程、decision gates 或完成契約。Confirmed decisions 與 explicitly unresolved knowledge 均可呈現，不為補齊圖或 protocol 說明自行做架構決策。
+Design Doc 不要求固定章節名稱，但必須依 scope 回答足以 review design 的核心問題：
 
-## 圖表格式與證據邊界
+1. **Why / Goal**：為什麼值得改？完成後要解決什麼問題？
+2. **Scope / Non-goals**：這次改什麼、不改什麼？
+3. **Current**：目前 responsibility、dependency、runtime behavior 與 state 怎麼運作？
+4. **Target**：完成後 components、boundaries、ownership 與 dependency 怎麼變？
+5. **Change Scope**：哪些 responsibility / state / flow 會搬？哪些刻意維持原位？
+6. **Behavior**：runtime ordering、success / failure / recovery、callbacks / events 怎麼走？
+7. **State**：有哪些 meaningful state？誰擁有？何時建立、失效、提交、恢復？
+8. **Implementation Mechanics**：哪些具體 type / function / algorithm / synchronization 機制是證明設計可落地所必需？
+9. **Verification**：如何證明 target 符合設計，且 behavior-preserving refactor 沒有改壞既有 contract？
+10. **Pending / Open Questions**：哪些問題仍會影響實作或需要 validation？
 
-Markdown design documents 預設使用 Mermaid，以 fenced `mermaid` code blocks 嵌入。互動 CLI 的 ASCII 模型是輸入材料；轉成 Markdown sections 與 Mermaid 時，保留已建立的架構模型、關係與限制，不自行重新設計。Mermaid 不是上游 architecture reasoning 的要求。
+Architecture-change proposal 必須在前段提供 **Target Architecture Overview**。不要因 concrete API 尚未定案就省略已有足夠 evidence 支持的 conceptual target。
 
-圖與相鄰 Markdown 清楚區分：
+## Change Profiles
 
-- **CURRENT：**repository evidence 支持的既有架構與行為，提供 concrete code locations。
-- **PROPOSED — NOT YET ACCEPTED：**尚未接受的候選設計，保留 assumptions 與 unresolved questions。
-- **CONFIRMED TARGET：**使用者已確認的 target；說明是否已實作，不能讓它看似已在 repository 中運作。
+Core Design Questions 是共同骨架；依變更型態增加真正需要的內容，不套固定模板。
 
-不為讓 Mermaid 圖看似完整，補入沒有根據的 nodes、states、messages、dependencies 或 ownership relationships。未知關係可省略，或在相鄰 Markdown 明確說明 uncertainty；未決問題仍是未決問題。
+### UI / Feature
 
-## Structure、behavior 與 state
+可視需要包含：
 
-依 scope 選擇互補的視角，不要求每份文件都包含三者或所有圖型：
+- UX / user journey
+- screen / component hierarchy
+- UI flow
+- view / presentation state
+- API interactions
+- selectors / analytics / accessibility / test hooks
 
-| 視角 | 需要呈現的架構問題 |
+### Architecture / Refactor
+
+優先包含：
+
+- current → target architecture
+- **What moves / What stays**
+- ownership / responsibility boundaries
+- representative before → after cases
+- compatibility invariants
+- migration boundary
+- behavior parity / regression strategy
+
+### Data / Persistence
+
+可視需要包含：
+
+- schema / model changes
+- ownership / consistency
+- migration / backward compatibility
+- ordering / transaction / failure semantics
+- rollback / recovery
+
+### Service / API
+
+可視需要包含：
+
+- API / protocol contracts
+- lifecycle
+- concurrency / isolation
+- error semantics
+- backward compatibility
+- consumers / implementations
+
+同一份文件可以同時符合多個 profile。
+
+## Reading narrative
+
+Design Doc 是 synthesis artifact，不按 investigation chronology 傾倒證據。
+
+Architecture / refactor 常見閱讀主線：
+
+```text
+Why / Problem
+      ↓
+Scope / Non-goals
+      ↓
+Current model
+      ↓
+Target architecture
+      ↓
+What moves / What stays
+      ↓
+Representative before → after
+      ↓
+Contracts / behavior / state
+      ↓
+Critical implementation mechanics
+      ↓
+Migration boundary
+      ↓
+Compatibility & verification
+      ↓
+Open questions
+```
+
+這是 narrative pattern，不是固定目錄。依 scope 合併、刪除或調整。
+
+Reviewer 應該能在前段就理解 target；supporting protocols、flows、implementation sketches、alternatives、history、risks 往後 progressive disclosure。
+
+## Change Scope: What moves / What stays
+
+對 refactor，不能只給 Current 與 Target 兩張架構圖。應明確回答 responsibility / state / flow 到底怎麼搬。
+
+可使用：
+
+| Area | Current | Target | Intentionally unchanged |
+| --- | --- | --- | --- |
+| committed state | ... | ... | ... |
+| draft / edit state | ... | ... | ... |
+| operation workflow | ... | ... | ... |
+| persistence | ... | ... | ... |
+
+這個 section 的目的，是讓 reviewer 快速辨識 scope boundary 與 accidental redesign。
+
+## Representative before → after
+
+對 architecture/refactor，選 1–3 個代表性 operation / flow，具體說明設計如何落地。
+
+每個 case 應回答：
+
+```text
+CURRENT
+Who owns the logic/state today?
+How does the runtime flow behave?
+
+TARGET
+What moves?
+What stays?
+Who becomes the owner?
+
+INVARIANT
+Which externally observable or contractual behavior must stay the same?
+```
+
+可使用 table、sequence diagram、state diagram、pseudocode 或 code sketch。
+
+不要為完整而逐一展開全部 callers / panels；選足以證明 responsibility model 成立的 representative cases，其餘用 coverage / inventory 處理。
+
+## Structure, behavior and state
+
+依 scope 選擇互補視角：
+
+| 視角 | 需要呈現的設計問題 |
 | --- | --- |
-| Structure | 元件、dependency direction、ownership、protocol 與 responsibility boundaries。 |
-| Behavior | 呼叫順序、跨元件互動、async flows、notifications／callbacks／delegates／events，以及會改變行為的 success／failure／recovery paths。 |
-| State | 有意義的狀態、triggering events、transitions、guards，以及 terminal／error／recovery states。每個狀態需指出 owner。 |
+| Structure | components、dependency direction、ownership、protocol、responsibility boundaries |
+| Behavior | call ordering、async flow、notifications / callbacks / events、success / failure / recovery |
+| State | meaningful states、owner、trigger、transition、guard、invalidation、terminal / error / recovery |
 
-Diagrams 保存推理中的關係與限制，不用來裝飾。每張圖回答一個問題，提供狀態標籤、必要說明及 evidence。困難概念可增加直觀說明，但不能省略會影響決策的技術細節。
+State ownership 是一級設計問題。不要只畫「A 呼叫 B」，還要回答：
 
-### 選擇 diagram
+- committed state 在哪裡？
+- draft / temporary state 在哪裡？
+- operation state 在哪裡？
+- identity / session state 在哪裡？
+- presentation state 是否只是 output，還是另一份 source of truth？
 
-| 架構問題 | Mermaid type |
+同一份 state 不應因文件方便而被描述成多個 canonical owner。
+
+## Diagrams
+
+Markdown Design Doc 預設使用 Mermaid fenced blocks，讓 topology 可 review、可 diff、可長期維護。
+
+狀態標籤：
+
+- **CURRENT**：repository evidence 支持的既有架構 / behavior。
+- **PROPOSED — NOT YET ACCEPTED**：尚未接受的候選。
+- **CONFIRMED TARGET**：已確認 target；仍需說明是否已實作。
+
+常用：
+
+| 問題 | Mermaid |
 | --- | --- |
-| Component／dependency／ownership | `flowchart` |
-| Data flow | `flowchart` |
-| Call ordering／interactions | `sequenceDiagram` |
-| Lifecycle／state transitions，有 meaningful states 時 | `stateDiagram-v2` |
+| component / dependency / ownership | `flowchart` |
+| data flow | `flowchart` |
+| ordering / interaction | `sequenceDiagram` |
+| meaningful state transition | `stateDiagram-v2` |
 
-- **`flowchart`：**呈現元件、dependency direction、ownership boundaries、protocol consumers／implementations，或 data flow。箭頭意義可能模糊時，在 Markdown 說明是 dependency direction、ownership 或 runtime data flow。不要混用 dependency、ownership 與 runtime message flow；同圖使用時必須明確區分。
-- **`sequenceDiagram`：**順序或元件互動影響架構時優先使用。適合 repository／sync／async 操作、delegate／callback／notification、persistence transaction、authentication、lifecycle 與 failure／recovery。列出重要 participants、messages、await／callback，以及會實質改變行為的 failure branches；只畫理解架構所需的互動，不列每個 function call，也不把平行工作畫成固定先後。
-- **`stateDiagram-v2`：**僅在 repository evidence 或 confirmed target design 建立有意義的 states／transitions 時使用。在相鄰 Markdown 指出 state machine owner，標示 triggering events、相關 guards、failure states 與 recovery transitions。Sequential process 不自動構成 state machine，不從暫時 control-flow steps 推定 persistent states。圖中的說明用名稱不得假裝成 repository 的 enum、欄位或新 state owner；尚未確認的狀態設計保留為 proposal／open question。
+規則：
 
-其他 Mermaid diagram types 只有在更適合表達該架構問題時使用，不為視覺變化而選用。
+- 每張圖回答一個主要問題。
+- 不為完整補造 node / edge / state / message / ownership。
+- Current 與 Target 若 behavior 不同，分開畫。
+- 箭頭意義不明時，在相鄰 prose 說明是 dependency、ownership 還是 runtime flow。
+- sequence 只畫有設計意義的 messages / failure branches，不列每個 function call。
+- state diagram 必須指出 owner；sequential steps 不自動等於 persistent state machine。
 
-優先使用數張各回答一個問題的小圖，不用一張巨型圖涵蓋全系統，也不為增加密度要求所有 diagram types。當變更改變 behavior，必要時分別畫 current 與 target／proposal，不能混成一張讓新行為看似已存在。
+Design Doc 以 Mermaid source 為 authoritative diagram representation。Static SVG / PNG 可作 preview 或 downstream artifact，但不取代 Mermaid source-of-truth。
 
-## Protocol 與責任契約
+## Protocol and boundary contracts
 
-將 scope 內定義重要架構邊界的 protocols 視為文件主要內容。每個 relevant protocol 有獨立 Markdown 小節，例如以 `###` 加上 protocol 名稱為標題。不要逐一列舉 repository 所有 protocols；先選會影響理解或 review 的介面。
+Scope 內真正定義 architecture boundary 的 protocols / interfaces 是主要內容，但不要逐一列舉 repository 所有 protocols。
 
-依 evidence 與架構相關性，使用以下小節結構；可省略不相關的項目，重要缺口留在 Open questions：
+視需要描述：
 
-| 小節 | 說明內容 |
-| --- | --- |
-| **Purpose** | 此 protocol 定義的架構邊界。 |
-| **Owner / Layer** | Abstraction 所屬的 layer 與 owner。 |
-| **Implemented by** | Repository evidence 支持的 concrete implementations。 |
-| **Consumed by** | 依賴此 protocol 的元件。 |
-| **Responsibilities** | Protocol 保證或協調的責任。 |
-| **Non-responsibilities** | 明確位於邊界之外的重要行為。 |
-| **Operations** | 重要 operations，以及有架構意義的 input／output semantics。 |
-| **Lifecycle / Ordering** | 順序限制與相關 notifications／events／callbacks；連到相關 sequence diagram。 |
-| **State implications** | State ownership 或經由此邊界引發的 transitions；連到相關 state diagram。 |
-| **Error semantics** | 有架構意義的失敗行為。 |
-| **Concurrency** | 相關的 actor、queue、thread、Sendable、synchronization 或 isolation requirements。 |
-| **Current limitations** | Evidence 支持的已知限制。 |
-| **Proposed changes** | 與 existing API 分開的候選變更。 |
-| **Open questions** | 尚未確認的設計決策或缺少的 evidence。 |
+- Purpose
+- Owner / Layer
+- Implemented by
+- Consumed by
+- Responsibilities
+- Non-responsibilities
+- Operations / input-output semantics
+- Lifecycle / Ordering
+- State implications
+- Error semantics
+- Concurrency / isolation
+- Current limitations
+- Proposed changes
+- Open questions
 
-可用簡短 Swift protocol declaration 輔助定位，但 declaration 不能取代語意說明。不複製 implementation details 來增加篇幅。區分 protocol requirement、extension default、具體實作能力與 caller 保證；不能從 method 名稱或 conformance 推定實作能力、錯誤契約或 isolation。
+API / protocol declaration 必須標明：
 
-API 沿用上述證據與決策狀態，分別標為 **CURRENT API**、**PROPOSED API — NOT YET ACCEPTED**、**CONFIRMED TARGET API**。不把 proposed declaration 當成現有 code。只確認責任或行為不等於已接受具體 API declaration。
+- **CURRENT API**
+- **PROPOSED API — NOT YET ACCEPTED**
+- **CONFIRMED TARGET API**
 
-沒有足夠 evidence 或 accepted design 時，保留責任層級與 open question，不虛構 protocol 名稱、methods、states 或後續設計。Rejected premise 的文件也不需要 target API 或 migration 圖。
+只確認 responsibility 不代表已接受具體 signature。
 
-## 交叉引用與一致性
+## Concrete implementation sketches are design material
 
-Protocol 說明連到相關 sequence／state flows 與 failure semantics；圖沿用其他段落的 component 與 protocol terminology。State diagram 指出 owner，sequence diagram 說明呼叫經過的介面，structure diagram 表達相同責任邊界。必要時用穩定的小節名稱或 anchors 交叉引用。
+**不要因內容長得像 code，就把它排除在 Design Doc 外。**
 
-讀者應能從相互連結的表示回答：誰擁有責任、哪個 protocol 定義邊界、誰實作、誰使用、runtime 發生什麼、順序為何、哪些狀態改變，以及失敗後發生什麼。未知的答案保持可見，不為讓表示完整而補造架構。
+當 implementation mechanics 會影響下列任一事項時，應提供 concrete type / function sketch、pseudocode 或 representative code：
 
-所有 CURRENT diagrams 與 protocol 描述都需根據 code 查證。Proposal、confirmed target 與 current behavior 分開；確認 target 不代表它已在 repository 中運作。文件知識不足時可保留 gap，不重啟上游推理流程來補滿圖型。
+- ownership
+- ordering
+- state transition
+- concurrency / synchronization
+- error / recovery semantics
+- identity / lifecycle
+- serialization / codec behavior
+- compatibility
+- feasibility of the proposed boundary
 
-## 決策狀態與寫作
+目的不是預先完成 implementation，而是讓 reviewer 能在 coding 前檢查 design 是否 coherent。
 
-Observed facts、interpretations、assumptions、proposed changes、confirmed decisions 與 unresolved questions 清楚區分。段落或表格已表明狀態時，不必每句加標籤。
+### Contract-level sketch
 
-Reasoning completion、規劃結果狀態、文件完成、方向已由使用者確認、外部 review 已通過是不同事項。沒有實際確認不能標成 accepted／approved；recommendation 不自動升格為 decision。若 review 改變前提，保留仍有效的內容，只修正受影響的模型與設計，必要時重開該 decision gate。
+可以用簡短 declaration 顯示 boundary：
 
-以繁體中文寫作。使用短句、一句一個主要意思、active voice、穩定術語與明確條件，減少模糊代詞。這是受 ASD-STE100 啟發的寫作習慣，不宣稱嚴格符合該標準。Code identifiers、API names 與 established technical terminology 保持原樣。
+```swift
+protocol SettingService {
+    func value(for type: SettingType) -> SettingValue?
+    func send(_ command: SettingCommand)
+}
+```
 
-重要技術描述提供 repository-relative `file:line` 與 symbol，讓其他人與 CLI 能定位。外部能力或限制引用實際查證的 primary sources。Current facts 與 proposed behavior 分開，避免把未實作設計描述成既有能力。Tests 區分已有、建議與已執行；保留環境限制與結果來源。
+Declaration 必須搭配語意說明，不能取代 responsibility / ordering / error contract。
 
-## 文件驗證與交付
+### Design-level code sketch
 
-交付前確認 reviewer 無須讀原對話就能理解變更目的、current model、選擇理由與影響。對照 references、protocols、圖、ownership、contracts、migration、verification 與決策狀態，修正矛盾與無 evidence 的 claims。檢查 participants／messages、callback 與 failure ordering、state owners／guards／recovery 及 API 標籤是否與 prose 相符；不把 current、confirmed target 與未接受 proposal 混寫。尚未釐清的關鍵問題保持可見，並指出是否阻止後續實作。
+複雜 flow 應可具體到能 review ordering：
 
-確認 Mermaid code fences、diagram type 與圖中關係可讀且一致；有可用的 Mermaid parser／renderer 時，檢查語法或 rendering。語法檢查不能取代 repository evidence 與模型一致性查證。
+```swift
+func handleEvent(_ event: Event, session: Session) {
+    guard session.isValid else { return }
+    let result = apply(event)
+    emit(result)
+    requestPersistenceSnapshot(result)
+}
+```
 
-沿用一份主文件作為此次交付，不預設另產生 AI 版、review 清單或多份重複報告；使用者指定多種 artifacts 時依其要求。完成後提供文件位置、狀態與最重要的待 review 問題。不要自動發送給 reviewer，也不要把文件交付當成實作授權。
+Reviewer 應能從 sketch 問：
+
+- identity 從哪裡來？
+- state 何時 mutation？
+- event 何時 emit？
+- persistence 是否是 gate？
+- failure 是否 rollback？
+- callback 是否可能重入？
+
+### Implementation-level mechanism
+
+若具體寫法本身就是 architecture decision，可再更具體，例如 lock scope、actor isolation、generation token、transaction ordering。
+
+但 Design Doc 不應：
+
+- 預寫每一個 method；
+- 把 production implementation 複製進文件；
+- 列出逐檔修改順序；
+- 取代 implementation plan；
+- 用大量 code 掩蓋未確認的 architecture decision。
+
+判斷原則：
+
+> **Design Doc 的 code 回答「這個設計具體怎麼成立？」；Implementation Plan 回答「用什麼順序把它做完？」**
+
+## Behavior parity and verification
+
+Behavior-preserving refactor 不應只列一串 tests 或 risk。Design Doc 要把 compatibility contract 寫成可 review 的設計內容。
+
+優先使用：
+
+| Behavior | Existing baseline | Target owner / shape | Invariant | Verification |
+| --- | --- | --- | --- | --- |
+| representative operation | current trace | new owner | what must stay identical | how to compare |
+
+也就是：
+
+```text
+Baseline
+   ↓
+Target owner / implementation shape
+   ↓
+Invariant
+   ↓
+Verification
+```
+
+Verification 可包含：
+
+- core equivalence：merge / codec / serialization / bytes
+- workflow equivalence：ACK / timeout / retry / commit / rollback
+- identity / lifecycle：switch / logout / late callback / stale work
+- persistence / event ordering
+- runtime / integration acceptance
+
+Planned tests 不得寫成 existing coverage。
+
+## Migration boundary
+
+Design Doc 可以說明 migration shape、dependency、compatibility boundary 與 architectural gates，但不取代 execution plan。
+
+Design Doc 可以回答：
+
+- 哪些 ownership 必須 atomic takeover？
+- 哪些 caller 可逐批遷移？
+- 過渡期允許哪些 bridge？
+- 哪些 dual-owner 狀態禁止進 production？
+- 哪些 validation failure 會要求 reopen architecture？
+
+Implementation Plan 再負責：
+
+- 實際 work batches
+- file / task order
+- staffing
+- rollback steps
+- acceptance execution
+- progress tracking
+
+## Alternatives and decision state
+
+Observed facts、interpretations、assumptions、proposed changes、confirmed decisions 與 unresolved questions必須區分。
+
+有意義的 rejected alternative 應記錄：
+
+- alternative
+- why considered
+- why rejected / deferred
+- what evidence or constraint mattered
+
+不要為了完整保留已失去價值的歷史辯論。
+
+若仍有會決定 target responsibility、ownership、dependency 或 contract 的 blocking decision，文件必須維持 **Draft / Pending Decisions**，不能寫成 final target。
+
+## Writing and traceability
+
+以繁體中文寫作。使用短句、active voice、穩定 terminology 與明確條件。Code identifiers、API names 與 established engineering terms保持原樣。
+
+重要 technical description 提供 repository-relative `file:line` / symbol，讓 reviewer 與 CLI 可追查。
+
+Design Doc 必須自己可理解，但與 Technical Report 不同：**evidence / code reference 是正式 review material，不預設隱藏。**
+
+Current fact 與 proposed behavior 分開；tests 區分 existing / planned / executed；保留環境限制與結果來源。
+
+## Cross-reference consistency
+
+Structure、behavior、state、protocol、code sketch、verification 必須描述同一套 design。
+
+Reviewer 應能回答：
+
+- 誰擁有責任 / state？
+- 哪個 boundary 定義 contract？
+- runtime ordering 怎麼走？
+- failure / recovery 怎麼走？
+- code sketch 是否真的符合 diagram / prose？
+- verification 是否直接驗證 invariants？
+
+若這些表示互相矛盾，修正文件；不要讓不同 section 各自演化成不同 architecture。
+
+## Delivery
+
+沒有既有文件慣例時，使用合適的 `docs/<topic>-design.md`。沿用一份主 Design Doc，不預設另產 AI 版或多份重複文件。
+
+交付前確認：
+
+1. Reviewer 無須讀原對話即可理解 Why、Scope、Current、Target。
+2. What moves / What stays 是否清楚？
+3. State ownership 是否清楚且沒有 duplicate canonical owner？
+4. Representative before → after 是否足以證明 target responsibility model 可落地？
+5. Critical implementation mechanics 是否有足夠 code sketch / pseudocode 可 review？
+6. Protocol / API status 是否區分 current / proposed / confirmed target？
+7. Behavior-preserving refactor 是否有 Baseline → Invariant → Verification？
+8. Mermaid topology、prose、code sketch 是否一致？
+9. 重要 current claims 是否有可追查 evidence？
+10. Migration 是否停留在 architecture boundary，而沒有變成 implementation task list？
+11. Open questions 是否保持可見，且標明是否 block implementation？
+
+完成 Design Doc 不代表 implementation 已開始、tests 已執行或 external review 已通過。
