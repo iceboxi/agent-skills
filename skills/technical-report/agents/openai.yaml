@@ -1,6 +1,0 @@
-interface:
-  display_name: "Technical Report"
-  short_description: "Turn approved technical plans into audience-ready report outlines"
-  default_prompt: "使用 $technical-report 將既有 Design Doc、Implementation Plan 與可選 repository evidence 整理成適合指定 audience 的 technical report content specification；若未指定輸出媒介，先確認要投影片、文件、網頁或大綱。"
-policy:
-  allow_implicit_invocation: true
