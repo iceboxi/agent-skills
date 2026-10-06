@@ -15,7 +15,6 @@ from pathlib import Path
 
 TARGET_ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
 INSTRUCTION_TARGETS = (".codex/AGENTS.md", ".claude/CLAUDE.md")
-RETIRED_SKILLS = ("architecture", "design-doc", "technical-report")
 
 
 class InstallError(Exception):
@@ -195,12 +194,17 @@ def apply_install(actions: list[Action], home: Path) -> Path | None:
     return backup_root
 
 
-def find_retired_skill_links(home: Path, repository_root: Path) -> list[Path]:
-    """Return only retired symlinks that still point into this repository."""
-    retired = []
+def find_stale_managed_skill_links(
+    home: Path, skills_root: Path, current_skill_names: set[str],
+) -> list[Path]:
+    """Find obsolete installer-managed skill symlinks without touching unrelated entries."""
+    skills_root = skills_root.resolve(strict=False)
+    stale = []
     for target_root in TARGET_ROOTS:
-        for name in RETIRED_SKILLS:
-            destination = home / target_root / name
+        installed_root = home / target_root
+        if not installed_root.is_dir():
+            continue
+        for destination in installed_root.iterdir():
             if not destination.is_symlink():
                 continue
             raw_target = destination.readlink()
@@ -208,13 +212,17 @@ def find_retired_skill_links(home: Path, repository_root: Path) -> list[Path]:
                 raw_target if raw_target.is_absolute()
                 else destination.parent / raw_target
             ).resolve(strict=False)
-            expected = (repository_root / "skills" / name).resolve(strict=False)
-            if resolved == expected:
-                retired.append(destination)
-    return retired
+
+            # A managed skill link always targets one direct child of this repository's
+            # skills/ directory. Only reconcile links whose old source no longer exists
+            # in the desired skill set; unrelated symlinks and regular directories are
+            # intentionally left untouched.
+            if resolved.parent == skills_root and resolved.name not in current_skill_names:
+                stale.append(destination)
+    return sorted(stale)
 
 
-def remove_retired_skill_links(paths: list[Path]) -> None:
+def remove_stale_managed_skill_links(paths: list[Path]) -> None:
     for path in paths:
         path.unlink()
 
@@ -245,22 +253,25 @@ def main() -> int:
     skills_root = repository_root / "skills"
     try:
         actions = plan_install(skills_root, home, args.adopt_identical, args.adopt_instructions)
-        retired_links = find_retired_skill_links(home, repository_root)
+        current_skill_names = {skill.name for skill in skills_root.iterdir() if skill.is_dir()}
+        stale_links = find_stale_managed_skill_links(home, skills_root, current_skill_names)
         if args.verify:
             verify_install(actions)
-            if retired_links:
-                raise InstallError("Retired skill symlinks remain: " + ", ".join(map(str, retired_links)))
+            if stale_links:
+                raise InstallError(
+                    "Stale managed skill symlinks remain: " + ", ".join(map(str, stale_links))
+                )
             print(f"Verified {len(actions)} symlinks (skills and global instructions); no changes made.")
             return 0
         for action in actions:
             print(f"{action.kind:9} {action.destination} -> {action.source}")
-        for destination in retired_links:
-            print(f"{'retire':9} {destination}")
+        for destination in stale_links:
+            print(f"{'remove':9} {destination}")
         if args.dry_run:
             print("Dry run complete; no changes made.")
             return 0
         backup_root = apply_install(actions, home)
-        remove_retired_skill_links(retired_links)
+        remove_stale_managed_skill_links(stale_links)
         if backup_root is not None:
             print(f"Previous entries backed up to: {backup_root}")
         print(f"Verified {len(actions)} symlinks (skills and global instructions).")
