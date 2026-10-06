@@ -90,7 +90,7 @@ python3 install.py --dry-run
 python3 install.py
 ```
 
-既有 skills 與 Codex／Claude 全域指引會透過 symlinks 取得新內容。執行 installer 會安裝新增 skills，並安全移除仍指向此 repository 舊目錄的 retired skill symlinks（`architecture`、`design-doc`、`technical-report`）；同名但不是由此 repository 管理的項目不會被刪除。Cursor 的 User Rule 依上節同步更新。
+既有 skills 與 Codex／Claude 全域指引會透過 symlinks 取得新內容。執行 installer 會把安裝狀態 reconcile 成目前 repository 的 desired state：新增缺少的 skill links，並自動移除仍直接指向此 repository `skills/<name>`、但該 source skill 已不存在的 stale managed symlinks。其他 repository 的 symlink、一般目錄或一般檔案都不會被刪除。Cursor 的 User Rule 依上節同步更新。
 
 在任何裝置修改共用內容後，以一般 Git commit／push 同步；其他裝置再 pull。專案 `AGENTS.md` 由各專案自己的 repository 同步。
 
