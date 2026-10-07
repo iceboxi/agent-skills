@@ -6,7 +6,7 @@
 | --- | --- |
 | `instructions/common.md` | 每個專案都適用的 Engineering Rules、繁體中文偏好與 Code Navigation。 |
 | `skills/explore` | 查證 repository 現況，建立 responsibility、state ownership、runtime flow、constraints 與 evidence。 |
-| `skills/design` | 根據需求與 repository evidence 完成 software design，產出可 review 的 Design Doc，包含 target architecture、protocol/interface、flow、migration、implementation phases 與 verification。 |
+| `skills/design` | 根據需求與 repository evidence 完成 software design；主 skill 保留 hard invariants / routing，architecture、interface ownership、migration/verification 分成一層 references，產出可 review 的 Design Doc。 |
 | `skills/review` | 對既有 Design Doc 做獨立、evidence-based acceptance review，回傳 ACCEPT / ACCEPT WITH NON-BLOCKING NOTES / REVISE / BLOCKED。 |
 | `skills/report` | 從已核准 Design Doc 提取 technical presentation，保留 Current/Target、design realization、核心 protocol/code sketch、phase、estimate 與 validation。 |
 
@@ -22,6 +22,9 @@ agent-skills/
       agents/openai.yaml
     design/
       SKILL.md
+      architecture.md
+      interfaces.md
+      delivery.md
       agents/openai.yaml
     review/
       SKILL.md
