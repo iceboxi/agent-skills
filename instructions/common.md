@@ -30,6 +30,13 @@ Matt skills are the generic workflow base. Apply these local differences only wh
 - Behavior-preserving refactor: before changing behavior-bearing legacy code, characterize the current observable behavior at an existing seam, then refactor in small green steps. Expected values must come from current behavior, a known fixture, protocol/spec, or another independent oracle.
 - Runtime validation: keep unit/integration/device evidence distinct. BLE, Watch, background lifecycle, entitlement, hardware timing, and similar OS/device behavior remain runtime gates even when unit tests pass.
 
+# Artifact Delivery Overlay
+
+- Human-facing generated files must not be delivered only from an OS temp directory such as `$TMPDIR`, `/tmp`, or macOS `/var/folders/.../T`. Temp paths may be used for intermediate generation only.
+- Before reporting a generated HTML/report/diagram/document as complete, copy or move the final artifact to a persistent user-facing location. Default to `${AGENT_ARTIFACTS_DIR:-$HOME/Documents/agent-artifacts}/<repo-name>/`; if that location is unavailable, fall back to `$HOME/Downloads/agent-artifacts/<repo-name>/`.
+- This rule overrides upstream skills that prescribe temp-only report delivery, including `improve-codebase-architecture`. Keep the upstream generation process, but deliver the persistent copy.
+- Final responses must report the persistent absolute path. If auto-open is attempted, open the persistent copy, not the temp file. Mention the temp path only for debugging.
+
 # Code Navigation
 
 - Use native search for simple lookup; when available, use `cx` where structural navigation avoids broad reads.
