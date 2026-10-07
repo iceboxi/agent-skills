@@ -1,0 +1,6 @@
+interface:
+  display_name: "Questionnaire"
+  short_description: "Ask the person who holds missing knowledge"
+  default_prompt: "使用 $questionnaire 將阻塞 decision、但只存在另一個人腦中的資訊整理成 focused Markdown questionnaire；只 grill send，不替 recipient 回答 subject。"
+policy:
+  allow_implicit_invocation: false
