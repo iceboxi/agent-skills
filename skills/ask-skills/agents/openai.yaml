@@ -1,6 +1,6 @@
 interface:
   display_name: "Ask Skills"
   short_description: "Choose the right engineering skill or flow"
-  default_prompt: "使用 $ask-skills 判斷目前 engineering phase，實際讀取最可能的 candidate SKILL.md 後，推薦能完成目標的最小 skill / flow；若最佳 target 是 explicit-only/user-invoked skill，明確指出 `$skill-name`，不要用鄰近 implicit skill 代替。"
+  default_prompt: "使用 $ask-skills 判斷目前 engineering phase，實際讀取最可能的 candidate SKILL.md 後，推薦能完成目標的最小 skill / flow，並說明為什麼不用鄰近 skill。"
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false
