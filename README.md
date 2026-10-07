@@ -25,8 +25,9 @@ Matt upstream
 └─ retro / writing-for-agents / ...
 
 Our local skills
-├─ design    # formal Architecture Design Doc + bounded document maintenance
-└─ review    # design acceptance + optional spec-fidelity mode
+├─ design       # formal Architecture Design Doc + bounded document maintenance
+├─ challenge    # optional multi-role adversarial strengthening
+└─ review       # independent acceptance + optional spec-fidelity mode
 
 Lightweight overlay
 └─ instructions/common.md
@@ -53,7 +54,12 @@ grill-with-docs / wayfinder decisions
         ↓
       design
         ↓
-      review
+   Design Doc draft
+        ├─ optional challenge
+        │      ├─ human decisions → grilling / grill-me
+        │      └─ revisions → design
+        ↓
+      review (independent acceptance)
    ┌────┴──────────────────────────┐
 REVISE / BLOCKED                 ACCEPT
    │                               ├─ small → implement → code-review
@@ -66,6 +72,8 @@ REVISE / BLOCKED                 ACCEPT
                                                  → to-tickets
                                                  → implement / implement-spec
 ~~~
+
+`challenge` 與 `review` 不同：前者用多個獨立角色高 recall 地找盲點、不給 verdict；後者以 fresh independent reviewer 驗證 acceptance-relevant claims，低噪音地給 ACCEPT / REVISE / BLOCKED。
 
 Repository current-state inspection 不再是獨立 skill；各 workflow 直接依需要讀 code/tests。Accepted Design Doc 的 bounded maintenance 也不是獨立 skill，而是 `design` 的 document-maintenance mode。
 
@@ -94,6 +102,7 @@ Local skills：
 
 ~~~text
 skills/design/
+skills/challenge/
 skills/review/
 ~~~
 
@@ -267,8 +276,8 @@ Matt 的 `setup-matt-pocock-skills` 也會被安裝。它目前支援 GitHub、G
 Upstream generic engineering discipline
     → mattpocock/skills submodule
 
-Our formal architecture authority
-    → local design / review
+Our architecture workflow
+    → local design / challenge / review
 
 Our lightweight behavioral differences
     → instructions/common.md
