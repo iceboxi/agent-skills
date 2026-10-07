@@ -1,122 +1,164 @@
 # Agent Environment
 
-個人的跨裝置 agent 規則與 skills。Repository 名稱維持 `agent-skills`。共用規則與工作流程各自只有一份來源，由 installer 建立本機 symlinks。
+個人的跨裝置 agent engineering environment。Repository 名稱維持 \`agent-skills\`。共用規則與 skills 各自只有一份 source of truth，由 installer 建立本機 symlinks。
 
-| 內容 | 用途 |
+這套 workflow 借鑑 Matt Pocock skills 的核心結構，但保留我們自己的 architecture baseline：
+
+- **Human alignment**：grilling / domain-modeling
+- **Repository-grounded architecture**：explore → design → review
+- **Implementation synthesis**：spec → spec-review
+- **Execution decomposition**：work-breakdown
+- **Implementation**：implement / implement-spec + tdd → code-review
+- **Feedback loop**：retro
+- **大型未知 effort**：wayfinder
+- **Architecture health**：improve-codebase-architecture
+
+## Router
+
+不知道該用哪支時，先用 \`ask-skills\`。Router 只能 shortlist；推薦或跳過 candidate 前，必須實際讀 candidate 的 \`SKILL.md\`。
+
+## Main flow
+
+\`\`\`text
+idea / change
+    ↓
+grill-with-docs              ← requirement / trade-off 尚未收斂時
+    │
+    ├── research             ← external fact
+    ├── prototype            ← runnable uncertainty
+    └── domain-modeling      ← glossary / durable ADR
+    ↓
+design ← codebase-design
+    ↓
+review
+ ┌──┴──────────────────────────────────────────────────┐
+ │                                                     │
+REVISE                                              ACCEPT
+ │                                                     │
+ └──────────────→ design                                ├─ small → implement
+                                                       │            ↑
+                                                       │           tdd
+                                                       │            ↓
+                                                       │        code-review
+                                                       │
+                                                       ├─ durable contract
+                                                       │      ↓
+                                                       │     spec
+                                                       │      ↓
+                                                       │  spec-review
+                                                       │      ├─ single-context → implement
+                                                       │      └─ multi-context
+                                                       │             ↓
+                                                       │       work-breakdown
+                                                       │          ├─ per item → implement
+                                                       │          └─ whole graph → implement-spec
+                                                       │                              ↓
+                                                       │                         code-review
+                                                       │
+                                                       ├─ accepted decision merge → doc-sync
+                                                       └─ presentation → report
+
+after implementation / difficult session
+    ↓
+retro
+    ↓
+skill / instruction / tooling / guardrail improvements
+\`\`\`
+
+\`spec\` 只做 accepted decisions 的 synthesis；\`work-breakdown\` 才拆 tracer-bullet / expand-contract work graph。不要再把兩個 phase 合在一起。
+
+## On-ramps
+
+| Situation | Skill | Exit |
+| --- | --- | --- |
+| 不理解 current repository | \`explore\` | current-state evidence model |
+| hard bug / flake / performance regression | \`diagnosing-bugs\` | exact red loop → fix → regression evidence |
+| 不知道哪裡值得 architecture 投資 | \`improve-codebase-architecture\` | visual candidate report → selected candidate grilling |
+| effort 大到 multi-session 且 route 不可見 | \`wayfinder\` | resolved decision map → design/spec |
+| plan 不在 repository 或不想寫 domain docs | \`grill-me\` | shared understanding |
+| knowledge 在另一個人腦中 | \`questionnaire\` | external human evidence |
+| 必須由人操作 dashboard / credential / cutover | \`wizard\` | verified manual result |
+
+## Shared primitives
+
+這些可被其他 workflow skill reach：
+
+| Skill | Responsibility |
 | --- | --- |
-| `instructions/common.md` | 每個專案都適用的 Engineering Rules、繁體中文偏好與 Code Navigation。 |
-| `skills/ask-skills` | Router：先判斷 engineering phase、實際讀 candidate SKILL.md，再推薦最小可用 skill / flow。 |
-| `skills/explore` | 查證 repository 現況，建立 responsibility、state ownership、runtime flow、constraints 與 evidence。 |
-| `skills/codebase-design` | Shared architecture discipline：module depth、seam、interface surface、locality、leverage、extension cost；供 design/review/spec/code-review 使用。 |
-| `skills/research` | 查 repository 外的 platform / SDK / language / toolchain facts，優先 primary sources。 |
-| `skills/prototype` | 用最小 throwaway artifact 回答單一 design / behavior / integration / UI uncertainty。 |
-| `skills/wayfinder` | 用 lightweight Markdown decision map 拆解完整 decision tree 尚不可見的大型工程 effort；不綁 ticket / issue tracker。 |
-| `skills/design` | 根據 requirement + repository evidence 做 architecture / refactor / interface decisions，產出可 review Design Doc；不負責單純 doc merge 或 ticket-level execution plan。 |
-| `skills/review` | 對 Design Doc 做獨立 design acceptance review；驗證 ownership、contracts、runtime semantics、locality 與 scope drift。 |
-| `skills/doc-sync` | 將 accepted decisions / review resolutions bounded 地同步回 canonical technical document；沒有 design authority。 |
-| `skills/spec` | 將 accepted design 轉成 executable implementation spec：work graph、dependencies、acceptance、verification seams、stop conditions。 |
-| `skills/spec-review` | 驗證 implementation spec 對 accepted design 的 fidelity、可執行性、blast radius 與 verification。 |
-| `skills/implement` | 依 accepted spec / Design Doc 實作 ready package；小步驗證、阻止 design drift，完成後進 code review。 |
-| `skills/tdd` | Implementation discipline：new behavior 用 red-green；behavior-preserving refactor 先 characterization，再 keep-green。 |
-| `skills/code-review` | 對 diff 分軸檢查 correctness/runtime、spec/design fidelity、locality/design quality 與 verification。 |
-| `skills/retro` | 從 session evidence 找 recurring failure mode，改善 skill boundary、invocation、navigation、tooling 與 deterministic guardrails。 |
-| `skills/report` | 從已核准 Design Doc 提取 technical presentation，不參與 architecture decision。 |
+| \`grilling\` | decision-tree frontier；facts 由 agent 查，decisions 由 human confirm |
+| \`domain-modeling\` | GLOSSARY / domain scenarios / sparse durable ADR |
+| \`codebase-design\` | deep module、interface、seam、adapter、depth、locality、leverage |
+| \`research\` | repository 外 authoritative technical facts |
+| \`prototype\` | throwaway artifact 解一個 design/runtime/UI question |
+| \`tdd\` | new behavior red-green + legacy characterization |
+| \`code-review\` | correctness、spec/design fidelity、locality、verification |
+| \`writing-for-agents\` | skill / AGENTS / agent-facing docs 的 context-load 與 pruning discipline |
+| \`change-summary\` | PR/MR body 的 smallest visual、before/after evidence、merge danger |
 
-入口優先用 `ask-skills` 判斷目前 phase；它會讀實際 candidate skill，不靠靜態摘要猜測。
+## Core artifacts and authority
 
-主要 workflow：
+| Skill | Can make new architecture decisions? | Main artifact |
+| --- | ---: | --- |
+| \`grill-with-docs\` | human-confirmed decisions only | conversation + glossary / sparse ADR |
+| \`design\` | ✅ | Design Doc |
+| \`review\` | ❌ | acceptance verdict |
+| \`doc-sync\` | ❌ | bounded canonical-doc update |
+| \`spec\` | ❌ | implementation contract |
+| \`spec-review\` | ❌ | spec fidelity verdict |
+| \`work-breakdown\` | ❌ | execution graph |
+| \`implement\` / \`implement-spec\` | ❌ | code |
+| \`report\` | ❌ | presentation |
 
-```text
-                       ┌─ research
-                       ├─ prototype
-                       └─ codebase-design
-                              │
-wayfinder（只在大型 foggy effort） │
-        ↓                     │
-      explore ────────────────┤
-        ↓                     │
-      design ─────────────────┘
-        ↓
-      review
-   ┌────┴────────────────────────────────────┐
-   │                                         │
- REVISE                                   ACCEPT
-   │                                         │
-   └────────→ design                          ├─ small work → implement → code-review
-                                             │                  ↑
-                                             │                 tdd
-                                             ├─ larger work → spec → spec-review → implement → code-review
-                                             ├─ accepted decision merge → doc-sync
-                                             └─ presentation → report
+## Phase boundaries
 
-任何完成的 engineering session
-        ↓
-      retro
-        ↓
-skill / instruction / tooling / guardrail 改善候選
-```
+Context move 只在 phase boundary 決定。詳細規則見 \`skills/ask-skills/phase-boundaries.md\`。
 
-`design` 決策、`review` 判斷、`doc-sync` 忠實整併、`spec` 規劃 executable work、`implement` 寫 code、`code-review` 驗 diff。Research / prototype / codebase-design 是按需能力；wayfinder 是超大型工作的 on-ramp；retro 是 feedback loop。不要用上一階段的 skill 順手做下一階段的工作。專案的 ownership、建置指令與專案限制留在各專案的 `AGENTS.md`，跟著該專案版本更新。CLI 設定、登入憑證、裝置路徑與專案信任設定仍由本機管理。只有實際需要時，才加入可攜的設定範本或工具 bootstrap。
+優先順序：
 
-```text
-agent-skills/
-  instructions/
-    common.md
-  skills/
-    ask-skills/
-      SKILL.md
-      agents/openai.yaml
-    explore/
-      SKILL.md
-      agents/openai.yaml
-    research/
-      SKILL.md
-      agents/openai.yaml
-    prototype/
-      SKILL.md
-      agents/openai.yaml
-    wayfinder/
-      SKILL.md
-      agents/openai.yaml
-    codebase-design/
-      SKILL.md
-      agents/openai.yaml
-    design/
-      SKILL.md
-      architecture.md
-      interfaces.md
-      delivery.md
-      agents/openai.yaml
-    review/
-      SKILL.md
-      agents/openai.yaml
-    doc-sync/
-      SKILL.md
-      agents/openai.yaml
-    spec/
-      SKILL.md
-      agents/openai.yaml
-    spec-review/
-      SKILL.md
-      agents/openai.yaml
-    implement/
-      SKILL.md
-      agents/openai.yaml
-    tdd/
-      SKILL.md
-      agents/openai.yaml
-    code-review/
-      SKILL.md
-      agents/openai.yaml
-    retro/
-      SKILL.md
-      agents/openai.yaml
-    report/
-      SKILL.md
-      agents/openai.yaml
-  install.py
-  tests/test_install.py
-```
+1. 下一 phase 仍需要 primary reasoning 且 context 健康 → **continue**
+2. 舊 context 完全無關 → fresh / clear
+3. 跨 harness / directory / repo / colleague → \`handoff\`
+4. bounded AFK side task → subagent
+5. context relevant 但過大 → compact
+
+不要把 handoff / compact 當成每階段固定 ceremony。
+
+## Skill catalog
+
+\`\`\`text
+skills/
+  ask-skills/
+  grilling/
+  grill-me/
+  grill-with-docs/
+  domain-modeling/
+  explore/
+  research/
+  prototype/
+  codebase-design/
+  improve-codebase-architecture/
+  wayfinder/
+  design/
+  review/
+  doc-sync/
+  spec/
+  spec-review/
+  work-breakdown/
+  implement/
+  implement-spec/
+  tdd/
+  diagnosing-bugs/
+  code-review/
+  change-summary/
+  questionnaire/
+  wizard/
+  handoff/
+  writing-for-agents/
+  retro/
+  report/
+\`\`\`
+
+每個 skill directory 至少有 \`SKILL.md\` 與 \`agents/openai.yaml\`；branch-specific references 與 templates 跟 skill 放在同一目錄。專案 ownership、build/test commands 與 project-specific constraints 留在各專案自己的 \`AGENTS.md\` / repository docs。
 
 ## 新裝置安裝
 
