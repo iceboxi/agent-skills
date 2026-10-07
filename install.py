@@ -74,10 +74,10 @@ def validate_skills(skills_root: Path) -> list[Path]:
             raise InstallError(f"Missing OpenAI skill metadata: {metadata}")
         metadata_text = metadata.read_text(encoding="utf-8")
         required_metadata = (
-            (r"^\\s*display_name:\\s*.+$", "display_name"),
-            (r"^\\s*short_description:\\s*.+$", "short_description"),
-            (r"^\\s*default_prompt:\\s*.+$", "default_prompt"),
-            (r"^\\s*allow_implicit_invocation:\\s*(?:true|false)\\s*$", "allow_implicit_invocation"),
+            (r"^\s*display_name:\s*.+$", "display_name"),
+            (r"^\s*short_description:\s*.+$", "short_description"),
+            (r"^\s*default_prompt:\s*.+$", "default_prompt"),
+            (r"^\s*allow_implicit_invocation:\s*(?:true|false)\s*$", "allow_implicit_invocation"),
         )
         for pattern, field in required_metadata:
             if not re.search(pattern, metadata_text, re.M):
