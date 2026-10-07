@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON="${PYTHON:-python3}"
+
+usage() {
+  cat <<'EOF'
+Usage: ./agent-skills <command> [options]
+
+Commands:
+  install [install.py options]
+      Initialize the pinned upstream checkout and install/reconcile skills.
+
+  update
+      Pull this repository, checkout its pinned upstream revision, run tests,
+      install/reconcile skills, then verify the installation.
+
+  upstream [--update]
+      Check Matt Pocock upstream for a newer revision.
+      With --update, move the submodule checkout to latest origin/main, then
+      run tests and a dry-run. Review and commit the gitlink separately.
+
+  verify
+      Verify installed symlinks against the current local + upstream catalog.
+
+  test
+      Run the installer/unit test suite.
+
+  help
+      Show this help.
+
+Examples:
+  ./agent-skills install
+  ./agent-skills install --dry-run
+  ./agent-skills update
+  ./agent-skills upstream
+  ./agent-skills upstream --update
+  ./agent-skills verify
+EOF
+}
+
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+ensure_upstream() {
+  if [[ ! -e "$ROOT/upstream/mattpocock-skills/.git" ]]; then
+    echo "Initializing pinned upstream submodule..."
+    git -C "$ROOT" submodule update --init --recursive
+  fi
+}
+
+run_tests() {
+  "$PYTHON" -m unittest discover -s "$ROOT/tests" -v
+}
+
+require_clean_update_tree() {
+  if [[ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ]]; then
+    cat >&2 <<'EOF'
+Repository has tracked local changes.
+Commit/stash them before './agent-skills update' so a pull cannot mix with local work.
+EOF
+    exit 1
+  fi
+}
+
+command="${1:-help}"
+if [[ $# -gt 0 ]]; then
+  shift
+fi
+
+require_command git
+require_command "$PYTHON"
+
+case "$command" in
+  install)
+    ensure_upstream
+    exec "$PYTHON" "$ROOT/install.py" "$@"
+    ;;
+
+  update)
+    if [[ $# -ne 0 ]]; then
+      echo "'update' does not accept additional arguments." >&2
+      usage >&2
+      exit 2
+    fi
+    require_clean_update_tree
+    git -C "$ROOT" pull --ff-only
+    git -C "$ROOT" submodule update --init --recursive
+    run_tests
+    "$PYTHON" "$ROOT/install.py"
+    "$PYTHON" "$ROOT/install.py" --verify
+    ;;
+
+  upstream)
+    ensure_upstream
+    if [[ $# -eq 0 ]]; then
+      exec "$PYTHON" "$ROOT/update_upstream.py"
+    elif [[ $# -eq 1 && "$1" == "--update" ]]; then
+      "$PYTHON" "$ROOT/update_upstream.py" --update
+      run_tests
+      "$PYTHON" "$ROOT/install.py" --dry-run
+      cat <<'EOF'
+
+Upstream checkout moved and validation passed.
+Review before committing:
+  git diff --submodule=log
+
+If accepted:
+  git add upstream/mattpocock-skills skills-manifest.json
+  git commit -m "Update Matt skills upstream"
+  git push
+  ./agent-skills install
+EOF
+    else
+      echo "Usage: ./agent-skills upstream [--update]" >&2
+      exit 2
+    fi
+    ;;
+
+  verify)
+    if [[ $# -ne 0 ]]; then
+      echo "'verify' does not accept additional arguments." >&2
+      exit 2
+    fi
+    ensure_upstream
+    exec "$PYTHON" "$ROOT/install.py" --verify
+    ;;
+
+  test)
+    if [[ $# -ne 0 ]]; then
+      echo "'test' does not accept additional arguments." >&2
+      exit 2
+    fi
+    ensure_upstream
+    run_tests
+    ;;
+
+  help|-h|--help)
+    usage
+    ;;
+
+  *)
+    echo "Unknown command: $command" >&2
+    echo >&2
+    usage >&2
+    exit 2
+    ;;
+esac
