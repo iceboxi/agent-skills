@@ -21,67 +21,54 @@ Matt upstream
 ├─ handoff / teach / wait-what / questionnaire
 └─ retro / writing-for-agents / ...
 
-Our overlay
-├─ ask-skills
-├─ explore
-├─ design
-├─ review
-├─ doc-sync
-├─ spec-review
-├─ report
-├─ prototype      # iOS / integration spike adaptation
-├─ tdd            # legacy characterization branch
-└─ wayfinder      # no ticket/issue-tracker requirement
+Our local layer
+├─ design         # formal Architecture Design Doc + bounded document maintenance
+├─ review         # design acceptance + optional spec-fidelity mode
+├─ prototype      # currently local Apple-platform adaptation
+├─ tdd            # currently local characterization adaptation
+└─ wayfinder      # currently local planning adaptation
 ~~~
 
-原則：沒有真正差異就直接使用 upstream；不要複製 upstream SKILL.md 再改幾行。需要組合上的差異，優先放在 ask-skills / workflow handoff，而不是 patch upstream body。
+原則：沒有真正差異就直接使用 upstream；不要複製 upstream SKILL.md 再改幾行。Router 直接使用 upstream `ask-matt`。只有新的 authority / artifact 才保留 local skill；較小差異優先以 reference / workflow overlay 表達。
 
 ## Main engineering flow
 
-~~~text
-idea / change
-    ↓
-grill-with-docs                     (upstream)
-    ↓
-explore                             (ours, when repository grounding is needed)
-    ↓
-design                              (ours)
-    ↓
-review                              (ours)
- ┌──┴────────────────────────────────────────────────────┐
- │                                                       │
-REVISE                                                 ACCEPT
- │                                                       │
- └──────────────→ design                                  ├─ small → implement
-                                                         │            ↓
-                                                         │        code-review
-                                                         │
-                                                         └─ durable contract
-                                                                ↓
-                                                             to-spec
-                                                                ↓
-                                                           spec-review
-                                                                ├─ single-context → implement
-                                                                └─ multi-context
-                                                                       ↓
-                                                                  to-tickets
-                                                                       ├─ per item → implement
-                                                                       └─ whole graph → implement-spec
-                                                                                              ↓
-                                                                                         code-review
+不知道該用哪支 skill 時，直接使用 upstream router：
 
-after difficult or surprising work
-    ↓
-retro
+~~~text
+$ask-matt
 ~~~
+
+Architecture-changing feature / refactor 的 local overlay：
+
+~~~text
+grill-with-docs
+    ↓
+design
+    ↓
+review
+ ┌──┴──────────────────────────────────┐
+REVISE                              ACCEPT
+  │                                     ├─ small → implement → code-review
+  └────────────→ design                  │
+                                        └─ durable contract → to-spec
+                                               ├─ high-risk / multi-session
+                                               │      → review (spec-fidelity)
+                                               ├─ single-context → implement
+                                               └─ multi-context
+                                                      → to-tickets
+                                                      → implement / implement-spec
+~~~
+
+Repository current-state inspection 不再是獨立 skill；各 workflow 直接依需要讀 code/tests。Accepted Design Doc 的 bounded maintenance 也不是獨立 skill，而是 `design` 的 document-maintenance mode。
 
 Side paths:
 
 - hard bug / flake / perf regression → diagnosing-bugs
 - architecture health survey → improve-codebase-architecture
-- huge route-invisible effort → our wayfinder
+- huge route-invisible effort → wayfinder
 - external technical fact → research
-- runnable iOS / state / compatibility uncertainty → our prototype
+- runnable iOS / state / compatibility uncertainty → prototype
 - stateful learning → teach
 - explanation did not land → wait-what
 - GitHub/GitLab issue or external PR/MR intake → triage
