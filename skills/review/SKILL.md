@@ -111,6 +111,7 @@ VERDICT
 - Proposal 是否新增沒有 evidence 支持的 abstraction、protocol、state owner 或 workflow language？
 - Review subject 是否聲稱 tests／prototype／compatibility 已通過，但沒有實際 execution evidence？
 - 依文件規模，overview 是否忠於正文，讓 reviewer 能追查 Current → Target、遷移順序與重大風險？
+- 需要理解 placement / ownership / interaction 的地方是否真的有 architecture / sequence view；是否用 responsibility table / prose 取代了必要的 relationship diagram，導致 significant protocol / collaborator 雖有描述但沒有位置感？
 - 新增元件與 legacy compatibility 的成本是否有理由？單一 owner 是否吸收了無關 policy / workflow；拆檔是否只是掩蓋責任集中？
 - 關鍵假設失敗是否會改 target / contract / migration / estimate，卻被列為 implementation gate？Go/no-go 是否早於依賴它的投入；fallback 是否可評估？
 - 高風險 phase 的工作包、整合、可行性驗證與 regression 是否能支持工時區間，而不只是列出 phase 總數？
@@ -150,6 +151,7 @@ VERDICT
 8. 若 review subject 是 Design Doc，確認有與 phases / work packages 對應的工時區間、總 effort、估算依據與 uncertainty；若提供 calendar duration，已區分人力與 dependency assumptions。缺漏時指出影響並交回 `design`，不由 reviewer 補估或重排 phases。
 9. 已觸發的重大 go/no-go、fallback、delivery checkpoints、外部資源與停止 / 回復條件可執行，沒有把會改 target 的假設延後到大量實作後才驗證；未觸發的 planning 不列為缺漏。
 10. 成果驗收能證明 confirmed goals；overview 與主要 claims 忠於詳細內容，planned evidence 沒有被寫成已完成。
+11. 對 non-trivial refactor，Current structure、Target external boundary、Target internal realization、representative runtime before/after，以及存在 coexistence 時的 transitional wiring，都有足夠視覺覆蓋；table / prose 沒有取代 reviewer 必須看懂的 placement / interaction。
 
 ## Verdict
 
