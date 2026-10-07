@@ -36,7 +36,7 @@ def main() -> int:
     upstream = root / "upstream/mattpocock-skills"
 
     try:
-        if not upstream.is_dir():
+        if not (upstream / ".git").exists():
             run("git", "submodule", "update", "--init", "--recursive", cwd=root)
 
         current = run("git", "rev-parse", "HEAD", cwd=upstream)
