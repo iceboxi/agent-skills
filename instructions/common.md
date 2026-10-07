@@ -19,9 +19,10 @@
 
 Matt skills are the generic workflow base. Apply these local differences only when the branch matches:
 
-- Architecture-changing feature/refactor: after requirements/decisions are sufficiently aligned, use `design` to create the architecture baseline and `review` to accept it before `to-spec` or implementation.
-- Architecture-focused `wayfinder`: when the fog clears into a coherent architecture change, hand off through `design → review → to-spec`. If architecture is already accepted and wayfinding only resolved execution uncertainty, go directly to `to-spec`.
-- `review` is the independent architecture gate. For high-risk or multi-session implementation specs, the same `review` skill may use its spec-fidelity mode; do not create a separate review phase by default.
+- Architecture-changing feature/refactor: after requirements/decisions are sufficiently aligned, use `design` to create the architecture proposal. Use `challenge` optionally to adversarially strengthen a complex/high-risk draft, then use `review` to independently accept or reject the baseline before `to-spec` or implementation.
+- `challenge` and `review` have different authorities: challenge is high-recall multi-perspective critique with no verdict; review is low-noise independent acceptance based on authoritative requirements and repository evidence.
+- Architecture-focused `wayfinder`: when the fog clears into a coherent architecture change, hand off through `design → optional challenge → review → to-spec`. If architecture is already accepted and wayfinding only resolved execution uncertainty, go directly to `to-spec`.
+- For high-risk or multi-session implementation specs, the same `review` skill may use its spec-fidelity mode; do not create a separate review skill.
 
 # Prototype / Verification Overlay
 
