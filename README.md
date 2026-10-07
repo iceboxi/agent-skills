@@ -105,28 +105,32 @@ upstream/mattpocock-skills/
 
 Installer 會把 local + manifest-selected upstream skills 合併成一個 catalog；名稱衝突會直接失敗，不做隱式 override。
 
+## Command-line interface
+
+日常操作只需要記 root-level `./agent-skills`：
+
+~~~text
+./agent-skills install [install.py options]
+./agent-skills update
+./agent-skills upstream [--update]
+./agent-skills verify
+./agent-skills test
+./agent-skills help
+~~~
+
+Shell 只負責 human-facing orchestration；symlink safety、manifest validation、rollback 與 reconciliation 仍由 Python engine 負責。
+
 ## New device installation
 
 需要 Git、Python 3.10+，以及可讀取本 private repository 的 GitHub SSH 設定。
 
-推薦直接 clone submodule：
-
 ~~~sh
 git clone --recurse-submodules git@github.com:iceboxi/agent-skills.git ~/Documents/agent-skills
 cd ~/Documents/agent-skills
-python3 -m unittest discover -s tests -v
-python3 install.py --dry-run
-python3 install.py
+./agent-skills install
 ~~~
 
-若已經 clone 但 upstream 尚未初始化：
-
-~~~sh
-cd ~/Documents/agent-skills
-git submodule update --init --recursive
-python3 install.py --dry-run
-python3 install.py
-~~~
+若 clone 時沒有帶 `--recurse-submodules`，`install` 會自行初始化目前 parent repo pin 指定的 upstream revision。
 
 Installer 使用 symlink，不複製 skill files。安裝入口：
 
@@ -139,73 +143,129 @@ Installer 使用 symlink，不複製 skill files。安裝入口：
 ~/.claude/CLAUDE.md
 ~~~
 
-從舊版（所有 skill 都在 local skills/）升級時，installer 會辨識仍指向本 repo 的 managed symlink，並將同名 skill 自動 retarget 到 pinned upstream source；不需要手動刪舊 link。
+從舊版（所有 skill 都在 local `skills/`）升級時，installer 會辨識仍指向本 repo 的 managed symlink，並把同名 skill retarget 到 pinned upstream source；不需要手動刪舊 link。
 
 ## Normal repository update
 
-其他裝置取得本 repo 已確認的 upstream pin：
+取得這個 repository 已確認的 workflow 與 Matt pin：
 
 ~~~sh
 cd ~/Documents/agent-skills
-git pull --ff-only
-git submodule update --init --recursive
-python3 -m unittest discover -s tests -v
-python3 install.py --dry-run
-python3 install.py
+./agent-skills update
 ~~~
 
-如果只是 upstream skill 內容更新、skill path/name 沒變，既有 symlink 會直接看到新 submodule 內容；再次跑 installer 仍建議用來驗證 manifest、retarget 與 stale links。
+`update` 會依序：
+
+1. 拒絕在 tracked working tree 有未提交修改時 pull。
+2. `git pull --ff-only`。
+3. checkout parent repo pin 指定的 submodule revision。
+4. 跑 unit tests。
+5. install / reconcile。
+6. verify symlinks。
+
+它**不會**把 Matt upstream 偷偷更新到 latest。
 
 ## Updating Matt upstream
 
-Upstream 不會在 install 時自動追 latest。這是刻意的：engineering workflow 是 infrastructure，升級必須可 review、可回退。
-
-先檢查：
+先檢查是否有新版：
 
 ~~~sh
-cd ~/Documents/agent-skills
-python3 update_upstream.py
+./agent-skills upstream
 ~~~
 
-有新版本時：
+要評估 latest upstream：
 
 ~~~sh
-python3 update_upstream.py --update
+./agent-skills upstream --update
+~~~
+
+這會：
+
+1. fetch Matt `origin/main`；
+2. 將 submodule working checkout 移到 latest；
+3. validate manifest-selected skills；
+4. 跑 tests；
+5. 跑 installer dry-run；
+6. 停下來讓你 review。
+
+接著人工檢查：
+
+~~~sh
 git diff --submodule=log
-python3 -m unittest discover -s tests -v
-python3 install.py --dry-run
 ~~~
 
-如果 Matt 移動或刪除 manifest-selected skill，validation 會失敗；先更新 skills-manifest.json 或決定是否保留 local adaptation，再繼續。
-
-確認後正式更新 pin：
+確認接受後才更新 parent repo pin：
 
 ~~~sh
 git add upstream/mattpocock-skills skills-manifest.json
 git commit -m "Update Matt skills upstream"
 git push
-python3 install.py
+./agent-skills install
 ~~~
 
-Parent repo 的 submodule gitlink commit 是唯一 upstream pin。skills-manifest.json 不重複保存 SHA。
+Parent repo 的 submodule gitlink commit 是唯一 upstream pin；`skills-manifest.json` 不重複保存 SHA。
+
+若 Matt 移動或刪除 manifest-selected skill，validation 會失敗；先更新 manifest 或決定是否保留 local adaptation，再提交新的 pin。
 
 若升級後行為不如預期：
 
 1. 先判斷是單次執行問題還是 recurring workflow problem。
-2. recurring 問題使用 retro。
-3. 若 upstream 行為本身不適合我們，優先新增小型 overlay / custom skill；只有必要時才 fork 該 skill。
-4. 回退 upstream 只需把 submodule pin 回到先前 parent commit。
+2. recurring 問題用 upstream `retro`。
+3. 若 upstream 行為真的不符合我們，優先新增小型 overlay / custom skill；只有必要時才 fork。
+4. 回退只需把 parent repo 的 submodule pin 回先前 commit。
 
 ## Adding or removing upstream skills
 
-不要複製檔案。編輯 skills-manifest.json 中 upstream.skills 的 relative path，然後：
+不要複製 upstream skill。編輯 `skills-manifest.json` 的 `upstream.skills`，然後：
 
 ~~~sh
-python3 install.py --dry-run
-python3 install.py
+./agent-skills install --dry-run
+./agent-skills install
 ~~~
 
-移除的 managed skill symlink 會被 reconcile；新增的會被建立。
+移除的 managed skill symlink 會 reconcile；新增的會建立。
+
+## Validation
+
+日常：
+
+~~~sh
+./agent-skills test
+./agent-skills verify
+~~~
+
+想看安裝計畫但不寫入：
+
+~~~sh
+./agent-skills install --dry-run
+~~~
+
+底層 Python 指令仍可用於 installer 開發 / troubleshooting：
+
+~~~sh
+python3 -m unittest discover -s tests -v
+python3 install.py --dry-run
+python3 install.py --verify
+python3 update_upstream.py
+~~~
+
+## Adoption / conflicts
+
+預設遇到一般檔案、一般目錄或非本 repo 管理的同名 symlink 就停止，不 force overwrite。
+
+完全相同的既有 skill / global instruction 可明確採用：
+
+~~~sh
+./agent-skills install --adopt-identical --dry-run
+./agent-skills install --adopt-identical
+~~~
+
+既有 global instructions 若完整文字已包含在 `instructions/common.md`：
+
+~~~sh
+./agent-skills install --adopt-instructions --dry-run
+./agent-skills install --adopt-instructions
+~~~
 
 ## Local skill contract
 
