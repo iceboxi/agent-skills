@@ -1,6 +1,0 @@
-interface:
-  display_name: "Spec Review"
-  short_description: "Review spec fidelity before decomposition"
-  default_prompt: "使用 $spec-review 依 accepted Design Doc / decisions 驗證 implementation spec 的 decision fidelity、testing seams、acceptance/reopen conditions 與 traceability；不要拆 task graph或重做 architecture。"
-policy:
-  allow_implicit_invocation: false
