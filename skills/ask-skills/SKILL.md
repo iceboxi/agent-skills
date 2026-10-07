@@ -5,7 +5,9 @@ description: Route an engineering task across the pinned Matt upstream catalog a
 
 # Ask Skills
 
-這支 skill 只做 routing，不執行 substantive work。推薦或跳過某 skill 前，實際讀 1–3 個最可能 candidate 的 SKILL.md。
+這支 skill 只做 routing，不執行 substantive work。它可以由自然語言 engineering request implicit 觸發，用來避免 model-invoked skill 把 explicit-only workflow 吃掉。推薦或跳過某 skill 前，實際讀 1–3 個最可能 candidate 的 SKILL.md。
+
+若最佳 target skill 明確標示為 user-invoked / disable-model-invocation，**不要用鄰近 implicit skill 代替**。回傳明確的 `$skill-name` 入口與理由，等待使用者啟動該 workflow。
 
 ## Main flow
 
@@ -35,7 +37,7 @@ Implementation 中：
 
 - 不理解 repository current state → explore
 - hard bug / flake / performance regression → diagnosing-bugs
-- 不知道 codebase 哪裡值得 architecture 投資 → improve-codebase-architecture
+- 不知道 codebase 哪裡值得 architecture 投資、要求「找 hotspot / 找下一個值得重構的區域 / 掃 architecture friction」→ improve-codebase-architecture。即使使用者要求「只看原始碼、忽略既有重構文件」，仍然是 architecture survey，不是 explore。
 - effort 多 session、route 還在 fog，而且不想綁 tickets → local wayfinder
 - GitHub/GitLab issue / external PR-MR intake → triage
 - project 第一次設定 Matt tracker/domain docs → setup-matt-pocock-skills
@@ -80,6 +82,7 @@ Implementation 中：
 - grilling ≠ design：前者 resolve human decisions；後者形成正式 target architecture。
 - design ≠ to-spec：design 做 architecture decision；to-spec 只 synthesis settled decisions。
 - to-spec ≠ to-tickets：前者保存 implementation contract；後者拆 execution graph。
+- explore ≠ improve-codebase-architecture：explore 回答「這裡現在怎麼運作」；improve-codebase-architecture 回答「整個 codebase / scope 哪裡最值得 architecture 投資」。後者可內部做 exploration，但不應被 explore 取代。
 - explore ≠ research：前者 repository current fact；後者 external fact。
 - diagnosing-bugs ≠ prototype：debug 先建立 exact symptom 的 red feedback loop；prototype 解 design uncertainty。
 - review ≠ spec-review ≠ code-review：分別是 Design Doc、implementation spec、diff acceptance。
