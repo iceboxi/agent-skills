@@ -69,6 +69,19 @@ def validate_skills(skills_root: Path) -> list[Path]:
             raise InstallError(f"Skill name must match directory: {entry}")
         if not re.search(r"^description: \S.+$", fields, re.M):
             raise InstallError(f"Missing description: {entry}")
+        metadata = skill / "agents/openai.yaml"
+        if not metadata.is_file():
+            raise InstallError(f"Missing OpenAI skill metadata: {metadata}")
+        metadata_text = metadata.read_text(encoding="utf-8")
+        required_metadata = (
+            (r"^\\s*display_name:\\s*.+$", "display_name"),
+            (r"^\\s*short_description:\\s*.+$", "short_description"),
+            (r"^\\s*default_prompt:\\s*.+$", "default_prompt"),
+            (r"^\\s*allow_implicit_invocation:\\s*(?:true|false)\\s*$", "allow_implicit_invocation"),
+        )
+        for pattern, field in required_metadata:
+            if not re.search(pattern, metadata_text, re.M):
+                raise InstallError(f"Missing or invalid {field} in {metadata}")
         for document in sorted(skill.rglob("*.md")):
             for href in re.findall(r"\[[^\]]*\]\(([^\s)]+)\)", document.read_text(encoding="utf-8")):
                 if href.startswith("#") or re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", href):
