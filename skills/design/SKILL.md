@@ -32,8 +32,8 @@ Design 必須：
 3. 找出 responsibilities、dependencies、state ownership、extension points 與主要 runtime flows。
 4. 先建立 target responsibility model，再決定 abstraction / protocol / pattern。
 5. 用足夠的 architecture / sequence views 讓 reviewer 看懂 **placement、ownership、interaction、migration**；不要用 table 取代本來需要圖才能理解的 relationship。
-6. 只有在確實解決 boundary / testability / extensibility 問題時才引入 abstraction。
-7. 提供可 review 的 concrete interfaces / type sketches。
+6. 只有在確實解決 seam / ownership / testability / extensibility 問題時才引入 abstraction；需要判斷 module depth、locality、interface surface 時使用 `codebase-design` discipline。
+7. 提供可 review 的 concrete interfaces / type sketches，並對已確認的「可擴充／易維護」目標用代表性 change-locality exercise 驗證修改半徑。
 8. 對 refactor 提供 Current → Target mapping、behavior invariants 與 migration。
 9. 從 architecture dependency 與 migration safety 推導 implementation phases。
 10. 提供 engineering estimate 與 verification / regression strategy。
@@ -234,7 +234,7 @@ Consumer-facing boundary 只暴露真實 consumer 需要的 capability。Owner-o
 
 ## 8. Migration / estimates / verification
 
-Implementation / migration phases 屬於 Design Doc，不要求另一份 standalone implementation plan。
+Design Doc 必須描述 implementation / migration **strategy 與 phases**，但不要把它展開成 ticket-level execution plan。Design acceptance 後，只有工作規模需要 fresh-context work packages / dependency graph 時，才交給 `spec` 產生 implementation spec。
 
 每個設計都需要：
 
@@ -249,7 +249,9 @@ Implementation / migration phases 屬於 Design Doc，不要求另一份 standal
 - branch / integration coordination
 - release / rollout / monitoring
 - external resource readiness
-- outcome metrics / extension exercise
+- outcome metrics
+
+若 confirmed goal 包含 extensibility / maintainability，extension exercise 不是 project governance，而是 design acceptance evidence：用一個代表性 command / source / policy 變更檢查 locality；詳細 discipline 由 `codebase-design` 提供。
 
 不要把一般 design 擴張成 project / release governance 文件。
 
@@ -299,6 +301,7 @@ Audit fail 時先修文件；不要只把問題列成 limitation 然後宣稱完
 
 - [architecture.md](architecture.md)：visual coverage、architecture / realization / runtime / migration diagrams。
 - [interfaces.md](interfaces.md)：degrees of freedom、ownership、protocol / capability boundary、complexity guardrails。
+- `codebase-design` skill：module depth、seam、locality、leverage、change-locality exercise 與 abstraction pressure。
 - [delivery.md](delivery.md)：migration phases、feasibility、estimate、verification 與 conditional delivery planning。
 
 讀取策略：
@@ -318,14 +321,19 @@ explore
 design
   ↓
 review
- ┌┴──────────────┐
- │               │
-ACCEPT         REVISE
- │               │
- ▼               ▼
-implementation  design
+ ┌┴─────────────────────────────┐
+ │                              │
+ACCEPT                        REVISE
+ │                              │
+ ├── small / single-session → implement
  │
- └──→ report（需要 presentation 時）
+ ├── multi-step / migration → spec → spec-review → implement
+ │
+ ├── accepted decisions need canonical-doc merge → doc-sync
+ │
+ └── presentation needed → report
+                                │
+                                └────────→ design
 ```
 
-Design Doc 是 technical source of truth。Review 負責 acceptance；Report 只做 presentation extraction，不重新設計 architecture。
+Design Doc 是 technical source of truth。Review 負責 design acceptance；`spec` 將 accepted design 轉成 execution contract；`doc-sync` 只同步已決策內容；Report 只做 presentation extraction。Design 已收斂後，不要再用 `design` 做純文件整併。
