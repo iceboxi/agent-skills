@@ -328,21 +328,24 @@ grill-with-docs / repository evidence
         ↓
       design
         ↓
-      review
-   ┌────┴──────────────────────────┐
-   │                               │
-ACCEPT                         REVISE / BLOCKED
-   │                               │
-   ├─ small / single-session → implement
-   │
-   └─ durable implementation contract → to-spec
-          ├─ high-risk / multi-session → review (spec-fidelity mode)
-          ├─ single-context → implement
-          └─ multi-context → to-tickets → implement / implement-spec
-                                   │
-                                   └────────────→ design
+   Design Doc draft
+        ├─ optional challenge
+        │      ├─ human decision gaps → grilling / grill-me
+        │      ├─ validation gaps → research / prototype
+        │      └─ revisions → design / document-maintenance
+        │
+        └──────────────→ review
+                           ├─ REVISE / BLOCKED → design / grilling
+                           └─ ACCEPT
+                                ├─ small / single-session → implement
+                                └─ durable contract → to-spec
+                                      ├─ high-risk / multi-session → review (spec-fidelity)
+                                      ├─ single-context → implement
+                                      └─ multi-context → to-tickets → implement / implement-spec
 ```
 
-Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；Review 負責 design acceptance。Upstream `to-spec` 將 accepted design synthesis 成 implementation contract；只有 high-risk / multi-session handoff 才需要再用 `review` 的 spec-fidelity mode。
+Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；複雜或高風險 draft 可先用 `challenge` 做 multi-role adversarial strengthening，再由 `review` 以 fresh independent evidence 決定 acceptance。Challenge 不建立 accepted baseline。
+
+Upstream `to-spec` 將 accepted design synthesis 成 implementation contract；只有 high-risk / multi-session handoff 才需要再用 `review` 的 spec-fidelity mode。
 
 若只是把已接受決策同步回既有 Design Doc，讀 [document-maintenance.md](document-maintenance.md) 並使用 bounded maintenance mode；不要另開新的 design decision。
