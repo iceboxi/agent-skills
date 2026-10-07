@@ -51,18 +51,12 @@ def main() -> int:
             return 0
 
         if not args.update:
-            print("Update available. Run: python3 update_upstream.py --update")
+            print("Update available.")
             return 0
 
         run("git", "checkout", "--detach", latest, cwd=upstream)
         selected, _ = install.load_upstream_skills(root)
         print(f"Checked out {latest} and validated {len(selected)} selected upstream skills.")
-        print("Next:")
-        print("  git diff --submodule=log")
-        print("  python3 -m unittest discover -s tests -v")
-        print("  python3 install.py --dry-run")
-        print("  git add upstream/mattpocock-skills")
-        print('  git commit -m "Update Matt skills upstream"')
         return 0
     except (install.InstallError, OSError, subprocess.SubprocessError) as error:
         print(f"Upstream update stopped: {error}", file=sys.stderr)
