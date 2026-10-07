@@ -1,0 +1,6 @@
+interface:
+  display_name: "Design Challenge"
+  short_description: "Stress-test a Design Doc from multiple independent roles"
+  default_prompt: "使用 $challenge 對既有 Design Doc 做 multi-role adversarial challenge：依風險選 3–6 個獨立 perspective，優先由不同 fresh agents 並行檢查，最後整併 evidence gaps、design gaps、human decision gaps 與 validation gaps；不要給 acceptance verdict。"
+policy:
+  allow_implicit_invocation: false
