@@ -15,6 +15,20 @@
 - Explicit terminology requested by the user takes precedence for audience-facing wording, while quoted source text and code identifiers remain unchanged. Apply such terminology consistently across the output.
 - Ask before adding newly discovered conventions to project `AGENTS.md`.
 
+# Workflow Overlay
+
+Matt skills are the generic workflow base. Apply these local differences only when the branch matches:
+
+- Architecture-changing feature/refactor: after requirements/decisions are sufficiently aligned, use `design` to create the architecture baseline and `review` to accept it before `to-spec` or implementation.
+- Architecture-focused `wayfinder`: when the fog clears into a coherent architecture change, hand off through `design → review → to-spec`. If architecture is already accepted and wayfinding only resolved execution uncertainty, go directly to `to-spec`.
+- `review` is the independent architecture gate. For high-risk or multi-session implementation specs, the same `review` skill may use its spec-fidelity mode; do not create a separate review phase by default.
+
+# Prototype / Verification Overlay
+
+- Apple-platform prototype: when `prototype` depends on Swift/Objective-C compilation, UIKit/SwiftUI, Apple framework behavior, lifecycle, persistence, hardware, or device/runtime semantics, use the smallest native executable, test target, demo controller/view, preview, or integration harness that can answer the single question instead of forcing an HTML/web artifact.
+- Behavior-preserving refactor: before changing behavior-bearing legacy code, characterize the current observable behavior at an existing seam, then refactor in small green steps. Expected values must come from current behavior, a known fixture, protocol/spec, or another independent oracle.
+- Runtime validation: keep unit/integration/device evidence distinct. BLE, Watch, background lifecycle, entitlement, hardware timing, and similar OS/device behavior remain runtime gates even when unit tests pass.
+
 # Code Navigation
 
 - Use native search for simple lookup; when available, use `cx` where structural navigation avoids broad reads.

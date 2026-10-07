@@ -1,6 +1,0 @@
-interface:
-  display_name: "TDD"
-  short_description: "Behavior-first tests and characterization"
-  default_prompt: "使用 $tdd 依工作類型選擇 new behavior 的 red-green loop，或 behavior-preserving refactor 的 characterization→regression→keep-green；只從 agreed observable seams 驗證 behavior。"
-policy:
-  allow_implicit_invocation: true

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Wayfinder"
-  short_description: "Map a multi-session foggy effort into decisions"
-  default_prompt: "使用 $wayfinder 為 route 尚不可見的 multi-session effort 建 lightweight Markdown decision map；先用 $grilling + $domain-modeling 定 destination，以 grilling / research / prototype / task 解 frontier，直到可交給 design / spec。"
-policy:
-  allow_implicit_invocation: false

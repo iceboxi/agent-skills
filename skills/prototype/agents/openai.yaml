@@ -1,6 +1,0 @@
-interface:
-  display_name: "Prototype"
-  short_description: "Answer one design question with a throwaway artifact"
-  default_prompt: "使用 $prototype 針對一個無法靠 paper reasoning 解決的 design / behavior / integration / UI 問題，建立最小 throwaway artifact，取得可重現 evidence；保留答案，不把 prototype 當 production design。"
-policy:
-  allow_implicit_invocation: true

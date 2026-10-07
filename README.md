@@ -1,10 +1,11 @@
 # Agent Environment
 
-個人的跨裝置 agent engineering environment。這個 repository 不再 fork 大量通用 engineering skills；改成：
+個人的跨裝置 agent engineering environment。這個 repository 以 Matt Pocock skills 作為 pinned upstream base，只保留真正不同的 local architecture authority 與少量 global overlay。
 
-- Matt Pocock skills = pinned upstream base
-- 本 repo skills = 我們真正不同的 workflow / architecture overlay
-- skills-manifest.json = 決定哪些 upstream skills 會被安裝
+- Matt Pocock skills = generic engineering workflow base
+- local skills = 真正新增的 authority / artifact
+- `instructions/common.md` = 輕量 workflow / Apple-platform overlay
+- `skills-manifest.json` = 決定哪些 upstream skills 會被安裝
 - Git submodule gitlink = upstream 版本唯一 pin
 
 Matt upstream 採 MIT License；upstream 原始內容保持在 submodule，不直接修改。
@@ -13,23 +14,29 @@ Matt upstream 採 MIT License；upstream 原始內容保持在 submodule，不�
 
 ~~~text
 Matt upstream
+├─ ask-matt
 ├─ grilling / grill-with-docs / domain-modeling
 ├─ research / diagnosing-bugs / codebase-design
+├─ prototype / tdd / wayfinder
 ├─ to-spec / to-tickets
 ├─ implement / implement-spec / code-review
 ├─ triage / pr / wizard
-├─ handoff / teach / wait-what / questionnaire
+├─ handoff / teach / wait-what / to-questionnaire
 └─ retro / writing-for-agents / ...
 
-Our local layer
-├─ design         # formal Architecture Design Doc + bounded document maintenance
-├─ review         # design acceptance + optional spec-fidelity mode
-├─ prototype      # currently local Apple-platform adaptation
-├─ tdd            # currently local characterization adaptation
-└─ wayfinder      # currently local planning adaptation
+Our local skills
+├─ design    # formal Architecture Design Doc + bounded document maintenance
+└─ review    # design acceptance + optional spec-fidelity mode
+
+Lightweight overlay
+└─ instructions/common.md
+   ├─ architecture handoff: design → review
+   ├─ native Apple-platform prototype rule
+   ├─ behavior-preserving characterization
+   └─ device/runtime validation boundary
 ~~~
 
-原則：沒有真正差異就直接使用 upstream；不要複製 upstream SKILL.md 再改幾行。Router 直接使用 upstream `ask-matt`。只有新的 authority / artifact 才保留 local skill；較小差異優先以 reference / workflow overlay 表達。
+原則：**沒有新的 authority / artifact，就不要 fork upstream skill。** 平台差異、handoff 差異與 verification nuance 優先寫成短 overlay；只有 upstream 無法表達的正式流程才保留 local skill。
 
 ## Main engineering flow
 
@@ -42,25 +49,27 @@ $ask-matt
 Architecture-changing feature / refactor 的 local overlay：
 
 ~~~text
-grill-with-docs
-    ↓
-design
-    ↓
-review
- ┌──┴──────────────────────────────────┐
-REVISE                              ACCEPT
-  │                                     ├─ small → implement → code-review
-  └────────────→ design                  │
-                                        └─ durable contract → to-spec
-                                               ├─ high-risk / multi-session
-                                               │      → review (spec-fidelity)
-                                               ├─ single-context → implement
-                                               └─ multi-context
-                                                      → to-tickets
-                                                      → implement / implement-spec
+grill-with-docs / wayfinder decisions
+        ↓
+      design
+        ↓
+      review
+   ┌────┴──────────────────────────┐
+REVISE / BLOCKED                 ACCEPT
+   │                               ├─ small → implement → code-review
+   └────────────→ design            │
+                                   └─ durable contract → to-spec
+                                          ├─ high-risk / multi-session
+                                          │      → review (spec-fidelity)
+                                          ├─ single-context → implement
+                                          └─ multi-context
+                                                 → to-tickets
+                                                 → implement / implement-spec
 ~~~
 
 Repository current-state inspection 不再是獨立 skill；各 workflow 直接依需要讀 code/tests。Accepted Design Doc 的 bounded maintenance 也不是獨立 skill，而是 `design` 的 document-maintenance mode。
+
+`prototype`、`tdd`、`wayfinder` 直接使用 upstream 版本；Apple/legacy/architecture-specific 差異由 `instructions/common.md` 補充，不維護 local fork。
 
 Side paths:
 
@@ -68,7 +77,8 @@ Side paths:
 - architecture health survey → improve-codebase-architecture
 - huge route-invisible effort → wayfinder
 - external technical fact → research
-- runnable iOS / state / compatibility uncertainty → prototype
+- runnable design / runtime / UI uncertainty → prototype
+- test-first behavior work → tdd
 - stateful learning → teach
 - explanation did not land → wait-what
 - GitHub/GitLab issue or external PR/MR intake → triage
@@ -80,17 +90,20 @@ GitHub、GitLab、local files 可以依專案分別設定；不同 repository �
 
 ## Skill sources
 
-Local skills 位於 skills/。
+Local skills：
 
-Upstream skills 位於：
+~~~text
+skills/design/
+skills/review/
+~~~
+
+Upstream skills：
 
 ~~~text
 upstream/mattpocock-skills/
 ~~~
 
-實際曝光哪些 upstream skills 由 skills-manifest.json 控制。Matt repo 裡其他 experimental、writing、course 或 platform-specific skills 不會因 submodule 存在就自動安裝。
-
-Installer 會把 local + manifest-selected upstream skills 合併成一個 catalog；名稱衝突會直接失敗，不做隱式 override。
+實際曝光哪些 upstream skills 由 `skills-manifest.json` 控制。Installer 會把 local + manifest-selected upstream skills 合併成一個 catalog；名稱衝突會直接失敗，不做隱式 override。
 
 ## Command-line interface
 
@@ -159,7 +172,7 @@ cd ~/Documents/agent-skills
 
 若選擇不升 Matt，現有 pin 不變，仍會完成本 repo 的 update / reconcile / health check。
 
-若接受 Matt 更新，流程會：
+若接受 Matt 更新：
 
 ~~~text
 checkout latest Matt revision
@@ -177,11 +190,7 @@ commit parent-repo submodule pin
 push
 ~~~
 
-也就是 upstream 仍然是 **reviewable / pinned dependency**，但一般使用者不需要另外學一個 `upstream` command。
-
-如果 validation 失敗，CLI 會把 submodule checkout 還原到更新前的 pin，不提交新版。若 validation 成功但 push 失敗，本機 environment 與 local commit 會保留，CLI 會要求之後手動 push。
-
-在 non-interactive 環境發現 Matt 新版時，預設保持目前 pin，不自動升級。
+如果 validation 失敗，CLI 會把 submodule checkout 還原到更新前的 pin，不提交新版。在 non-interactive 環境發現 Matt 新版時，預設保持目前 pin。
 
 ## Health check
 
@@ -191,17 +200,9 @@ push
 ./agent-skills doctor
 ~~~
 
-它等價於兩種不同層次的檢查：
+它同時執行 installer/unit tests 與 actual installed-environment verification。一般使用者不需要分辨底層的 `test` / `verify`。
 
-~~~text
-installer/unit tests
-        +
-actual installed-environment verification
-~~~
-
-一般使用者不需要分辨原本的 `test` 與 `verify`。
-
-底層 troubleshooting 仍可直接使用：
+底層 troubleshooting：
 
 ~~~sh
 python3 -m unittest discover -s tests -v
@@ -247,15 +248,11 @@ skills/<name>/SKILL.md
 skills/<name>/agents/openai.yaml
 ~~~
 
-Installer 會驗證 local metadata。Upstream skill 使用 Matt 自己的 SKILL.md invocation metadata，不要求我們額外包一份 agents/openai.yaml。
-
-Local Markdown references 必須留在 local skills tree 內；upstream references 必須留在 upstream submodule tree 內。跨 layer 依賴以 skill name / workflow composition 表達，不使用相對 Markdown link 穿越 submodule boundary。
+Installer 會驗證 local metadata。Upstream skill 使用 Matt 自己的 `SKILL.md` invocation metadata，不要求我們額外包一份 `agents/openai.yaml`。
 
 ## Project bootstrap and trackers
 
-Matt 的 setup-matt-pocock-skills 也會被安裝。它目前支援 GitHub、GitLab、local files 或其他 tracker convention。
-
-在實際 project 第一次採用 upstream engineering workflow 時，可用它設定該 repository 的 tracker / triage labels / domain-doc layout；這些是 project-local configuration，不寫回本 agent-skills repo。
+Matt 的 `setup-matt-pocock-skills` 也會被安裝。它目前支援 GitHub、GitLab、local files 或其他 tracker convention。這些是 project-local configuration，不寫回本 agent-skills repo。
 
 例如：
 
@@ -270,17 +267,17 @@ Matt 的 setup-matt-pocock-skills 也會被安裝。它目前支援 GitHub、Git
 Upstream generic engineering discipline
     → mattpocock/skills submodule
 
-Our architecture/process differentiation
-    → local skills/
+Our formal architecture authority
+    → local design / review
+
+Our lightweight behavioral differences
+    → instructions/common.md
 
 Which upstream skills are active
     → skills-manifest.json
 
 Which upstream revision is trusted
     → Git submodule gitlink
-
-Cross-project persistent rules
-    → instructions/common.md
 
 Project-specific build/ownership/tracker rules
     → each project's AGENTS.md / repository docs
