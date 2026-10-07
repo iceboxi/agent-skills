@@ -127,7 +127,8 @@ Repository
 Explore 完成後：
 
 - 若使用者只想理解系統，到此停止。
-- 若使用者要新功能 / refactor 設計，將 current-state model、evidence、constraints、unknowns 交給 `design`。
+- 若使用者要新功能 / refactor 設計，且 scope 已能放進一份 coherent design，將 current-state model、evidence、constraints、unknowns 交給 `design`。
+- 若 effort 大到 responsibility clusters / dependencies / decision frontier 尚無法一次看清，交給 `wayfinder` 建 decision map；不要硬產生 final target。
 - 若已有 proposal 要驗證，交給 `review`。
 - 不預設自動建立 Design Doc；`design` 的產物才是正式 design artifact。
 
