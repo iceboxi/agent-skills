@@ -1,0 +1,6 @@
+interface:
+  display_name: "Grilling"
+  short_description: "Resolve a decision tree with the user"
+  default_prompt: "使用 $grilling 以 decision-tree frontier 分輪訪談：facts 由 agent 查，decisions 由使用者確認；每題附 recommendation，直到 frontier 為空且 shared understanding 被確認。"
+policy:
+  allow_implicit_invocation: true
