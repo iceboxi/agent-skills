@@ -1,0 +1,6 @@
+interface:
+  display_name: "Codebase Design"
+  short_description: "Shared discipline for deep modules, seams and locality"
+  default_prompt: "使用 $codebase-design 評估 module depth、seam、interface surface、locality、leverage 與 change blast radius；它是 shared design discipline，不自行啟動完整 design workflow。"
+policy:
+  allow_implicit_invocation: true
