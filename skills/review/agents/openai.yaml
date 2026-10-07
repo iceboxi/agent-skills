@@ -1,6 +1,6 @@
 interface:
-  display_name: "Technical Design Review"
-  short_description: "Challenge technical designs against repository evidence"
-  default_prompt: "使用 $review 對既有 Design Doc（含 implementation / migration sections）做獨立 evidence-based review，查核核心設計、工時與依 scope 適用的 planning，指出 blocking findings 並給 acceptance verdict；ACCEPT 類型預設建立該版本與 review scope 的 accepted baseline。"
+  display_name: "Independent Technical Review"
+  short_description: "Accept or reject a technical baseline using independent evidence"
+  default_prompt: "使用 $review 以 fresh independent reviewer 優先，針對既有 Design Doc 或 implementation spec 驗證 acceptance-relevant claims，只報有 evidence 的 blocking/non-blocking findings，最後給 ACCEPT、ACCEPT WITH NON-BLOCKING NOTES、REVISE 或 BLOCKED；不要重新設計或做 multi-role brainstorming。"
 policy:
   allow_implicit_invocation: false
