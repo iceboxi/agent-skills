@@ -27,7 +27,7 @@ description: Design a concrete, implementable software solution for a new featur
 
 Design 必須：
 
-1. 理解 requirement、scope、non-goals、compatibility constraints。
+1. 理解 requirement、scope、non-goals、compatibility constraints；先讀 relevant `GLOSSARY.md` / `GLOSSARY-MAP.md` 與 ADR，沿用既有 domain language，不重新爭論已 accepted durable decision。
 2. 讀取 relevant repository code；缺 current model 時先做必要 explore。
 3. 找出 responsibilities、dependencies、state ownership、extension points 與主要 runtime flows。
 4. 先建立 target responsibility model，再決定 abstraction / protocol / pattern。
@@ -229,7 +229,7 @@ Consumer-facing boundary 只暴露真實 consumer 需要的 capability。Owner-o
 - repository fact：先 `explore`；
 - repository 外的 platform / SDK / language / toolchain fact：交 `research`；
 - paper reasoning 無法回答的 runtime / state / compatibility / UI feasibility：交 `prototype`；
-- requirement / engineering trade-off：repository 無法決定時提問；
+- requirement / engineering trade-off：若需要 human judgement 且不是單一 targeted clarification，交 `grill-with-docs` 用 decision-tree frontier 收斂，design 不自行 improvising 長訪談；
 - effort 大到完整 decision tree 尚不可見：先用 `wayfinder` 清除 architecture fog，再回到正常 design。
 
 若 uncertainty 會改變 target、主要 contract、migration path 或 major estimate，在依賴它的工作前建立明確 gate。Implementation-only detail 不必阻塞 Design Doc。
@@ -306,6 +306,8 @@ Audit fail 時先修文件；不要只把問題列成 limitation 然後宣稱完
 - `codebase-design` skill：module depth、seam、locality、leverage、change-locality exercise 與 abstraction pressure。
 - `research` skill：repository 外的 authoritative technical facts。
 - `prototype` skill：以最小 throwaway artifact 解一個 paper reasoning 無法確認的問題。
+- `grill-with-docs` skill：repository 中的 HITL decision-tree alignment + domain modeling；用於 target decisions 尚未收斂時。
+- `domain-modeling` skill：domain terminology / ADR discipline；design 消費結果，不把 glossary 當 spec。
 - `wayfinder` skill：超大型 effort 的 decision map；只在完整 design path 尚不可見時使用。
 - [delivery.md](delivery.md)：migration phases、feasibility、estimate、verification 與 conditional delivery planning。
 
@@ -341,4 +343,4 @@ ACCEPT                        REVISE
                                 └────────→ design
 ```
 
-Design Doc 是 technical source of truth。Review 負責 design acceptance；`spec` 將 accepted design 轉成 execution contract；`doc-sync` 只同步已決策內容；Report 只做 presentation extraction。Design 已收斂後，不要再用 `design` 做純文件整併。
+Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；Review 負責 design acceptance；`spec` 將 accepted design 忠實轉成 implementation contract；需要多個 fresh-context work items 時再交 `work-breakdown`；`doc-sync` 只同步已決策內容；Report 只做 presentation extraction。Design 已收斂後，不要再用 `design` 做純文件整併。
