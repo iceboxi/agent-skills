@@ -1,0 +1,6 @@
+interface:
+  display_name: "Wizard"
+  short_description: "Guide genuinely human-only setup or cutover work"
+  default_prompt: "使用 $wizard 將 agent 無法代做的 provisioning / credentials / dashboard / migration 步驟整理成 staged checklist 或 interactive script；可由 agent 自己做的事情不要丟回人。"
+policy:
+  allow_implicit_invocation: true
