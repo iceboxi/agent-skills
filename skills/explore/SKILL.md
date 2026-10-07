@@ -1,6 +1,6 @@
 ---
 name: explore
-description: Inspect an unfamiliar or relevant part of a repository and build an evidence-based current-state model of responsibilities, dependencies, state ownership, runtime flows, constraints, tests, and unknowns. Use to understand how the system works before design or implementation; hand target design requests to design.
+description: Inspect a named or relevant part of a repository and build an evidence-based current-state model of responsibilities, dependencies, state ownership, runtime flows, constraints, tests, and unknowns. Use to understand how a scope currently works before design or implementation. Do not use for codebase-wide architecture hotspot discovery or deciding what should be refactored next; route those to improve-codebase-architecture.
 ---
 
 # Explore
@@ -27,6 +27,7 @@ Explore 應：
 
 Explore 不應：
 
+- 掃描整個 codebase 並排名「下一個值得重構的 architecture hotspot」；這屬於 `improve-codebase-architecture`，即使使用者要求只看 source code；
 - 提出 target architecture；需要設計時交給 `design`；
 - 自動導入 Clean Architecture、MVVM、Repository、Coordinator、Factory 或其他 pattern；
 - 為了「解耦」憑空新增 protocol；
