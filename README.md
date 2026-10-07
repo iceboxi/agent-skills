@@ -293,36 +293,6 @@ Matt 的 setup-matt-pocock-skills 也會被安裝。它目前支援 GitHub、Git
 
 兩個 project 的設定彼此獨立。
 
-## Validation
-
-~~~sh
-python3 -m unittest discover -s tests -v
-python3 install.py --dry-run
-python3 install.py --verify
-~~~
-
---verify 只檢查目前 symlink 是否指向 manifest 選定的 local/upstream source，不建立或移轉內容。
-
-## Adoption / conflicts
-
-預設遇到一般檔案、一般目錄或非本 repo 管理的同名 symlink 就停止。
-
-完全相同的既有 skill / global instruction 可明確採用：
-
-~~~sh
-python3 install.py --adopt-identical --dry-run
-python3 install.py --adopt-identical
-~~~
-
-既有 global instructions 若完整文字已包含在 instructions/common.md：
-
-~~~sh
-python3 install.py --adopt-instructions --dry-run
-python3 install.py --adopt-instructions
-~~~
-
-Installer 不提供 force overwrite。衝突要先人工比較，避免吃掉其他工具或 repository 的設定。
-
 ## Ownership summary
 
 ~~~text
