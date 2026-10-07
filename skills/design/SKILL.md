@@ -226,9 +226,11 @@ Consumer-facing boundary 只暴露真實 consumer 需要的 capability。Owner-o
 
 遇到 uncertainty：
 
-- repository fact：先 explore；
+- repository fact：先 `explore`；
+- repository 外的 platform / SDK / language / toolchain fact：交 `research`；
+- paper reasoning 無法回答的 runtime / state / compatibility / UI feasibility：交 `prototype`；
 - requirement / engineering trade-off：repository 無法決定時提問；
-- feasibility：先查 code / tests，必要時做 bounded spike 或列 PLANNED VALIDATION。
+- effort 大到完整 decision tree 尚不可見：先用 `wayfinder` 清除 architecture fog，再回到正常 design。
 
 若 uncertainty 會改變 target、主要 contract、migration path 或 major estimate，在依賴它的工作前建立明確 gate。Implementation-only detail 不必阻塞 Design Doc。
 
@@ -302,6 +304,9 @@ Audit fail 時先修文件；不要只把問題列成 limitation 然後宣稱完
 - [architecture.md](architecture.md)：visual coverage、architecture / realization / runtime / migration diagrams。
 - [interfaces.md](interfaces.md)：degrees of freedom、ownership、protocol / capability boundary、complexity guardrails。
 - `codebase-design` skill：module depth、seam、locality、leverage、change-locality exercise 與 abstraction pressure。
+- `research` skill：repository 外的 authoritative technical facts。
+- `prototype` skill：以最小 throwaway artifact 解一個 paper reasoning 無法確認的問題。
+- `wayfinder` skill：超大型 effort 的 decision map；只在完整 design path 尚不可見時使用。
 - [delivery.md](delivery.md)：migration phases、feasibility、estimate、verification 與 conditional delivery planning。
 
 讀取策略：
