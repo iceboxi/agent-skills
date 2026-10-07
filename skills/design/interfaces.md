@@ -7,6 +7,7 @@
 - Protocol / interface contract
 - Capability-minimal boundaries
 - Abstraction traceability
+- Async / cancellation semantics
 - Complexity guardrails
 
 ## Degrees of freedom
@@ -98,6 +99,30 @@ significant abstraction 至少要能從下列一處追到：
 - code sketch + 明確 placement 說明。
 
 但若 abstraction 影響「位置、owner、dependency、interaction」，只靠 table 不夠，應在對應 diagram 出現。
+
+## Async / cancellation semantics
+
+Behavior-preserving refactor 遇到 timer、retry、observer、DispatchQueue / TaskDispatcher、delayed callback 或其他 queued work 時，不要把它們統一成一個 generic `cancel` 語意。
+
+必須依 repository evidence 區分至少這些 lifecycle stage：
+
+- 尚未排程；
+- timer / delayed work 已排程但尚未觸發；
+- callback 已觸發、後續 retry / next-step 已 enqueue；
+- queued work 已開始執行；
+- operation 整體 invalidated。
+
+**移除 observer、停止尚未觸發的 timer、阻止已 enqueue work、取消整個 operation 是不同 semantics，除非 current evidence 證明等價。**
+
+若 finish / disconnect / scene exit / scope invalidation 會改變 asynchronous work，Design Doc 應明確說明：
+
+1. 哪些尚未觸發的 work 被取消；
+2. 哪些已 enqueue 的 work 仍會執行；
+3. 執行後是否會再建立新的 timer / retry；
+4. observation removal 是否只停止 delivery，還是也停止 workflow；
+5. operation generation / scope invalidation 從哪個 stage 開始阻止 side effect。
+
+對 ordering-sensitive legacy flow，加入 characterization fixture 覆蓋「callback 已 enqueue next-step，但 lifecycle event 在 next-step 執行前發生」的 interleaving；不能只測 steady-state success / timeout。
 
 ## Complexity guardrails
 
