@@ -1,129 +1,147 @@
 ---
 name: wayfinder
-description: Map and resolve a very large, foggy engineering effort whose full decision tree cannot fit in one design pass. Maintain a lightweight Markdown decision map, resolve one decision frontier at a time, and hand the clarified result into normal design/spec workflows. No issue tracker is required.
+description: Map and resolve a multi-session, foggy engineering effort whose route to a named destination is not yet visible. Maintain a lightweight Markdown decision map; resolve one frontier decision at a time with grilling, research, prototype, or unblock tasks; hand clarified decisions into design/spec. No issue tracker is required.
 ---
 
 # Wayfinder
 
-Wayfinder 處理的是：
+Wayfinder 用在 **一個 session 裝不下，而且從 current state 到 destination 的路還看不清楚** 的 effort。
 
-目標大致知道，但從 current state 到 destination 的完整路徑還看不清楚。
+典型例子：DataRepository 拆解、跨 subsystem migration、長期 ObjC→Swift ownership migration。
 
-典型例子：拆解巨型 DataRepository、跨多 subsystem migration、長期 Objective-C → Swift ownership migration。
+它產生 decisions，不產生 implementation deliverables。
 
-它不是 implementation ticket generator，也不是大型 Design Doc。目標是逐步清除 fog of war，直到正常的 design / spec 能接手。
+## 1. Name the destination
 
-## Canonical artifact
+Chart map 前，先讀：
 
-使用一份 Markdown decision map。
+- [grilling](../grilling/SKILL.md)
+- [domain-modeling](../domain-modeling/SKILL.md)
 
-若專案已有 planning / memo convention，沿用它；否則預設：
+用 grilling 把 destination 說清楚。Destination 是這張 map 的 scope boundary。
 
-~~~
+如果 breadth-first grilling 後發現整條路其實一個 session 就看得清楚，**不要建 map**；回 grill-with-docs / design。
+
+## 2. Canonical map
+
+不綁 issue tracker。沿用 project convention；沒有時：
+
 .scratch/wayfinder/<effort>/map.md
-~~~
 
-不要求 GitHub/GitLab issue、child ticket、label 或 blocking API。若團隊本來就在 issue tracker 工作，可以另外 mirror，但不是本 skill contract。
+Map 是 index，不是 detail store：
 
-## Map shape
-
-~~~
+~~~markdown
 # <Effort>
 
 ## Destination
-<走到什麼狀態才算 fog 已清到可以進正常 design/spec>
+<清 fog 到哪裡就完成>
 
-## Scope
-<目前 effort 的邊界>
+## Notes
+<standing constraints / useful skill pointers>
 
-## Decisions resolved
-- <decision>: <one-line result> → <link / note / evidence>
+## Decisions so far
+- <decision name> → <one-line gist + pointer>
 
 ## Frontier
 ### <decision name>
 Question:
-Why now:
 Depends on:
-Resolution mode: explore | research | prototype | discussion
+Mode: grilling | research | prototype | task
 
-## Fog
-- <知道未來需要處理，但現在還無法精確問的區域>
+## Not yet specified
+- <知道未來有問題，但現在還不能精確問>
 
 ## Out of scope
-- <刻意不處理的工作>
+- <超過 destination 的事項>
 
 ## Re-entry
-<什麼條件達成後交給 design / spec>
+<何時可交 design / spec>
 ~~~
 
-Map 是 index，不要把每個 decision 的完整研究全文重複貼進來。Detail 放在獨立 note / prototype / source，map 只留 pointer + gist。
+Detail 放在 resolution note / prototype / research artifact；map 只放 gist + pointer。
 
-## Charting
+## 3. Fog vs frontier
 
-1. Name the destination：先確認這次 effort 最終要交付什麼，例如「DataRepository 可被分域設計的 responsibility map」而不是模糊的「變乾淨」。
-2. Draw current visible frontier：只建立現在能精確描述的 decisions。
-3. Record fog：知道有問題但還不能精確問的，不要硬拆成假 work item。
-4. Order dependencies：Frontier item 可寫 Depends on，但不需要 ticket graph。
-5. Choose resolution mode：
-   - repository fact → explore
-   - external fact → research
-   - runnable uncertainty → prototype
-   - architecture trade-off → discussion / design bounded decision
+判斷標準：
 
-## Working the map
+- **Frontier item**：現在已能精確說出 question，即使還不能回答。
+- **Not yet specified**：現在連 question 都還不能精確描述。
 
-一次聚焦一個 frontier decision，除非多個純 research 可以安全平行。
+不要預先把 fog 切成假 work items。
 
-每次 resolution 後：
+## 4. Resolution modes
 
-1. 把結果加入 Decisions resolved。
-2. 更新受影響的 frontier。
-3. Fog 中已能精確描述的項目才升成 frontier。
-4. 被證明不屬於 destination 的項目移到 Out of scope。
-5. 檢查是否已達 Re-entry condition。
+每個 frontier decision 選一種 mode。
 
-Wayfinder 產生 decisions，不直接做 production implementation。
+### Grilling — default, HITL
+
+能透過 discussion / judgement 解的 decision：
+
+- 用 [grilling](../grilling/SKILL.md)
+- 同時用 [domain-modeling](../domain-modeling/SKILL.md)
+
+Human 必須真的回答；agent 不得自己問自己答。
+
+### Research — AFK
+
+外部 fact 阻塞 decision → research。
+
+### Prototype — HITL
+
+「要看到 / 跑到才知道」的 state、runtime、integration、UI question → prototype。
+
+### Task — AFK or HITL
+
+沒有 decision，但必須先完成一個 manual / provisioning / data-moving action才能做下一個 decision。
+
+Task 只因為 **unblock decision** 才存在；不得把 production implementation 偷塞進 map。
+
+Repository current fact 本身通常不是 decision ticket；用 explore 查完，將 fact帶回相應 frontier decision。
+
+## 5. Work the frontier
+
+一次 session 原則上只 resolve 一個非-research frontier decision。
+
+Resolution 後：
+
+1. 記錄 detail pointer + gist 到 Decisions so far。
+2. 更新 dependent frontier。
+3. Fog 中現在能精確問的才升成 frontier。
+4. 超過 destination 的移到 Out of scope。
+5. 重新檢查 Re-entry。
+
+Research 可安全平行。
 
 ## DataRepository-style decomposition
 
-對 monolith decomposition，優先逐步釐清：
+優先釐清：
 
-- responsibility clusters
+- domain / responsibility clusters
 - canonical state / write ownership
 - cross-domain dependencies
 - side-effect boundaries
-- high-risk lifecycle / async behavior
-- externally visible compatibility contracts
+- lifecycle / async risks
+- compatibility contracts
 - candidate extraction seams
-- migration ordering / coexistence constraints
+- migration / coexistence constraints
 
-不要一開始就宣布最終 module list。先讓 evidence 與 resolved decisions 把可行 seam 顯現出來。
+不要一開始宣布最終 module list。讓 evidence + resolved decisions逐步顯示 seam。
 
 ## Re-entry
 
-當以下條件成立，就停止 Wayfinder：
+停止 Wayfinder，當：
 
-- destination 已清楚；
-- architecture-blocking decisions 已能列出或已 resolved；
-- remaining work 能裝進一份 coherent Design Doc，或能直接形成 accepted implementation spec；
-- fog 剩下的是 downstream detail，而不是未知 architecture。
+- destination 已明確；
+- architecture-blocking decisions 已 resolved 或可完整列出；
+- remaining work 能裝進一份 coherent Design Doc / spec；
+- fog 剩的是 downstream detail。
 
-此時 handoff：
+通常：
 
-~~~
-wayfinder
-  ↓
-resolved decision map
-  ↓
-design
-  ↓
-review
-~~~
+wayfinder → design → review → spec
 
-若 wayfinding 結果其實只是 execution decomposition，而 architecture 已 accepted，可直接交 spec。
+如果 architecture 已經 accepted、wayfinder 只釐清 execution uncertainty，也可以直接回 spec。
 
 ## Completion criterion
 
-完成不是「列很多問題」，而是：
-
-原本無法一次規劃的 effort，現在已有一份低解析但可追溯的 decision map，且已清到可以進正常 design / spec workflow。
+不是「列很多問題」，而是原本 multi-session、route-invisible 的 effort 已成為可追溯 decision map，且 route 已清到正常 design/spec 可以接手。
