@@ -42,10 +42,11 @@ description: Implement an accepted spec and work graph end-to-end by working the
 每個 implementer：
 
 1. 只拿自己的 work item + spec/source pointers；
-2. 使用 implement + tdd discipline；
-3. 不重新做 design；
-4. 跑 item-level verification；
-5. 回報 changed scope、verification、reopen issue。
+2. pin scope / non-goals，做最小 navigation；
+3. 使用 tdd / characterization discipline 實作 small increments；
+4. 不重新做 design；若需要新 owner / public contract / semantics 就回 reopen condition；
+5. 跑 item-level verification；
+6. 回報 changed scope、verification、reopen issue。
 
 ## 3. Integration loop
 
