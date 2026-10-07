@@ -51,7 +51,12 @@ def tree_signature(root: Path) -> dict[str, tuple[str, str]]:
     return signature
 
 
-def _validate_skill(skill: Path, reference_root: Path, require_metadata: bool) -> Path:
+def _validate_skill(
+    skill: Path,
+    reference_root: Path,
+    require_metadata: bool,
+    validate_references: bool = True,
+) -> Path:
     if skill.is_symlink() or not skill.is_dir():
         raise InstallError(f"Invalid skill directory: {skill}")
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", skill.name):
@@ -86,14 +91,15 @@ def _validate_skill(skill: Path, reference_root: Path, require_metadata: bool) -
             if not re.search(pattern, metadata_text, re.M):
                 raise InstallError(f"Missing or invalid {field} in {metadata}")
 
-    root = reference_root.resolve()
-    for document in sorted(skill.rglob("*.md")):
-        for href in re.findall(r"\[[^\]]*\]\(([^\s)]+)\)", document.read_text(encoding="utf-8")):
-            if href.startswith("#") or re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", href):
-                continue
-            target = (document.parent / href.split("#", 1)[0]).resolve()
-            if not target.is_relative_to(root) or not target.is_file():
-                raise InstallError(f"Broken or external local reference in {document}: {href}")
+    if validate_references:
+        root = reference_root.resolve()
+        for document in sorted(skill.rglob("*.md")):
+            for href in re.findall(r"\[[^\]]*\]\(([^\s)]+)\)", document.read_text(encoding="utf-8")):
+                if href.startswith("#") or re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", href):
+                    continue
+                target = (document.parent / href.split("#", 1)[0]).resolve()
+                if not target.is_relative_to(root) or not target.is_file():
+                    raise InstallError(f"Broken or external local reference in {document}: {href}")
     return skill
 
 
@@ -135,7 +141,12 @@ def load_upstream_skills(repository_root: Path) -> tuple[list[Path], Path]:
         skill = (upstream_root / relative).resolve()
         if not skill.is_relative_to(upstream_root.resolve()):
             raise InstallError(f"Upstream skill escapes checkout: {relative}")
-        validated = _validate_skill(skill, upstream_root, require_metadata=False)
+        validated = _validate_skill(
+            skill,
+            upstream_root,
+            require_metadata=False,
+            validate_references=False,
+        )
         if validated.name in seen:
             raise InstallError(f"Duplicate upstream skill name: {validated.name}")
         seen.add(validated.name)
