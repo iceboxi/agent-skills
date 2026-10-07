@@ -7,7 +7,7 @@ description: Shared software-design discipline for module depth, seams, interfac
 
 這是 architecture / refactor / interface 工作共用的設計紀律。它不產生獨立 Design Doc，也不接管 workflow；`design`、`review`、`spec-review`、`code-review` 在需要判斷 module shape / seam / abstraction 時使用本 skill。
 
-預設使用繁體中文；保留 repository terminology 與 code identifiers。
+預設使用繁體中文；保留 repository terminology 與 code identifiers。若存在 relevant GLOSSARY / ADR，使用既有 domain nouns 與 durable decisions；本 skill 不修改 glossary / ADR。
 
 ## Core vocabulary
 
