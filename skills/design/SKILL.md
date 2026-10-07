@@ -28,7 +28,7 @@ description: Design a concrete, implementable software solution for a new featur
 Design 必須：
 
 1. 理解 requirement、scope、non-goals、compatibility constraints；先讀 relevant `GLOSSARY.md` / `GLOSSARY-MAP.md` 與 ADR，沿用既有 domain language，不重新爭論已 accepted durable decision。
-2. 讀取 relevant repository code；缺 current model 時先做必要 explore。
+2. 讀取 relevant repository code，建立足以支撐設計的 current model；repository-specific claims 以 code/tests 為 evidence，不要求獨立 explore phase。
 3. 找出 responsibilities、dependencies、state ownership、extension points 與主要 runtime flows。
 4. 先建立 target responsibility model，再決定 abstraction / protocol / pattern。
 5. 用足夠的 architecture / sequence views 讓 reviewer 看懂 **placement、ownership、interaction、migration**；不要用 table 取代本來需要圖才能理解的 relationship。
@@ -226,7 +226,7 @@ Consumer-facing boundary 只暴露真實 consumer 需要的 capability。Owner-o
 
 遇到 uncertainty：
 
-- repository fact：先 `explore`；
+- repository fact：直接查 relevant code / tests；
 - repository 外的 platform / SDK / language / toolchain fact：交 `research`；
 - paper reasoning 無法回答的 runtime / state / compatibility / UI feasibility：交 `prototype`；
 - requirement / engineering trade-off：若需要 human judgement 且不是單一 targeted clarification，交 `grill-with-docs` 用 decision-tree frontier 收斂，design 不自行 improvising 長訪談；
@@ -310,6 +310,7 @@ Audit fail 時先修文件；不要只把問題列成 limitation 然後宣稱完
 - `domain-modeling` skill：domain terminology / ADR discipline；design 消費結果，不把 glossary 當 spec。
 - `wayfinder` skill：超大型 effort 的 decision map；只在完整 design path 尚不可見時使用。
 - [delivery.md](delivery.md)：migration phases、feasibility、estimate、verification 與 conditional delivery planning。
+- [document-maintenance.md](document-maintenance.md)：已接受決策回寫既有 Design Doc 時的 bounded maintenance mode。
 
 讀取策略：
 
@@ -323,28 +324,25 @@ Audit fail 時先修文件；不要只把問題列成 limitation 然後宣稱完
 ## 12. Handoff
 
 ```text
-explore
-  ↓
-design
-  ↓
-review
- ┌┴─────────────────────────────┐
- │                              │
-ACCEPT                        REVISE
- │                              │
- ├── small / single-session → implement
- │
- ├── durable implementation contract → to-spec → spec-review
- │       ├── single-context → implement
- │       └── multi-context → to-tickets
- │              ├── per item → implement
- │              └── whole graph → implement-spec
- │
- ├── accepted decisions need canonical-doc merge → doc-sync
- │
- └── presentation needed → report
-                                │
-                                └────────→ design
+grill-with-docs / repository evidence
+        ↓
+      design
+        ↓
+      review
+   ┌────┴──────────────────────────┐
+   │                               │
+ACCEPT                         REVISE / BLOCKED
+   │                               │
+   ├─ small / single-session → implement
+   │
+   └─ durable implementation contract → to-spec
+          ├─ high-risk / multi-session → review (spec-fidelity mode)
+          ├─ single-context → implement
+          └─ multi-context → to-tickets → implement / implement-spec
+                                   │
+                                   └────────────→ design
 ```
 
-Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；Review 負責 design acceptance；upstream `to-spec` 將 accepted design 忠實 synthesis 成 implementation contract；需要多個 fresh-context work items 時再交 upstream `to-tickets`；`doc-sync` 只同步已決策內容；Report 只做 presentation extraction。Design 已收斂後，不要再用 `design` 做純文件整併。
+Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；Review 負責 design acceptance。Upstream `to-spec` 將 accepted design synthesis 成 implementation contract；只有 high-risk / multi-session handoff 才需要再用 `review` 的 spec-fidelity mode。
+
+若只是把已接受決策同步回既有 Design Doc，讀 [document-maintenance.md](document-maintenance.md) 並使用 bounded maintenance mode；不要另開新的 design decision。
