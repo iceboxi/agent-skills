@@ -57,6 +57,9 @@ Implementation 使用 tdd / characterization，最後 code-review。
 - confirmed decisions 只要同步回 existing doc → doc-sync
 - cross harness / directory / colleague / mid-phase side task → handoff
 - accepted Design Doc → presentation → report
+- knowledge only another person has → questionnaire
+- genuinely human-only provisioning / dashboard / cutover → wizard
+- PR / MR body after implementation/review → change-summary
 
 ## Phase boundaries
 
@@ -80,6 +83,8 @@ Implementation 使用 tdd / characterization，最後 code-review。
 - implement ≠ implement-spec：前者一個 ready unit；後者 orchestrate whole graph。
 - explore ≠ research：前者 repository current fact；後者 external fact。
 - diagnosing-bugs ≠ prototype：debug要先有 red-capable exact symptom loop；prototype只回答 design question。
+- questionnaire ≠ research：前者取 knowledge from a person；後者查 authoritative external sources。
+- wizard ≠ implement：wizard只處理 agent 無法代做的人類操作；可由 agent 執行的工作仍由 implement/tooling 完成。
 - review ≠ spec-review ≠ code-review：分別是 design、spec、diff acceptance。
 
 ## Output contract
