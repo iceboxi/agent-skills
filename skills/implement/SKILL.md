@@ -22,10 +22,11 @@ description: Implement one accepted spec, phase, or ready work package without r
 
 1. **Pin scope**：明確列本次 package、non-goals、依賴與完成條件。
 2. **Minimal navigation**：只探索完成 package 所需 symbols / callers / tests；不要重新做整體 architecture exploration。
-3. **Protect behavior**：
-   - behavior-preserving refactor 優先補 characterization / regression seam；
-   - 新 behavior 優先建立可失敗的 test / verification；
-   - ordering / lifecycle / persistence / cross-language contract 依 spec 保留。
+3. **Protect behavior**：使用 `tdd` discipline 選對 branch。
+   - behavior-preserving refactor：先 characterize current behavior，再建立 regression seam；
+   - 新 behavior：先建立會因缺少 behavior 而失敗的 test / verification，再做 minimum green；
+   - ordering / lifecycle / persistence / cross-language contract 依 spec 保留；
+   - unit test 不得冒充 device / hardware / OS-only validation。
 4. **Implement in small increments**：每一步保持 diff 可理解，避免順手 cleanup 擴大 blast radius。
 5. **Verify continuously**：跑最小 relevant test / typecheck / build；完成 package 後跑 spec 指定的 integration / regression gates。
 6. **Drift check**：若需要新的 owner、protocol、public API、state semantics、dependency direction、migration policy：
