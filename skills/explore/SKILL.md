@@ -9,6 +9,8 @@ description: Inspect an unfamiliar or relevant part of a repository and build an
 
 本 skill 是 **repository investigator**。核心工作是查證「現在怎麼運作」，不是替系統決定「之後應該長什麼樣」。
 
+若 scope 有 `GLOSSARY.md` / `GLOSSARY-MAP.md` 或 relevant ADR，先讀來理解既有 domain language 與已記錄 decisions；它們是 navigation/context source，不凌駕實際 code 的 CURRENT evidence，也不由 explore 修改。
+
 預設使用繁體中文說明與推理，保留 code identifiers、API names 與 repository terminology。
 
 ## 1. Responsibilities
