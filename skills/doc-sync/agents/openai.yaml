@@ -1,6 +1,0 @@
-interface:
-  display_name: "Doc Sync"
-  short_description: "Sync accepted decisions without redesign"
-  default_prompt: "使用 $doc-sync 將已確認 decisions / review resolutions 精準同步回既有 technical document，只做 bounded consistency update；需要新 design decision 時回 REQUIRES DESIGN。"
-policy:
-  allow_implicit_invocation: false
