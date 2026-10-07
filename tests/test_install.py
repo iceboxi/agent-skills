@@ -28,6 +28,9 @@ class InstallerTests(unittest.TestCase):
         (upstream_skill / "SKILL.md").write_text(
             "---\nname: gamma\ndescription: Upstream fixture skill.\n---\n"
         )
+        (upstream_skill / "REFERENCE.md").write_text(
+            "[Illustrative path](./src/example/DOES-NOT-EXIST.md)\n"
+        )
         (self.skills.parent / "skills-manifest.json").write_text(json.dumps({
             "schema_version": 1,
             "upstream": {
@@ -67,6 +70,20 @@ class InstallerTests(unittest.TestCase):
     def actions(self, adopt=False, adopt_instructions=False):
         return install.plan_install(self.skills, self.home, adopt, adopt_instructions)
 
+    def catalog_actions(self):
+        skills, roots = install.load_install_skills(self.skills.parent)
+        with patch.object(install, "__file__", str(self.skills.parent / "install.py")):
+            return install.plan_install_sources(
+                skills,
+                self.home,
+                adopt_identical=False,
+                managed_skill_roots=roots,
+            )
+
+    def catalog_destinations(self):
+        return [self.home / root / name for root in ROOTS
+                for name in ("alpha", "beta", "gamma")] + self.instruction_destinations()
+
     def destinations(self):
         return [self.home / root / name for root in ROOTS
                 for name in ("alpha", "beta")] + self.instruction_destinations()
@@ -100,6 +117,7 @@ class InstallerTests(unittest.TestCase):
         skills, _ = install.load_install_skills(self.skills.parent)
         gamma = next(skill for skill in skills if skill.name == "gamma")
         self.assertFalse((gamma / "agents/openai.yaml").exists())
+        self.assertTrue((gamma / "REFERENCE.md").is_file())
 
     def test_missing_openai_metadata_is_rejected(self):
         (self.skills / "beta/agents/openai.yaml").unlink()
@@ -459,10 +477,10 @@ class InstallerTests(unittest.TestCase):
             return install.main()
 
     def test_verify_is_read_only_and_preserves_existing_links(self):
-        install.apply_install(self.actions(), self.home)
-        before = [p.lstat().st_ino for p in self.destinations()]
+        install.apply_install(self.catalog_actions(), self.home)
+        before = [p.lstat().st_ino for p in self.catalog_destinations()]
         self.assertEqual(self.run_verify_cli(), 0)
-        self.assertEqual(before, [p.lstat().st_ino for p in self.destinations()])
+        self.assertEqual(before, [p.lstat().st_ino for p in self.catalog_destinations()])
         self.assertFalse((self.home / ".local/share/agent-skills/backups").exists())
 
     def test_verify_does_not_install_missing_entries(self):
