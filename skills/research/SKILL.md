@@ -27,10 +27,13 @@ explore 回答「我們的 code 現在怎麼做」；research 回答「platform 
 3. 查 primary sources，記錄版本 / date / platform constraints。
 4. 對相互衝突或版本敏感的資料做 reconciliation。
 5. 將結果整理成 decision-ready note，而不是 dump links。
+6. 若 research 會被後續 design / wayfinder / implementation 引用，保存成 durable Markdown artifact；沿用 project research convention，沒有時預設 `.scratch/research/<slug>.md`。純即時查詢、不會被後續引用時可只回目前 session。
 
 若環境支援 subagent，可將 reading legwork 交給 research subagent；不支援時就在目前 session 完成，不把 background 當必要條件。
 
 ## Output
+
+Durable artifact（需要時）應包含：
 
 - Question
 - Short answer
@@ -40,8 +43,8 @@ explore 回答「我們的 code 現在怎麼做」；research 回答「platform 
 - Unknown / ambiguous points
 - Sources
 
-Research 不自行做 architecture decision；它提供 evidence 給 design / prototype / implement。
+Research 不自行做 architecture decision；它提供 evidence 給 design / prototype / implement。後續 artifact 應以 path / URL pointer 引用 research note，不要把全文複製進 Design Doc / handoff。
 
 ## Completion criterion
 
-主要結論都能追溯到 authoritative source；版本敏感 claim 有明確 scope；剩餘 unknown 不被假裝成 fact。
+主要結論都能追溯到 authoritative source；版本敏感 claim 有明確 scope；剩餘 unknown 不被假裝成 fact；需要跨 phase 使用的 research 有 durable pointer。
