@@ -17,15 +17,16 @@ description: Independently review an existing technical design, technical design
 
 - technical design proposal 或 target technical design；
 - `design` 產生的文件；
-- Design Doc 的 implementation / migration sections；
-- 使用者另外提供、用於實現 accepted architecture 的 execution plan（額外輸入，不是必要的 downstream artifact）；
+- Design Doc 內的 implementation / migration **strategy**；
+- 已接受 design 的 scope-drift / extension-quality review；
 - 使用者要求「review／驗證／accept 這份設計」且重點是 technical boundaries、ownership、contracts、migration 或 regression strategy。
 
 不適用：
 
 - 尚未形成 proposal、需要從零探索 target 的工作：使用 `design`；
 - 撰寫或重整 Design Doc：使用 `design`；
-- PR diff、局部 code quality、style、bug review：使用一般 code review workflow；
+- executable implementation spec / work-package graph：使用 `spec-review`；
+- PR diff、局部 code quality、style、bug review：使用 `code-review`；
 - 實作、migration、branch、commit 或 production code 修改。
 
 Review 不自行重新設計。發現 design-blocking 問題時，指出問題、evidence、影響與需要重開的 decision；若需要 alternatives 或新的 architecture decision，交回 `design`。可以描述「哪個 boundary 不成立」，但不要在 review 中偷偷建立替代 target。
@@ -118,6 +119,9 @@ VERDICT
 - Owner 切換前的 evidence 是否足夠？是否誤把 read-only compare 當 dual writer、讓 shadow 產生正式 side effects，或讓 feature flag 同時啟用兩條有 side effects 的路徑？
 - 依 scope，integration / release / rollout / monitoring 與外部資源是否可執行；rollback 是否忽略 in-flight operation 或已發布版本的限制？
 - 可讀性、擴充性或 UI separation 的成果是否有代表性驗收方法；ROI / 改善數字是否有 baseline 支持？
+- 若 confirmed goal 是 extensibility / maintainability，是否有代表性 change-locality exercise；普通 command / source / policy 變更是否仍造成 unrelated shotgun surgery？
+- Interface 是否 deep enough：caller-facing surface 是否小於它所隱藏的 behavior complexity，或只是 pass-through / middle-man abstraction？
+- 若此版由 accepted decisions 回寫而來，新增的 type / method / helper / dependency 是否可追溯到既有 decision；追不到的 exact realization 是否被誤升格成 design contract？
 
 不要為了顯得嚴格而製造 finding。沒有 evidence 支持的疑慮標為 unknown 或 review note，不當成已證實缺陷。
 
@@ -213,13 +217,15 @@ ACCEPT 類型                REVISE / BLOCKED
  │                            │
  ▼                            ▼
 Accepted Design Doc          design
- ├──→ implementation
+ ├──→ small work → implement
+ ├──→ larger work → spec → spec-review → implement
+ ├──→ bounded decision merge → doc-sync
  └──→ report → presentation
 ```
 
 `review` 不因 ACCEPT 自動開始 implementation / report，也不修改 Design Doc 的 decision labels。交付時記錄受 review 的版本或基準、scope、verdict 與 reopen conditions；後續 workflow 沿用該 acceptance basis，不另設人工確認。
 
-若 review scope 是 Design Doc 的 implementation / migration sections，或使用者另外提供 execution plan，驗證其是否忠實實現文件的 target architecture（已有 accepted baseline 時沿用）、是否有可驗證的 bounded steps、regression／rollback gates，以及是否偷帶新的 architecture decisions；不要重新 review 已接受 architecture，除非該 section / plan 暴露 contradiction。這不要求 design 另外產出 standalone plan。
+Design Doc 內的 migration strategy 仍由本 skill review；若已進一步產生 executable implementation spec / work packages，交給 `spec-review` 檢查 fidelity、bounded execution、dependencies 與 verification seams。不要讓 design review 同時兼任 execution-plan review。
 
 ## Review discipline
 
