@@ -1,0 +1,6 @@
+interface:
+  display_name: "Implementation Spec"
+  short_description: "Turn accepted design into executable work packages"
+  default_prompt: "使用 $spec 將 accepted Design Doc 轉成 bounded implementation work graph、acceptance criteria、verification seams 與 stop conditions；不得新增 architecture decision。"
+policy:
+  allow_implicit_invocation: false
