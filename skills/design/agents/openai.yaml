@@ -3,4 +3,4 @@ interface:
   short_description: "Design implementable architecture from repository evidence"
   default_prompt: "使用 $design 根據需求與 repository evidence 完成 software design：先建立 responsibility / state / workflow ownership，再以足夠的 Current、Target external、Target internal realization、runtime 與 migration views 讓 placement 與 interaction 可視化；tables 不取代必要的 relationship diagrams。限制 consumer-facing capability surface，產出含 concrete interfaces、Current→Target mapping、phases、工時、驗證與 self-audit 的 Markdown Design Doc。"
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false
