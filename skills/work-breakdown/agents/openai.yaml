@@ -1,6 +1,0 @@
-interface:
-  display_name: "Work Breakdown"
-  short_description: "Split an accepted spec into a dependency graph"
-  default_prompt: "使用 $work-breakdown 把 accepted spec 拆成 fresh-context work graph：一般工作用 tracer-bullet vertical slices，wide refactor 用 expand-contract；只表達 genuine blockers，不新增 architecture。"
-policy:
-  allow_implicit_invocation: false

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Retro"
-  short_description: "Improve the agent engineering environment from session evidence"
-  default_prompt: "使用 $retro 從 session / review evidence 找 recurring failure modes，優先建議 deterministic guardrails、skill boundary / invocation、navigation、tooling 或 instruction simplification；預設不直接修改環境。"
-policy:
-  allow_implicit_invocation: false

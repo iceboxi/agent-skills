@@ -1,6 +1,0 @@
-interface:
-  display_name: "Implementation Spec"
-  short_description: "Synthesize accepted design into a durable implementation contract"
-  default_prompt: "使用 $spec 將 accepted Design Doc / resolved decisions 忠實 synthesis 成 implementation contract：保留 accepted ownership、runtime invariants、testing seams、acceptance 與 reopen conditions；不要重新 interview、重新 design 或拆 work graph。"
-policy:
-  allow_implicit_invocation: false

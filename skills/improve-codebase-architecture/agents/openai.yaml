@@ -1,6 +1,0 @@
-interface:
-  display_name: "Improve Codebase Architecture"
-  short_description: "Survey deepening opportunities, then grill one"
-  default_prompt: "使用 $improve-codebase-architecture 掃描 architecture friction，先產 visual HTML candidate report 並讓我選 candidate，再用 $grilling + $domain-modeling 深挖；不要直接改 production code。"
-policy:
-  allow_implicit_invocation: false

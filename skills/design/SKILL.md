@@ -236,7 +236,7 @@ Consumer-facing boundary 只暴露真實 consumer 需要的 capability。Owner-o
 
 ## 8. Migration / estimates / verification
 
-Design Doc 必須描述 implementation / migration **strategy 與 phases**，但不要把它展開成 ticket-level execution plan。Design acceptance 後，只有工作規模需要 fresh-context work packages / dependency graph 時，才交給 `spec` 產生 implementation spec。
+Design Doc 必須描述 implementation / migration **strategy 與 phases**，但不要把它展開成 ticket-level execution plan。Design acceptance 後，需要 durable implementation contract 時交給 upstream `to-spec` 做忠實 synthesis；若還需要 fresh-context work graph / dependency graph，再交給 upstream `to-tickets`。
 
 每個設計都需要：
 
@@ -334,9 +334,9 @@ ACCEPT                        REVISE
  │                              │
  ├── small / single-session → implement
  │
- ├── durable implementation contract → spec → spec-review
+ ├── durable implementation contract → to-spec → spec-review
  │       ├── single-context → implement
- │       └── multi-context → work-breakdown
+ │       └── multi-context → to-tickets
  │              ├── per item → implement
  │              └── whole graph → implement-spec
  │
@@ -347,4 +347,4 @@ ACCEPT                        REVISE
                                 └────────→ design
 ```
 
-Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；Review 負責 design acceptance；`spec` 將 accepted design 忠實轉成 implementation contract；需要多個 fresh-context work items 時再交 `work-breakdown`；`doc-sync` 只同步已決策內容；Report 只做 presentation extraction。Design 已收斂後，不要再用 `design` 做純文件整併。
+Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；Review 負責 design acceptance；upstream `to-spec` 將 accepted design 忠實 synthesis 成 implementation contract；需要多個 fresh-context work items 時再交 upstream `to-tickets`；`doc-sync` 只同步已決策內容；Report 只做 presentation extraction。Design 已收斂後，不要再用 `design` 做純文件整併。

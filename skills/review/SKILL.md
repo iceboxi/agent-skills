@@ -25,7 +25,7 @@ description: Independently review an existing technical design, technical design
 
 - 尚未形成 proposal、需要從零探索 target 的工作：使用 `design`；
 - 撰寫或重整 Design Doc：使用 `design`；
-- executable implementation spec / work-package graph：使用 `spec-review`；
+- implementation spec：使用 `spec-review`；execution graph / tickets 由 upstream `to-tickets` 的 human review gate 負責；
 - PR diff、局部 code quality、style、bug review：使用 `code-review`；
 - 實作、migration、branch、commit 或 production code 修改。
 
@@ -218,16 +218,16 @@ ACCEPT 類型                REVISE / BLOCKED
  ▼                            ▼
 Accepted Design Doc          design
  ├──→ small work → implement
- ├──→ durable contract → spec → spec-review
+ ├──→ durable contract → to-spec → spec-review
  │       ├──→ single-context → implement
- │       └──→ multi-context → work-breakdown → implement / implement-spec
+ │       └──→ multi-context → to-tickets → implement / implement-spec
  ├──→ bounded decision merge → doc-sync
  └──→ report → presentation
 ```
 
 `review` 不因 ACCEPT 自動開始 implementation / report，也不修改 Design Doc 的 decision labels。交付時記錄受 review 的版本或基準、scope、verdict 與 reopen conditions；後續 workflow 沿用該 acceptance basis，不另設人工確認。
 
-Design Doc 內的 migration strategy 仍由本 skill review；implementation spec 交給 `spec-review` 檢查 fidelity、testing decisions、acceptance 與 traceability。Work graph 的 granularity、blocking edges 與 tracer-bullet / expand-contract sequencing 由 `work-breakdown` 自己的人類確認 gate 負責，不讓 design review 或 spec review 偷偷兼任 execution-plan review。
+Design Doc 內的 migration strategy 仍由本 skill review；implementation spec 交給 `spec-review` 檢查 fidelity、testing decisions、acceptance 與 traceability。Work graph 的 granularity、blocking edges 與 tracer-bullet sequencing 由 upstream `to-tickets` 自己的人類確認 gate 負責，不讓 design review 或 spec review 偷偷兼任 execution-plan review。
 
 ## Review discipline
 

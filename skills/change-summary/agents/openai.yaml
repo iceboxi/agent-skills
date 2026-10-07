@@ -1,6 +1,0 @@
-interface:
-  display_name: "Change Summary"
-  short_description: "Shape a PR or MR body with evidence and merge danger"
-  default_prompt: "使用 $change-summary 為 PR/MR 寫 reviewer-friendly change body：最小 visual、before/after evidence、reversibility 與 blast radius；不要重新做 code review。"
-policy:
-  allow_implicit_invocation: true

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Writing for Agents"
-  short_description: "Discipline for skills and agent-facing docs"
-  default_prompt: "使用 $writing-for-agents 以 context load、pointer、progressive disclosure、completion criteria、single source of truth、pruning/no-op discipline 改善 skill / AGENTS / agent-facing docs。"
-policy:
-  allow_implicit_invocation: true

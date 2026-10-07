@@ -1,6 +1,0 @@
-interface:
-  display_name: "Handoff"
-  short_description: "Move context across sessions or harnesses"
-  default_prompt: "使用 $handoff 產一份 portable context handoff，只在跨 harness / directory / repo / colleague 或 mid-phase fork 時使用；引用既有 artifacts，不建立第二份 source of truth。"
-policy:
-  allow_implicit_invocation: false

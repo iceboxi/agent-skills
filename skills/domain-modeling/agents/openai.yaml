@@ -1,6 +1,0 @@
-interface:
-  display_name: "Domain Modeling"
-  short_description: "Sharpen domain language and durable decisions"
-  default_prompt: "使用 $domain-modeling challenge fuzzy / overloaded domain terms，以 concrete scenarios 壓測概念並即時維護 GLOSSARY / sparse ADR；不要把 glossary 當 spec。"
-policy:
-  allow_implicit_invocation: true

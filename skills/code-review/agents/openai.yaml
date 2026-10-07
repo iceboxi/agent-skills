@@ -1,6 +1,0 @@
-interface:
-  display_name: "Code Review"
-  short_description: "Review correctness, spec fidelity, locality and verification"
-  default_prompt: "使用 $code-review 對 fixed-point diff 分別檢查 correctness/runtime、spec/design fidelity、design quality/locality 與 verification；回報 PASS / PASS WITH NOTES / CHANGES REQUIRED / BLOCKED。"
-policy:
-  allow_implicit_invocation: true

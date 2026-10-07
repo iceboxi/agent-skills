@@ -1,6 +1,0 @@
-interface:
-  display_name: "Diagnosing Bugs"
-  short_description: "Build a red feedback loop before debugging"
-  default_prompt: "使用 $diagnosing-bugs 先建立 exact symptom 的 red-capable feedback loop，再 minimise、rank falsifiable hypotheses、instrument、fix 與 regression-test；沒有 red loop 不先猜原因。"
-policy:
-  allow_implicit_invocation: true

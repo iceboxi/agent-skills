@@ -1,6 +1,0 @@
-interface:
-  display_name: "Implement Spec"
-  short_description: "Orchestrate a whole accepted work graph"
-  default_prompt: "使用 $implement-spec 依 accepted spec + work graph 執行 ready frontier；用 Codex native subagents/worktrees 在安全時平行，持續整合與驗證，最後做 whole-branch $code-review。"
-policy:
-  allow_implicit_invocation: false

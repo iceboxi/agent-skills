@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import shutil
 import tempfile
 import unittest
@@ -21,6 +22,21 @@ class InstallerTests(unittest.TestCase):
         self.skills = self.root / "checkout" / "skills"
         (self.skills / "alpha/references").mkdir(parents=True)
         (self.skills / "beta").mkdir()
+        self.upstream = self.skills.parent / "upstream/mattpocock-skills"
+        upstream_skill = self.upstream / "skills/engineering/gamma"
+        upstream_skill.mkdir(parents=True)
+        (upstream_skill / "SKILL.md").write_text(
+            "---\nname: gamma\ndescription: Upstream fixture skill.\n---\n"
+        )
+        (self.skills.parent / "skills-manifest.json").write_text(json.dumps({
+            "schema_version": 1,
+            "upstream": {
+                "name": "fixture/upstream",
+                "path": "upstream/mattpocock-skills",
+                "repository": "https://example.invalid/upstream.git",
+                "skills": ["skills/engineering/gamma"],
+            },
+        }))
         for name in ("alpha", "beta"):
             agents = self.skills / name / "agents"
             agents.mkdir()
@@ -74,6 +90,16 @@ class InstallerTests(unittest.TestCase):
     def test_packaged_skills_have_valid_names_and_local_references(self):
         skills = install.validate_skills(Path(install.__file__).resolve().parent / "skills")
         self.assertGreaterEqual(len(skills), 2)
+
+    def test_load_install_skills_combines_local_and_upstream(self):
+        skills, roots = install.load_install_skills(self.skills.parent)
+        self.assertEqual([skill.name for skill in skills], ["alpha", "beta", "gamma"])
+        self.assertEqual(roots, [self.skills, self.upstream])
+
+    def test_upstream_skill_does_not_require_local_openai_metadata(self):
+        skills, _ = install.load_install_skills(self.skills.parent)
+        gamma = next(skill for skill in skills if skill.name == "gamma")
+        self.assertFalse((gamma / "agents/openai.yaml").exists())
 
     def test_missing_openai_metadata_is_rejected(self):
         (self.skills / "beta/agents/openai.yaml").unlink()
@@ -131,6 +157,29 @@ class InstallerTests(unittest.TestCase):
         self.assertTrue(unrelated.is_symlink())
         self.assertTrue(regular.is_dir())
         self.assertEqual((regular / "keep.txt").read_text(), "keep")
+
+    def test_managed_skill_source_move_is_retargeted(self):
+        destination = self.home / ".codex/skills/alpha"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        old_source = self.skills / "alpha"
+        destination.symlink_to(old_source, target_is_directory=True)
+
+        new_root = self.skills.parent / "upstream/mattpocock-skills"
+        new_source = new_root / "skills/engineering/alpha"
+        new_source.mkdir(parents=True)
+        (new_source / "SKILL.md").write_text(
+            "---\nname: alpha\ndescription: Moved fixture skill.\n---\n"
+        )
+
+        action = install.plan_action(
+            new_source,
+            destination,
+            adopt_identical=False,
+            managed_skill_roots=[self.skills, new_root],
+        )
+        self.assertEqual(action.kind, "retarget")
+        install.apply_install([action], self.home)
+        self.assertEqual(destination.resolve(), new_source)
 
     def test_current_managed_skill_link_is_not_stale(self):
         managed = self.home / ".agents/skills/alpha"

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Implement"
-  short_description: "Implement accepted work without reopening architecture"
-  default_prompt: "使用 $implement 依 accepted spec / Design Doc 實作一個 ready package，持續驗證並阻止 design drift；完成後交給 $code-review。"
-policy:
-  allow_implicit_invocation: false

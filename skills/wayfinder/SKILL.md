@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: Map and resolve a multi-session, foggy engineering effort whose route to a named destination is not yet visible. Maintain a lightweight Markdown decision map; resolve one frontier decision at a time with grilling, research, prototype, or unblock tasks; hand clarified decisions into design/spec. No issue tracker is required.
+description: Map and resolve a multi-session, foggy engineering effort whose route to a named destination is not yet visible. Maintain a lightweight Markdown decision map; resolve one frontier decision at a time with grilling, research, prototype, or unblock tasks; hand clarified decisions into design/to-spec. No issue tracker is required.
 ---
 
 # Wayfinder
@@ -15,8 +15,8 @@ Wayfinder 用在 **一個 session 裝不下，而且從 current state 到 destin
 
 Chart map 前，先讀：
 
-- [grilling](../grilling/SKILL.md)
-- [domain-modeling](../domain-modeling/SKILL.md)
+- grilling
+- domain-modeling
 
 用 grilling 把 destination 說清楚。Destination 是這張 map 的 scope boundary。
 
@@ -77,8 +77,8 @@ Detail 放在 resolution note / prototype / research artifact；map 只放 gist 
 
 能透過 discussion / judgement 解的 decision：
 
-- 用 [grilling](../grilling/SKILL.md)
-- 同時用 [domain-modeling](../domain-modeling/SKILL.md)
+- 用 grilling
+- 同時用 domain-modeling
 
 Human 必須真的回答；agent 不得自己問自己答。
 
@@ -138,9 +138,9 @@ Research 可安全平行。
 
 通常：
 
-wayfinder → design → review → spec
+wayfinder → design → review → to-spec
 
-如果 architecture 已經 accepted、wayfinder 只釐清 execution uncertainty，也可以直接回 spec。
+如果 architecture 已經 accepted、wayfinder 只釐清 execution uncertainty，也可以直接回 to-spec。
 
 ## Completion criterion
 

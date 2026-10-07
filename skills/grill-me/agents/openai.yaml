@@ -1,6 +1,0 @@
-interface:
-  display_name: "Grill Me"
-  short_description: "Stress-test a plan without project docs"
-  default_prompt: "使用 $grill-me 對目前 plan / idea / design 做 stateless grilling，不修改 repository glossary / ADR，直到 decision tree 收斂。"
-policy:
-  allow_implicit_invocation: false
