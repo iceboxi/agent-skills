@@ -3,4 +3,4 @@ interface:
   short_description: "Turn an approved Design Doc into a technical presentation"
   default_prompt: "使用 $report 從已接受 Design Doc 提取 Current/Target、核心 protocol / flow、phase / estimate 與依 scope 適用的價值證明、gates、delivery milestones，交付並驗證 HTML / slides / PPTX 成品；不重問既有 acceptance，額外 approval 僅依明定流程。"
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false
