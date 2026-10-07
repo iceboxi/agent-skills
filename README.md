@@ -94,18 +94,19 @@ Installer 會把 local + manifest-selected upstream skills 合併成一個 catal
 
 ## Command-line interface
 
-日常操作只需要記 root-level `./agent-skills`：
+日常只需要三個指令：
 
 ~~~text
-./agent-skills install [install.py options]
+./agent-skills install
 ./agent-skills update
-./agent-skills upstream [--update]
-./agent-skills verify
-./agent-skills test
-./agent-skills help
+./agent-skills doctor
 ~~~
 
-Shell 只負責 human-facing orchestration；symlink safety、manifest validation、rollback 與 reconciliation 仍由 Python engine 負責。
+- **install**：第一次安裝或修復目前 checkout 宣告的 environment。
+- **update**：平常唯一的維護指令。更新本 repo、同步目前 pin、檢查 Matt upstream、reconcile installation，最後 health check。
+- **doctor**：覺得環境有問題時使用；執行 installer tests 並驗證實際安裝的 symlinks / manifest。
+
+`test`、`verify`、`upstream` 不再是 public CLI concepts。底層 Python commands 仍保留給 installer 開發與 troubleshooting。
 
 ## New device installation
 
@@ -117,9 +118,9 @@ cd ~/Documents/agent-skills
 ./agent-skills install
 ~~~
 
-若 clone 時沒有帶 `--recurse-submodules`，`install` 會自行初始化目前 parent repo pin 指定的 upstream revision。
+若 clone 時沒有帶 `--recurse-submodules`，`install` 會自行初始化 parent repo pin 指定的 upstream revision。
 
-Installer 使用 symlink，不複製 skill files。安裝入口：
+Installer 使用 symlink，不複製 skill files：
 
 ~~~text
 ~/.agents/skills/<name>
@@ -130,76 +131,85 @@ Installer 使用 symlink，不複製 skill files。安裝入口：
 ~/.claude/CLAUDE.md
 ~~~
 
-從舊版（所有 skill 都在 local `skills/`）升級時，installer 會辨識仍指向本 repo 的 managed symlink，並把同名 skill retarget 到 pinned upstream source；不需要手動刪舊 link。
+`install` 會先跑 tests，再 reconcile，最後 verify。從舊版升級時，同一 repo 管理的 symlink 可自動 retarget；已移除的 managed skill link 會被清理。
 
-## Normal repository update
+想只看 installation plan：
 
-取得這個 repository 已確認的 workflow 與 Matt pin：
+~~~sh
+./agent-skills install --dry-run
+~~~
+
+## Normal update
+
+平常不要再手動記 `git pull`、submodule、test、verify：
 
 ~~~sh
 cd ~/Documents/agent-skills
 ./agent-skills update
 ~~~
 
-`update` 會依序：
+`update` 會：
 
-1. 拒絕在 tracked working tree 有未提交修改時 pull。
-2. `git pull --ff-only`。
-3. checkout parent repo pin 指定的 submodule revision。
-4. 跑 unit tests。
-5. install / reconcile。
-6. verify symlinks。
+1. 確認 tracked working tree 沒有未提交修改。
+2. `git pull --ff-only` 更新本 repo。
+3. checkout parent repo 已信任的 Matt submodule pin。
+4. fetch Matt `origin/main` 並檢查是否有新版。
+5. 若沒有新版：tests → install/reconcile → verify。
+6. 若有新版：互動詢問是否升級。
 
-它**不會**把 Matt upstream 偷偷更新到 latest。
+若選擇不升 Matt，現有 pin 不變，仍會完成本 repo 的 update / reconcile / health check。
 
-## Updating Matt upstream
+若接受 Matt 更新，流程會：
 
-先檢查是否有新版：
-
-~~~sh
-./agent-skills upstream
+~~~text
+checkout latest Matt revision
+        ↓
+validate selected upstream skills
+        ↓
+tests
+        ↓
+install / reconcile
+        ↓
+verify
+        ↓
+commit parent-repo submodule pin
+        ↓
+push
 ~~~
 
-要評估 latest upstream：
+也就是 upstream 仍然是 **reviewable / pinned dependency**，但一般使用者不需要另外學一個 `upstream` command。
+
+如果 validation 失敗，CLI 會把 submodule checkout 還原到更新前的 pin，不提交新版。若 validation 成功但 push 失敗，本機 environment 與 local commit 會保留，CLI 會要求之後手動 push。
+
+在 non-interactive 環境發現 Matt 新版時，預設保持目前 pin，不自動升級。
+
+## Health check
+
+環境看起來不對時：
 
 ~~~sh
-./agent-skills upstream --update
+./agent-skills doctor
 ~~~
 
-這會：
+它等價於兩種不同層次的檢查：
 
-1. fetch Matt `origin/main`；
-2. 將 submodule working checkout 移到 latest；
-3. validate manifest-selected skills；
-4. 跑 tests；
-5. 跑 installer dry-run；
-6. 停下來讓你 review。
+~~~text
+installer/unit tests
+        +
+actual installed-environment verification
+~~~
 
-接著人工檢查：
+一般使用者不需要分辨原本的 `test` 與 `verify`。
+
+底層 troubleshooting 仍可直接使用：
 
 ~~~sh
-git diff --submodule=log
+python3 -m unittest discover -s tests -v
+python3 install.py --dry-run
+python3 install.py --verify
+python3 update_upstream.py
+python3 update_upstream.py --update
 ~~~
-
-確認接受後才更新 parent repo pin：
-
-~~~sh
-git add upstream/mattpocock-skills skills-manifest.json
-git commit -m "Update Matt skills upstream"
-git push
-./agent-skills install
-~~~
-
-Parent repo 的 submodule gitlink commit 是唯一 upstream pin；`skills-manifest.json` 不重複保存 SHA。
-
-若 Matt 移動或刪除 manifest-selected skill，validation 會失敗；先更新 manifest 或決定是否保留 local adaptation，再提交新的 pin。
-
-若升級後行為不如預期：
-
-1. 先判斷是單次執行問題還是 recurring workflow problem。
-2. recurring 問題用 upstream `retro`。
-3. 若 upstream 行為真的不符合我們，優先新增小型 overlay / custom skill；只有必要時才 fork。
-4. 回退只需把 parent repo 的 submodule pin 回先前 commit。
 
 ## Adding or removing upstream skills
 
@@ -208,32 +218,6 @@ Parent repo 的 submodule gitlink commit 是唯一 upstream pin；`skills-manife
 ~~~sh
 ./agent-skills install --dry-run
 ./agent-skills install
-~~~
-
-移除的 managed skill symlink 會 reconcile；新增的會建立。
-
-## Validation
-
-日常：
-
-~~~sh
-./agent-skills test
-./agent-skills verify
-~~~
-
-想看安裝計畫但不寫入：
-
-~~~sh
-./agent-skills install --dry-run
-~~~
-
-底層 Python 指令仍可用於 installer 開發 / troubleshooting：
-
-~~~sh
-python3 -m unittest discover -s tests -v
-python3 install.py --dry-run
-python3 install.py --verify
-python3 update_upstream.py
 ~~~
 
 ## Adoption / conflicts
