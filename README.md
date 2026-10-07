@@ -97,21 +97,57 @@ Side paths:
 GitHub、GitLab、local files 可以依專案分別設定；不同 repository 的 tracker / credentials / workflow 不混用。
 
 
-## Generated artifacts
+## Artifact lifecycle
 
-Human-facing generated files are persistent by default. Upstream skills may use `$TMPDIR` while rendering, but the final file must be copied to:
-
-~~~text
-${AGENT_ARTIFACTS_DIR:-$HOME/Documents/agent-artifacts}/<repo-name>/
-~~~
-
-If `~/Documents` is unavailable, use:
+Agent 產物分三層：
 
 ~~~text
-$HOME/Downloads/agent-artifacts/<repo-name>/
+docs/ / GLOSSARY.md / ADR / docs/agents/*
+    = canonical project knowledge
+
+<repo>/.scratch/artifacts/*
+    = project-local reasoning / analysis artifacts
+
+$TMPDIR / /tmp / /var/folders/.../T
+    = machine-temporary intermediates only
 ~~~
 
-This specifically overrides temp-only delivery from upstream workflows such as `improve-codebase-architecture`, whose HTML report would otherwise live under macOS `/var/folders/.../T`. The final response should point to the persistent copy and auto-open that copy when possible.
+有 repository context 時，值得給人閱讀、跨 session 保存，但又不是正式 source of truth 的 artifact，預設放：
+
+~~~text
+<repo-root>/.scratch/artifacts/<category>/
+~~~
+
+建議 categories：
+
+~~~text
+.scratch/artifacts/
+├─ architecture/
+├─ research/
+├─ handoff/
+├─ prototype/
+└─ reports/
+~~~
+
+例如 `improve-codebase-architecture` 可以照 upstream 規則先在 `$TMPDIR` render，但 final HTML 要 promotion 到：
+
+~~~text
+<repo-root>/.scratch/artifacts/architecture/
+~~~
+
+`handoff` 在 repo context 下放 `.scratch/artifacts/handoff/`；`research` 若專案沒有既有 research-note convention，放 `.scratch/artifacts/research/`。
+
+這個 overlay **不改變 canonical artifact ownership**：Glossary、ADR、`docs/agents/*`、accepted Design Doc 仍依 project convention；`to-spec`、`to-tickets`、`wayfinder` 仍使用 configured tracker。Prototype source 仍可依 upstream 規則保留在 throwaway branch，`.scratch/artifacts/prototype/` 只放 summary / evidence pointer。
+
+`.scratch/artifacts/` 預設視為 non-canonical working state；不要默默修改 tracked `.gitignore` 或 commit，除非專案明確採用這個 policy。
+
+沒有 repository context 時，才 fallback 到：
+
+~~~text
+${AGENT_ARTIFACTS_DIR:-$HOME/Documents/agent-artifacts}/
+~~~
+
+再不可用時使用 `$HOME/Downloads/agent-artifacts/`。Final response 應回報 promotion 後的路徑，而不是只有 temp path。
 
 ## Skill sources
 
