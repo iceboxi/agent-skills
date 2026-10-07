@@ -5,6 +5,8 @@ description: Review an engineering or agent session for repeatable failure modes
 
 # Retro
 
+開始分析前先讀 [writing-for-agents](../writing-for-agents/SKILL.md)，用同一套 context-load / pointer / progressive-disclosure / pruning discipline 評估 agent-facing docs。
+
 Retro 的對象不是這次 feature code，而是：
 
 為什麼這次 agent / workflow 會走偏？下次如何讓環境更不容易重犯？
@@ -37,6 +39,8 @@ Retro 的對象不是這次 feature code，而是：
 - human 是否已經難以知道該用哪支 skill？
 
 ### Context & writing
+
+依 writing-for-agents 檢查：
 
 - main SKILL.md 是否塞進只有少數 branch 才需要的 reference？
 - 是否有 duplicated rule / sediment / no-op instruction？
