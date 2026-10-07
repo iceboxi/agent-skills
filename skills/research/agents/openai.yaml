@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research"
+  short_description: "Research external technical facts from primary sources"
+  default_prompt: "使用 $research 對 repository 外的 platform / SDK / language / toolchain 問題查 primary sources，產出有版本範圍與 citations 的 decision-ready technical note；不自行做 architecture decision。"
+policy:
+  allow_implicit_invocation: true
