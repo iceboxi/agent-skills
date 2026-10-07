@@ -26,7 +26,7 @@ Design ACCEPT 後：
   - whole graph → implement-spec
 
 Implementation 中：
-- generic new behavior → upstream tdd may be appropriate
+- new behavior → local tdd 的 red-green branch
 - legacy behavior-preserving refactor / iOS device-sensitive work → local tdd discipline
 - 完成後 → code-review
 - difficult / surprising session → retro
@@ -48,7 +48,7 @@ Implementation 中：
 - domain terminology / ADR → domain-modeling
 - deep module / seam / locality → codebase-design
 - external authoritative fact → research
-- generic design prototype → upstream prototype if installed；iOS/runtime/integration spike → local prototype
+- design / runtime / integration / UI uncertainty → local prototype（保留 iOS/Swift-ObjC adaptation）
 - behavior implementation / regression seam → tdd
 - agent-facing docs / skills → writing-for-agents
 - stateful learning → teach
