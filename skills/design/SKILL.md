@@ -334,7 +334,11 @@ ACCEPT                        REVISE
  │                              │
  ├── small / single-session → implement
  │
- ├── multi-step / migration → spec → spec-review → implement
+ ├── durable implementation contract → spec → spec-review
+ │       ├── single-context → implement
+ │       └── multi-context → work-breakdown
+ │              ├── per item → implement
+ │              └── whole graph → implement-spec
  │
  ├── accepted decisions need canonical-doc merge → doc-sync
  │
