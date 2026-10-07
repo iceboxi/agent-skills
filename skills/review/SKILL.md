@@ -1,6 +1,6 @@
 ---
 name: review
-description: Independently review an existing technical design, technical design proposal, or Design Doc, including its implementation/migration sections, against repository evidence and confirmed goals. Use as an acceptance gate; challenge the proposal, classify findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign, implement, or perform routine code review.
+description: Independently review a technical design or an implementation spec against its authoritative baseline. Use as an acceptance/fidelity gate; challenge the artifact, classify findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign, implement, or perform routine code review.
 ---
 
 # Technical Design Review
@@ -25,7 +25,7 @@ description: Independently review an existing technical design, technical design
 
 - 尚未形成 proposal、需要從零探索 target 的工作：使用 `design`；
 - 撰寫或重整 Design Doc：使用 `design`；
-- implementation spec：使用 `spec-review`；execution graph / tickets 由 upstream `to-tickets` 的 human review gate 負責；
+- implementation spec：仍使用本 `review` skill，但切到 [spec-fidelity.md](spec-fidelity.md)；execution graph / tickets 由 upstream `to-tickets` 的 human review gate 負責；
 - PR diff、局部 code quality、style、bug review：使用 `code-review`；
 - 實作、migration、branch、commit 或 production code 修改。
 
@@ -179,7 +179,7 @@ VERDICT
 
 Verdict 是 review 結果，不代表 production code 已實作、tests 已通過或 release 已核准。
 
-`ACCEPT` / `ACCEPT WITH NON-BLOCKING NOTES` 是 technical acceptance，預設即建立該版本與 review scope 的 accepted baseline，可供已授權的 implementation / report 使用，不要求使用者再接受一次 review 結果。只有使用者或專案明定另一層 business / process approval 時，才在相應交接前取得；technical acceptance 不取代這類明定程序，也不擴大執行授權。局部 section 的 ACCEPT 不代表未 review 的整份 Design Doc 已接受。
+`ACCEPT` / `ACCEPT WITH NON-BLOCKING NOTES` 是 technical acceptance，預設即建立該版本與 review scope 的 accepted baseline，可供已授權的 implementation 使用，不要求使用者再接受一次 review 結果。只有使用者或專案明定另一層 business / process approval 時，才在相應交接前取得；technical acceptance 不取代這類明定程序，也不擴大執行授權。局部 section 的 ACCEPT 不代表未 review 的整份 Design Doc 已接受。
 
 ## 輸出格式
 
@@ -209,25 +209,25 @@ Notes: <n>
 
 ```text
 design
-    ↓
-review
- ┌──┴─────────────────────────┐
- │                            │
-ACCEPT 類型                REVISE / BLOCKED
- │                            │
- ▼                            ▼
-Accepted Design Doc          design
- ├──→ small work → implement
- ├──→ durable contract → to-spec → spec-review
- │       ├──→ single-context → implement
- │       └──→ multi-context → to-tickets → implement / implement-spec
- ├──→ bounded decision merge → doc-sync
- └──→ report → presentation
+  ↓
+review (design mode)
+  ├─ REVISE / BLOCKED → design
+  └─ ACCEPT
+       ├─ small → implement
+       └─ durable contract → to-spec
+             ├─ high-risk / multi-session → review (spec-fidelity mode)
+             ├─ single-context → implement
+             └─ multi-context → to-tickets → implement / implement-spec
 ```
 
-`review` 不因 ACCEPT 自動開始 implementation / report，也不修改 Design Doc 的 decision labels。交付時記錄受 review 的版本或基準、scope、verdict 與 reopen conditions；後續 workflow 沿用該 acceptance basis，不另設人工確認。
+同一支 `review` skill 有兩種 subject mode：
 
-Design Doc 內的 migration strategy 仍由本 skill review；implementation spec 交給 `spec-review` 檢查 fidelity、testing decisions、acceptance 與 traceability。Work graph 的 granularity、blocking edges 與 tracer-bullet sequencing 由 upstream `to-tickets` 自己的人類確認 gate 負責，不讓 design review 或 spec review 偷偷兼任 execution-plan review。
+- **Design mode**：檢查 architecture proposal 是否可接受。
+- **Spec-fidelity mode**：讀 [spec-fidelity.md](spec-fidelity.md)，檢查 `to-spec` 是否忠實保存 accepted baseline。
+
+兩者共用同一組 independent review authority、finding severity 與 verdict，不維護第二支 review skill。Spec-fidelity 只在 high-risk、multi-session、multi-agent 或明確要求 durable handoff assurance 時使用；小型單一 context work不設第二道 mandatory gate。
+
+Work graph 的 granularity、blocking edges 與 tracer-bullet sequencing 由 upstream `to-tickets` 自己的人類確認 gate 負責。
 
 ## Review discipline
 
