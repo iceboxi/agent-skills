@@ -21,6 +21,17 @@ class InstallerTests(unittest.TestCase):
         self.skills = self.root / "checkout" / "skills"
         (self.skills / "alpha/references").mkdir(parents=True)
         (self.skills / "beta").mkdir()
+        for name in ("alpha", "beta"):
+            agents = self.skills / name / "agents"
+            agents.mkdir()
+            (agents / "openai.yaml").write_text(
+                'interface:\n'
+                f'  display_name: "{name.title()}"\n'
+                '  short_description: "Fixture skill"\n'
+                '  default_prompt: "Use the fixture skill."\n'
+                'policy:\n'
+                '  allow_implicit_invocation: false\n'
+            )
         (self.skills / "alpha/SKILL.md").write_text(
             "---\nname: alpha\ndescription: First fixture skill.\n---\n"
             "[Guide](references/planning.md)\n[Sibling](../beta/SKILL.md)\n"
@@ -63,6 +74,12 @@ class InstallerTests(unittest.TestCase):
     def test_packaged_skills_have_valid_names_and_local_references(self):
         skills = install.validate_skills(Path(install.__file__).resolve().parent / "skills")
         self.assertGreaterEqual(len(skills), 2)
+
+    def test_missing_openai_metadata_is_rejected(self):
+        (self.skills / "beta/agents/openai.yaml").unlink()
+        with self.assertRaisesRegex(install.InstallError, "Missing OpenAI skill metadata"):
+            self.actions()
+        self.assertFalse(self.home.exists())
 
     def test_fresh_install_preserves_references(self):
         self.assertIsNone(install.apply_install(self.actions(), self.home))
