@@ -96,6 +96,23 @@ Side paths:
 
 GitHub、GitLab、local files 可以依專案分別設定；不同 repository 的 tracker / credentials / workflow 不混用。
 
+
+## Generated artifacts
+
+Human-facing generated files are persistent by default. Upstream skills may use `$TMPDIR` while rendering, but the final file must be copied to:
+
+~~~text
+${AGENT_ARTIFACTS_DIR:-$HOME/Documents/agent-artifacts}/<repo-name>/
+~~~
+
+If `~/Documents` is unavailable, use:
+
+~~~text
+$HOME/Downloads/agent-artifacts/<repo-name>/
+~~~
+
+This specifically overrides temp-only delivery from upstream workflows such as `improve-codebase-architecture`, whose HTML report would otherwise live under macOS `/var/folders/.../T`. The final response should point to the persistent copy and auto-open that copy when possible.
+
 ## Skill sources
 
 Local skills：
