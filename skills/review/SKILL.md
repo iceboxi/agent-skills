@@ -218,14 +218,16 @@ ACCEPT 類型                REVISE / BLOCKED
  ▼                            ▼
 Accepted Design Doc          design
  ├──→ small work → implement
- ├──→ larger work → spec → spec-review → implement
+ ├──→ durable contract → spec → spec-review
+ │       ├──→ single-context → implement
+ │       └──→ multi-context → work-breakdown → implement / implement-spec
  ├──→ bounded decision merge → doc-sync
  └──→ report → presentation
 ```
 
 `review` 不因 ACCEPT 自動開始 implementation / report，也不修改 Design Doc 的 decision labels。交付時記錄受 review 的版本或基準、scope、verdict 與 reopen conditions；後續 workflow 沿用該 acceptance basis，不另設人工確認。
 
-Design Doc 內的 migration strategy 仍由本 skill review；若已進一步產生 executable implementation spec / work packages，交給 `spec-review` 檢查 fidelity、bounded execution、dependencies 與 verification seams。不要讓 design review 同時兼任 execution-plan review。
+Design Doc 內的 migration strategy 仍由本 skill review；implementation spec 交給 `spec-review` 檢查 fidelity、testing decisions、acceptance 與 traceability。Work graph 的 granularity、blocking edges 與 tracer-bullet / expand-contract sequencing 由 `work-breakdown` 自己的人類確認 gate 負責，不讓 design review 或 spec review 偷偷兼任 execution-plan review。
 
 ## Review discipline
 
