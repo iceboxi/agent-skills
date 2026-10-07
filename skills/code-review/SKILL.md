@@ -11,11 +11,11 @@ description: Independently review a code diff against correctness, the accepted 
 
 1. Pin fixed point（commit / branch / merge-base）與 diff scope。
 2. 找 accepted spec / Design Doc / issue；若不存在，仍可做 correctness / quality review，但明確標示 fidelity axis unavailable。
-3. 讀 project standards、AGENTS / lint / test conventions，只讀與 diff 相關內容。
+3. 讀 project standards、AGENTS / lint / test conventions；若有 relevant GLOSSARY / ADR，一併讀取，檢查命名/decision 是否與既有 domain model 衝突。只讀與 diff 相關內容。
 
 ## Review axes
 
-盡可能獨立執行各軸；環境支援 subagents 時可平行，避免一個 axis 的結論污染另一個。
+盡可能獨立執行各軸；環境支援 subagents 時可平行，避免一個 axis 的結論污染另一個。使用 Codex native review/subagent harness 執行即可，本 skill 定義 review rubric，不重造 diff/worktree engine。
 
 ### A. Correctness & runtime semantics
 
