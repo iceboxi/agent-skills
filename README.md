@@ -6,11 +6,35 @@
 | --- | --- |
 | `instructions/common.md` | 每個專案都適用的 Engineering Rules、繁體中文偏好與 Code Navigation。 |
 | `skills/explore` | 查證 repository 現況，建立 responsibility、state ownership、runtime flow、constraints 與 evidence。 |
-| `skills/design` | 根據需求與 repository evidence 完成 software design；主 skill 保留 hard invariants / routing，architecture、interface ownership、migration/verification 分成一層 references，產出可 review 的 Design Doc。 |
-| `skills/review` | 對既有 Design Doc 做獨立、evidence-based acceptance review，回傳 ACCEPT / ACCEPT WITH NON-BLOCKING NOTES / REVISE / BLOCKED。 |
-| `skills/report` | 從已核准 Design Doc 提取 technical presentation，保留 Current/Target、design realization、核心 protocol/code sketch、phase、estimate 與 validation。 |
+| `skills/codebase-design` | Shared architecture discipline：module depth、seam、interface surface、locality、leverage、extension cost；供 design/review/spec/code-review 使用。 |
+| `skills/design` | 根據 requirement + repository evidence 做 architecture / refactor / interface decisions，產出可 review Design Doc；不負責單純 doc merge 或 ticket-level execution plan。 |
+| `skills/review` | 對 Design Doc 做獨立 design acceptance review；驗證 ownership、contracts、runtime semantics、locality 與 scope drift。 |
+| `skills/doc-sync` | 將 accepted decisions / review resolutions bounded 地同步回 canonical technical document；沒有 design authority。 |
+| `skills/spec` | 將 accepted design 轉成 executable implementation spec：work graph、dependencies、acceptance、verification seams、stop conditions。 |
+| `skills/spec-review` | 驗證 implementation spec 對 accepted design 的 fidelity、可執行性、blast radius 與 verification。 |
+| `skills/implement` | 依 accepted spec / Design Doc 實作 ready package；小步驗證、阻止 design drift，完成後進 code review。 |
+| `skills/code-review` | 對 diff 分軸檢查 correctness/runtime、spec/design fidelity、locality/design quality 與 verification。 |
+| `skills/report` | 從已核准 Design Doc 提取 technical presentation，不參與 architecture decision。 |
 
-工作流程刻意收斂成 `explore → design ↔ review → implementation`；`report` 是 Design Doc 的 presentation extraction，不參與 architecture decision。專案的 ownership、建置指令與專案限制留在各專案的 `AGENTS.md`，跟著該專案版本更新。CLI 設定、登入憑證、裝置路徑與專案信任設定仍由本機管理。只有實際需要時，才加入可攜的設定範本或工具 bootstrap。
+主要 workflow：
+
+```text
+explore
+  ↓
+design ←── codebase-design（shared discipline）
+  ↓
+review
+ ┌┴─────────────────────────────────────────┐
+ │                                          │
+REVISE                                   ACCEPT
+ │                                          │
+ └────────────→ design                       ├─ small work → implement → code-review
+                                            ├─ larger work → spec → spec-review → implement → code-review
+                                            ├─ accepted decision merge → doc-sync
+                                            └─ presentation → report
+```
+
+`design` 決策、`review` 判斷、`doc-sync` 忠實整併、`spec` 規劃 executable work、`implement` 寫 code、`code-review` 驗 diff。不要用上一階段的 skill 順手做下一階段的工作。專案的 ownership、建置指令與專案限制留在各專案的 `AGENTS.md`，跟著該專案版本更新。CLI 設定、登入憑證、裝置路徑與專案信任設定仍由本機管理。只有實際需要時，才加入可攜的設定範本或工具 bootstrap。
 
 ```text
 agent-skills/
@@ -20,6 +44,9 @@ agent-skills/
     explore/
       SKILL.md
       agents/openai.yaml
+    codebase-design/
+      SKILL.md
+      agents/openai.yaml
     design/
       SKILL.md
       architecture.md
@@ -27,6 +54,21 @@ agent-skills/
       delivery.md
       agents/openai.yaml
     review/
+      SKILL.md
+      agents/openai.yaml
+    doc-sync/
+      SKILL.md
+      agents/openai.yaml
+    spec/
+      SKILL.md
+      agents/openai.yaml
+    spec-review/
+      SKILL.md
+      agents/openai.yaml
+    implement/
+      SKILL.md
+      agents/openai.yaml
+    code-review/
       SKILL.md
       agents/openai.yaml
     report/
