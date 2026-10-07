@@ -160,6 +160,35 @@ skills/
 
 每個 skill directory 至少有 \`SKILL.md\` 與 \`agents/openai.yaml\`；branch-specific references 與 templates 跟 skill 放在同一目錄。專案 ownership、build/test commands 與 project-specific constraints 留在各專案自己的 \`AGENTS.md\` / repository docs。
 
+## Matt mapping / deliberate differences
+
+目前已內化 Matt engineering flow 的主要能力，但名稱與 artifact 依本 workflow 調整：
+
+- \`ask-matt\` → \`ask-skills\`
+- \`grilling / grill-me / grill-with-docs / domain-modeling\` → 保留核心 frontier + HITL + glossary/ADR 模型
+- \`to-spec\` → \`spec\`，只做 accepted decision synthesis
+- \`to-tickets\` → \`work-breakdown\`，保留 tracer bullets / blocking / expand-contract，但不要求 issue tracker
+- \`implement-spec\` → \`implement-spec\`，以 Codex native subagents/worktrees 執行 frontier
+- \`pr\` → \`change-summary\`，同時適用 GitHub PR / GitLab MR
+- \`to-questionnaire\` → \`questionnaire\`
+- \`improve-codebase-architecture / diagnosing-bugs / research / prototype / tdd / code-review / retro / wayfinder / wizard / handoff / writing-for-agents\` → 保留核心 reasoning pattern，再移除特定 harness / tracker 假設
+
+我們另外保留：
+
+- \`explore\`：formal repository-current evidence phase
+- \`design\` + \`review\`：正式 Design Doc architecture baseline + acceptance gate
+- \`doc-sync\`：已收斂 decisions 的 bounded document integration
+- \`spec-review\`：Design Doc → implementation contract 的 fidelity gate
+- \`report\`：accepted Design Doc 的 presentation extraction
+
+目前**刻意不加入**：
+
+- Matt \`triage\`：它主要管理 incoming issue / external PR 的 tracker state machine。等專案真的需要 GitHub/GitLab request intake automation 再設計 tracker-neutral 版本。
+- Matt \`setup-matt-pocock-skills\`：我們已有跨 Codex/Claude/Cursor installer；domain docs 採 lazy creation，且 core workflow 不依賴 issue tracker。
+- \`teach\` / \`wait-what\` 等一般 productivity skills：不屬於目前 engineering workflow 的缺口。
+
+這些是 deliberate exclusions，不代表永久禁止；若 \`retro\` 或實際工作暴露 recurring need，再加入。
+
 ## 新裝置安裝
 
 需要 Git、Python 3.10+，以及可讀取此 private repository 的 GitHub SSH 設定。Installer 使用 Python standard library；symlinks 安裝適用 macOS 與 Linux。各 CLI 本身與帳號登入另行設定。
