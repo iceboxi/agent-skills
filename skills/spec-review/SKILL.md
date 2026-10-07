@@ -1,84 +1,84 @@
 ---
 name: spec-review
-description: Independently review an implementation spec against its accepted Design Doc, repository reality, migration constraints, and verification seams. Use before implementation as a fidelity and executability gate; do not redesign the architecture or rewrite the spec.
+description: Independently review an implementation spec against its accepted Design Doc, resolved decisions, repository reality, testing seams, and acceptance criteria. Use as a fidelity gate before work decomposition or implementation; do not redesign or decompose the work.
 ---
 
 # Spec Review
 
-檢查 implementation spec 是否忠實、可執行、可驗證。這不是 design review，也不是 code review。
+Spec Review 判斷：這份 spec 是否**忠實保存已接受設計，而且足以交給 implementation**。
+
+它不是 design review、work-breakdown review、code review。
 
 ## Inputs
 
 需要：
 
-- review subject：implementation spec；
+- implementation spec；
 - accepted Design Doc / decisions；
-- relevant design-review acceptance basis / reopen conditions；
-- 必要的 repository evidence。
-
-若缺少 baseline 到無法判斷 fidelity，回 `BLOCKED`。
+- design review acceptance basis / reopen conditions；
+- relevant repository evidence（只查會影響 verdict 的 current facts）。
 
 ## Review axes
 
-### 1. Design fidelity
+### 1. Decision fidelity
 
 檢查 spec 是否：
 
-- 偷偷新增 / 移除 owner、protocol、public capability、state copy；
-- 改變 dependency direction；
-- 把 implementation example 當成 mandatory architecture；
-- 改變 accepted runtime / lifecycle / persistence semantics；
-- 遺漏 design 的 migration gate / non-goal。
+- 遺漏 accepted owner / interface / lifecycle / migration invariant；
+- 偷偷新增 owner、protocol、public capability、state copy；
+- 把 implementation example 升格成 required contract；
+- 弱化 negative requirement / ordering / numeric / compatibility detail；
+- 把 unresolved recommendation 寫成 confirmed decision。
 
-### 2. Executability
-
-檢查 work packages 是否：
-
-- bounded；
-- dependency / blocker 明確；
-- 可在 fresh context 執行；
-- acceptance criterion 可觀察；
-- high-risk uncertainty 在依賴工作前被 gate；
-- wide refactor 沒被硬切成無法保持 coherent state 的假 vertical slices。
-
-### 3. Verification seams
+### 2. Testing decisions
 
 檢查：
 
-- 每個重要 behavior 有合適 seam / characterization / regression；
-- tests 驗證 behavior，不綁 private helper shape；
-- device / integration gate 沒被 unit test 假裝取代；
+- agreed seams 是否真的對應 observable behavior；
+- characterization / regression strategy 是否能抓 semantic drift；
+- device / hardware / OS gate 沒被 unit tests 取代；
+- expected values 有 independent source；
 - planned validation 沒被寫成 completed evidence。
 
-### 4. Locality & blast radius
+### 3. Acceptance & reopen conditions
 
-使用 `codebase-design` discipline 檢查：
+檢查：
 
-- 普通 extension 是否集中在 responsibility owner；
-- spec 是否預期大量 unrelated edits；
-- shotgun surgery 是 legacy migration 暫時成本，還是 target design 本身沒有形成 locality；
-- implementation work 是否順手加入 speculative cleanup。
+- acceptance criteria 可觀察；
+- migration / compatibility 成功條件具體；
+- implementation 發現哪些 evidence 必須停下回 design，有明確定義。
+
+### 4. Traceability
+
+高風險或 architecture-relevant statement 應能追到：
+
+- accepted Design Doc；
+- confirmed decision；
+- prototype result；
+- ADR / wayfinder resolution；
+- repository current fact。
+
+追不到就是 scope drift candidate，不因內容「看起來合理」而接受。
 
 ## Findings
 
-每個 finding：severity、claim、baseline evidence、repository evidence（relevant 時）、impact、required action。
+每個 finding：severity、claim、source evidence、impact、required action。
 
 Verdict：
 
-- **ACCEPT**
-- **ACCEPT WITH NON-BLOCKING NOTES**
-- **REVISE**
-- **BLOCKED**
+- ACCEPT
+- ACCEPT WITH NON-BLOCKING NOTES
+- REVISE
+- BLOCKED
 
-需要新 architecture decision 時，required action 是 `REQUIRES DESIGN`；不要在 review 中提供 replacement design。只是 spec ordering / acceptance / wording 不完整時，回 `spec` 修正。
+若需要新 architecture decision → REQUIRES DESIGN。
+若只是 spec 遺漏 / wording / fidelity → 回 spec。
 
 ## Completion criterion
 
 ACCEPT 類型表示：
 
-- spec 沒有 design drift；
-- implementation packages 足以執行；
-- verification 能偵測主要 semantic drift；
-- remaining uncertainty 有明確 stop / reopen condition。
-
-Acceptance 不代表 code 已實作或 tests 已通過。
+- spec 是 accepted design 的忠實 implementation contract；
+- testing / acceptance 足以偵測主要 semantic drift；
+- 沒有 task decomposition 或新 architecture decision 混入；
+- 可以安全交給 work-breakdown 或 implement。
