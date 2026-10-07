@@ -5,6 +5,8 @@ description: Behavior-first implementation discipline for new behavior and behav
 
 # TDD & Characterization
 
+若 repository 有 relevant `GLOSSARY.md` / ADR，測試名稱與 seam terminology 應沿用 domain language並尊重 durable decisions；TDD 不修改 glossary/ADR。
+
 這是 implement 內部可重用的 verification discipline，不是每次工作都必須獨立啟動的 workflow。
 
 核心原則：
@@ -50,7 +52,7 @@ Characterization 的 expected result 必須來自 current behavior、known fixtu
 
 ## Seams
 
-優先使用已存在、caller 真正使用的 seam。若 seam 本身就是 design 問題，回 codebase-design / design，不要為了測試偷偷新增 production protocol。
+優先使用已存在、caller 真正使用的 seam。測試前先明確列出本次 agreed seams 與各自能抓到 / 抓不到的 behavior。若 seam 本身就是 design 問題，回 codebase-design / design，不要為了測試偷偷新增 production protocol。
 
 區分：
 
