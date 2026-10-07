@@ -5,6 +5,7 @@
     "path": "upstream/mattpocock-skills",
     "repository": "https://github.com/mattpocock/skills.git",
     "skills": [
+      "skills/engineering/ask-matt",
       "skills/engineering/code-review",
       "skills/engineering/codebase-design",
       "skills/engineering/diagnosing-bugs",
