@@ -1,11 +1,13 @@
 ---
 name: challenge
-description: Adversarially strengthen an existing technical design or Design Doc with multiple independent reviewer perspectives. Use after a draft exists and before acceptance review when the goal is to uncover blind spots, hidden assumptions, weak interfaces, runtime/migration risks, or unresolved human decisions. Produces a consolidated challenge set, not an acceptance verdict.
+description: Adversarially strengthen an existing technical design or Design Doc with multiple independent reviewer perspectives. Use only when the user explicitly requests adversarial critique of a design, spec, or Design Doc; this is optional and never an automatic gate. Produces a consolidated challenge set, not an acceptance verdict.
 ---
 
 # Design Challenge
 
-用多個彼此獨立的角度攻擊既有 Design Doc / technical proposal，目標是 **找盲點並強化設計**，不是判定 ACCEPT / REJECT。
+這是**使用者主動呼叫**的選用 critique，不是主流程的預設階段。
+
+用多個彼此獨立的角度檢查既有 Design Doc / spec / technical proposal，目標是 **找盲點並強化設計**，不是判定 ACCEPT / REJECT。
 
 這是一個高-recall critique pass：可以提出值得調查的 hypothesis，但必須和已證實 finding 分開。不要把 speculative concern 寫成 repository fact。
 
@@ -96,17 +98,8 @@ Human decision gap 必須真的交給 human。不要讓 challenger agent 自己�
 
 Challenge 完成不代表 Design Doc 已 accepted。
 
-## 7. Handoff
+## 7. Optional follow-up
 
-```text
-design draft
-    ↓
-challenge
-    ├─ human decision gaps → grilling / grill-me
-    ├─ validation gaps → research / prototype / characterization
-    └─ design/doc gaps → design / document-maintenance
-                            ↓
-                          review
-```
+由使用者決定哪些 findings 要回到已確定的需求、spec、計畫流程釐清。若 Design Doc 因來源更新而過期，使用 `design` 的 maintenance mode 同步文件；不要在 documentation 階段決定新的架構。
 
-如果 challenge 沒有找出需要改變 design 的問題，可以直接進 `review`；仍由 review 獨立決定 acceptance。
+不要自動呼叫 `review` 或阻塞 implementation。
