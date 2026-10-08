@@ -1,138 +1,67 @@
-# Interfaces & Ownership Guidance
+# Interface, State & Runtime Documentation Guidance
 
 ## Contents
 
-- Degrees of freedom
-- Ownership dimensions
-- Protocol / interface contract
-- Capability-minimal boundaries
-- Abstraction traceability
+- Evidence and authority
+- Ownership mapping
+- Protocol contract and sketches
 - Async / cancellation semantics
-- Complexity guardrails
+- Fidelity audit
 
-## Degrees of freedom
+## Evidence and authority
 
-Software design 是高 freedom reasoning task。不要把 skill 寫成固定 architecture recipe。
+本 reference 指導 **記錄已確立的技術設計**，不是新增 abstraction 的設計教學。Source 可以是先前確認的 architecture decisions、implementation spec、已解析的 ADR / prototype evidence 與 repository current facts。
 
-### Low freedom：必須遵守
+整理 protocol / function 時可以將相同決策畫成關係圖或轉為精簡 code sketch，但不能默默決定新的 public API、seam、concrete adapter、ownership 或 failure semantic。
 
-- CURRENT / PROPOSED / CONFIRMED / PLANNED VALIDATION 不混淆。
-- canonical state 不得無意間形成雙 owner / 雙 writer。
-- significant protocol 必須有 purpose、consumer、implementer、placement。
-- refactor 必須保留或明確改變 behavior invariant。
-- architecture / runtime / migration 語意不能混在同一個不明確 view。
-- 未驗證事項不得寫成已完成。
+若沒有足夠的 signature/detail，可列出已知 contract + `UNRESOLVED`；不要用編造的可編譯程式碼掩蓋缺漏。示意性 sketch 標 `ILLUSTRATIVE`，不具有超出來源的約束力。
 
-### Medium freedom：提供 preferred shape
+## Ownership mapping
 
-- interface sketch 深度；
-- phase granularity；
-- diagram decomposition；
-- migration / validation strategy；
-- error / lifecycle detail；
-- file organization。
+整理已知的：
 
-依 scope / risk 調整，不要求每份文件同形。
+- **State ownership**：canonical、draft、workflow、temporary state 的 owner。
+- **Workflow ownership**：ordering、retry、progress、timeout 由誰控制。
+- **Policy ownership**：feature / business decision 由誰做。
+- **Integration ownership**：BLE / DB / network / OS / legacy adapter 在哪裡。
+- **Presentation ownership**：render、interaction、UI-only state 在哪裡。
 
-### High freedom：讓 repository evidence 決定
+單一 domain 不代表上面都由同一個 class 負責；不可因為圖示簡化而誤導為雙 owner 或全能 object。
 
-- architecture pattern 名稱；
-- class / protocol 數量；
-- concrete type vs protocol；
-- naming；
-- section ordering；
-- file split；
-- helper implementation style。
+## Protocol contract and sketches
 
-如果不同做法不會破壞 requirement / invariant，不要用 skill 強制單一路徑。
-
-## Ownership dimensions
-
-分別回答：
-
-- **State ownership**：canonical state 在哪裡？
-- **Workflow ownership**：sequence / retry / progress / timeout 誰持有？
-- **Policy ownership**：feature / business decision 誰做？
-- **Integration ownership**：BLE / DB / network / OS / legacy adapter 誰接？
-- **Presentation ownership**：render / interaction / UI-only state 誰持有？
-
-同一 domain 不代表上述責任都塞進同一 class。
-
-## Protocol / interface contract
-
-每個 significant protocol / interface 說明：
+對每個 significant protocol / interface，從來源整理：
 
 - Purpose / problem solved
-- Consumer
-- Implementer
-- Responsibilities
-- Non-responsibilities
-- Key methods / data
-- Error semantics（relevant 時）
-- Concurrency / lifecycle（relevant 時）
+- Consumer / caller
+- Implementer / adapter
+- Placement / owning module
+- Responsibilities / non-responsibilities
+- Key methods / data contract
+- Error / concurrency / lifecycle contract（relevant 時）
 
-提供足以 review 的 code sketch，但不要寫完整 implementation。
+在 Design Realization diagram 中顯示其位置，重要 call / callback 在 sequence view 中對應。Code sketches 優先表達已定案的 capability 與 method relationship；不要為了填滿畫面而增加 method 或 protocol。
 
-## Capability-minimal boundaries
-
-Consumer-facing interface 只暴露真實 consumer 需要的能力。
-
-特別檢查：
-
-- owner-only mutation
-- ingress / hydration
-- persistence / upload
-- migration control
-- raw event stream
-- reset / administrative APIs
-
-這些預設保持 internal / narrower boundary。不要因同一 domain 支援它們，就做成「萬能 Client」。
-
-## Abstraction traceability
-
-significant abstraction 至少要能從下列一處追到：
-
-- Design Realization diagram；
-- responsibility / contract table；
-- runtime flow；
-- integration / migration mapping；
-- code sketch + 明確 placement 說明。
-
-但若 abstraction 影響「位置、owner、dependency、interaction」，只靠 table 不夠，應在對應 diagram 出現。
+`ILLUSTRATIVE` code sketch 可以略去 implementation noise，但若名稱、參數或回傳型別並非已確認，就用概念性 placeholder 或註明未定，不要將其偽裝成確定 API。
 
 ## Async / cancellation semantics
 
-Behavior-preserving refactor 遇到 timer、retry、observer、DispatchQueue / TaskDispatcher、delayed callback 或其他 queued work 時，不要把它們統一成一個 generic `cancel` 語意。
+Refactor 描述 legacy async 行為時應從 repository evidence 區分：
 
-必須依 repository evidence 區分至少這些 lifecycle stage：
-
-- 尚未排程；
+- work 尚未排程；
 - timer / delayed work 已排程但尚未觸發；
-- callback 已觸發、後續 retry / next-step 已 enqueue；
+- callback 已觸發並 enqueue 後續 work；
 - queued work 已開始執行；
-- operation 整體 invalidated。
+- operation / scope 已 invalidated。
 
-**移除 observer、停止尚未觸發的 timer、阻止已 enqueue work、取消整個 operation 是不同 semantics，除非 current evidence 證明等價。**
+移除 observer、停止 timer、取消 queued work、invalidate 整個 operation 可能各有不同語意。只有在來源明確證實時才能寫成相同。
 
-若 finish / disconnect / scene exit / scope invalidation 會改變 asynchronous work，Design Doc 應明確說明：
+針對 finish / disconnect / scene exit 等事件，忠實呈現已確認的：哪些 work 停止、哪些可繼續、是否再排程、何時阻止 side effects。若 spec 沒有處理重要交錯情境，標示 gap，不由 Design Doc 自行發明 cancellation policy。
 
-1. 哪些尚未觸發的 work 被取消；
-2. 哪些已 enqueue 的 work 仍會執行；
-3. 執行後是否會再建立新的 timer / retry；
-4. observation removal 是否只停止 delivery，還是也停止 workflow；
-5. operation generation / scope invalidation 從哪個 stage 開始阻止 side effect。
+## Fidelity audit
 
-對 ordering-sensitive legacy flow，加入 characterization fixture 覆蓋「callback 已 enqueue next-step，但 lifecycle event 在 next-step 執行前發生」的 interleaving；不能只測 steady-state success / timeout。
-
-## Complexity guardrails
-
-新增 abstraction 前問：
-
-1. 現有 concrete type 為何不足？
-2. 它切斷哪個 coupling / responsibility？
-3. 誰會 consume？
-4. 誰 implement / own？
-5. 新增的 wiring / testing / maintenance cost 是什麼？
-6. 若拿掉它，哪個 invariant 或 extension ability 會變差？
-
-不要用 protocol 數量判定好壞；也不要用「只有一個 service」掩蓋 god object。
+- [ ] 重大 contract 有 purpose、consumer、implementer、placement。
+- [ ] State owner、workflow owner、policy owner 不混淆。
+- [ ] Code sketches、diagram 與 prose 用同一 vocabulary。
+- [ ] 沒有將 illustrative type / helper 擴張成新的 architecture decision。
+- [ ] Lifecycle / async edge cases 沒有把 assumption 偽裝成既有行為或已定案 contract。
