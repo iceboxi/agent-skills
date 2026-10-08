@@ -1,14 +1,14 @@
 # Spec Fidelity Review
 
-Use this branch when the review subject is an implementation spec produced from an accepted Design Doc or other accepted architecture baseline.
+Use only on explicit user request to assess spec fidelity to confirmed decisions, requirements, ADRs, or an accepted prior architecture baseline. A post-spec standalone Design Doc does not automatically become implementation authority.
 
-This is the same independent review authority as the main review skill, applied to a different artifact. Do not create a second review workflow.
+This is an optional mode of the same independent review skill, not another mandatory phase.
 
 ## Inputs
 
 - implementation spec;
-- accepted Design Doc / confirmed decisions;
-- prior design-review acceptance basis and reopen conditions;
+- confirmed decisions / requirements / ADRs (accepted prior design baseline only if one actually exists);
+- prior review acceptance basis and reopen conditions, if available;
 - repository evidence only where it affects fidelity.
 
 ## Check
@@ -45,4 +45,4 @@ A finding that requires a new architecture decision returns to design. A fidelit
 
 ## When to use
 
-Run this mode when the implementation spec will become a durable handoff for multi-session / multi-agent work, or when architecture fidelity is high-risk. Small single-context work does not require a second mandatory review ceremony.
+Use only when the user explicitly requests a fidelity review, for example with high-risk multi-session work. Do not run automatically after spec, tickets or Design Doc.
