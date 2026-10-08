@@ -19,10 +19,11 @@
 
 Matt skills are the generic workflow base. Apply these local differences only when the branch matches:
 
-- Architecture-changing feature/refactor: after requirements/decisions are sufficiently aligned, use `design` to create the architecture proposal. Use `challenge` optionally to adversarially strengthen a complex/high-risk draft, then use `review` to independently accept or reject the baseline before `to-spec` or implementation.
-- `challenge` and `review` have different authorities: challenge is high-recall multi-perspective critique with no verdict; review is low-noise independent acceptance based on authoritative requirements and repository evidence.
-- Architecture-focused `wayfinder`: when the fog clears into a coherent architecture change, hand off through `design → optional challenge → review → to-spec`. If architecture is already accepted and wayfinding only resolved execution uncertainty, go directly to `to-spec`.
-- For high-risk or multi-session implementation specs, the same `review` skill may use its spec-fidelity mode; do not create a separate review skill.
+- Follow Matt upstream by default: `grill-with-docs → to-spec → to-tickets → implement` (or its small-work shortcut). Requirements and architecture decisions belong to the existing discussion/spec process, not a mandatory local design stage.
+- On explicit user request, run local `design` **after** the spec and work breakdown to publish an independently readable Markdown Design Doc for technical/manager communication, normally before implementation. Extract and visualize source decisions; do not redesign or override the spec.
+- Do not expose individual tickets (IDs, names, statuses, URLs, ticket-to-phase mapping) in the Design Doc. Summarize planned work as meaningful engineering phases, keeping relevant dependencies, gates and evidence.
+- `challenge` and `review` are both optional **user-invoked** skills, never automatic acceptance gates. Challenge explores blind spots; review assesses a selected design/spec only when asked.
+- Architecture-focused `wayfinder` rejoins upstream at `to-spec`; no Design Doc is required unless the user asks for one.
 
 # Prototype / Verification Overlay
 
