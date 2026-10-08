@@ -147,21 +147,21 @@ upstream/mattpocock-skills/
 ~~~text
 ./agent-skills install
 ./agent-skills update
-./agent-skills doctor
+./agent-skills verify
 ~~~
 
 - **install**：第一次安裝或修復目前 checkout 宣告的 environment。
-- **update**：平常唯一的維護指令。更新本 repo、同步目前 pin、檢查 Matt upstream、reconcile installation，最後 health check。
-- **doctor**：覺得環境有問題時使用；執行 installer tests 並驗證實際安裝的 symlinks / manifest。
+- **update**：更新本 repo、同步已鎖定的 Matt submodule 版本、reconcile installation 並驗證；不自動升級 Matt、不 Commit／Push。
+- **verify**：唯讀檢查 upstream pin、installer tests、symlinks / manifest，不初始化或修復檔案。
 
-`test`、`verify`、`upstream` 不再是 public CLI concepts。底層 Python commands 仍保留給 installer 開發與 troubleshooting。
+`test`、`upstream` 不屬於公開 CLI；底層 Python commands 保留供 installer 開發與 troubleshooting。
 
 ## New device installation
 
-需要 Git、Python 3.10+，以及可讀取本 private repository 的 GitHub SSH 設定。
+需要 Git、Python 3.10+，以及可存取本 private repository 的 GitHub HTTPS 認證。
 
 ~~~sh
-git clone --recurse-submodules git@github.com:iceboxi/agent-skills.git ~/Documents/agent-skills
+git clone --recurse-submodules https://github.com/iceboxi/agent-skills.git ~/Documents/agent-skills
 cd ~/Documents/agent-skills
 ./agent-skills install
 ~~~
@@ -201,41 +201,20 @@ cd ~/Documents/agent-skills
 1. 確認 tracked working tree 沒有未提交修改。
 2. `git pull --ff-only` 更新本 repo。
 3. checkout parent repo 已信任的 Matt submodule pin。
-4. fetch Matt `origin/main` 並檢查是否有新版。
-5. 若沒有新版：tests → install/reconcile → verify。
-6. 若有新版：互動詢問是否升級。
+4. 驗證 Matt checkout 與 Repository pin 一致。
+5. 執行 tests → reconcile installation → verify。
 
-若選擇不升 Matt，現有 pin 不變，仍會完成本 repo 的 update / reconcile / health check。
-
-若接受 Matt 更新：
-
-~~~text
-checkout latest Matt revision
-        ↓
-validate selected upstream skills
-        ↓
-tests
-        ↓
-install / reconcile
-        ↓
-verify
-        ↓
-commit parent-repo submodule pin
-        ↓
-push
-~~~
-
-如果 validation 失敗，CLI 會把 submodule checkout 還原到更新前的 pin，不提交新版。在 non-interactive 環境發現 Matt 新版時，預設保持目前 pin。
+日常 update 不會檢查 Matt 最新版本、不變更 upstream pin，也不自動 Commit / Push。Matt 新版本由維護者另外評估，確認後再透過 Git 更新並發布 pin。
 
 ## Health check
 
 環境看起來不對時：
 
 ~~~sh
-./agent-skills doctor
+./agent-skills verify
 ~~~
 
-它同時執行 installer/unit tests 與 actual installed-environment verification。一般使用者不需要分辨底層的 `test` / `verify`。
+它唯讀檢查 Matt submodule pin、執行 installer/unit tests，並驗證實際安裝環境。一般使用者不需要分辨底層的 `test` / `verify`。
 
 底層 troubleshooting：
 
