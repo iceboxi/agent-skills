@@ -14,11 +14,11 @@ Commands:
       Install or reconcile the environment declared by this checkout.
 
   update
-      Update agent-skills, check Matt upstream, optionally adopt a newer
-      upstream revision, then reconcile and health-check the environment.
+      Fast-forward agent-skills, sync its pinned Matt submodule,
+      reconcile installed links, and verify. Never commit or push.
 
-  doctor
-      Run the test suite and verify the installed environment.
+  verify
+      Read-only check of the pinned upstream, installer tests, and links.
 
   help
       Show this help.
@@ -26,7 +26,7 @@ Commands:
 Typical use:
   ./agent-skills install   # first setup / repair
   ./agent-skills update    # normal maintenance
-  ./agent-skills doctor    # when something looks wrong
+  ./agent-skills verify    # read-only health check
 EOF
 }
 
@@ -44,24 +44,37 @@ ensure_upstream() {
   fi
 }
 
+verify_upstream_pin() {
+  local pinned current
+  if [[ ! -e "$UPSTREAM/.git" ]]; then
+    echo "Pinned Matt upstream is not initialized; run './agent-skills install'." >&2
+    return 1
+  fi
+
+  pinned="$(git -C "$ROOT" ls-tree HEAD -- upstream/mattpocock-skills | awk '$2 == "commit" {print $3}')"
+  if [[ -z "$pinned" ]]; then
+    echo "Cannot find the Matt submodule pin in HEAD." >&2
+    return 1
+  fi
+  current="$(git -C "$UPSTREAM" rev-parse HEAD)"
+  if [[ "$current" != "$pinned" ]]; then
+    echo "Matt upstream checkout ($current) differs from the repository pin ($pinned)." >&2
+    echo "Review local submodule changes before restoring the pinned revision." >&2
+    return 1
+  fi
+  echo "Matt upstream matches the pinned revision: $pinned"
+}
+
 run_tests() {
   echo
   echo "==> Running tests"
-  "$PYTHON" -m unittest discover -s "$ROOT/tests" -v
+  PYTHONDONTWRITEBYTECODE=1 "$PYTHON" -m unittest discover -s "$ROOT/tests" -v
 }
 
 verify_environment() {
   echo
   echo "==> Verifying installed environment"
-  "$PYTHON" "$ROOT/install.py" --verify
-}
-
-run_doctor() {
-  ensure_upstream
-  run_tests
-  verify_environment
-  echo
-  echo "Environment healthy."
+  PYTHONDONTWRITEBYTECODE=1 "$PYTHON" "$ROOT/install.py" --verify
 }
 
 has_arg() {
@@ -79,72 +92,20 @@ has_arg() {
 require_clean_update_tree() {
   if [[ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ]]; then
     cat >&2 <<'EOF'
-Repository has tracked local changes.
-Commit or stash them before './agent-skills update'.
+Repository has tracked local changes (possibly a changed submodule pin).
+Review, commit, or safely restore them before './agent-skills update'.
 EOF
     exit 1
   fi
 }
 
-should_update_upstream() {
-  if [[ ! -t 0 ]]; then
-    echo "Matt upstream has an update, but stdin is not interactive; keeping the current pin."
-    return 1
-  fi
-
-  local answer
-  read -r -p "Matt upstream has an update. Apply, validate, commit, and push it? [y/N] " answer || true
-  case "$answer" in
-    y|Y|yes|YES|Yes) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
 reconcile_environment() {
+  verify_upstream_pin
   run_tests
   echo
   echo "==> Reconciling installed environment"
   "$PYTHON" "$ROOT/install.py"
   verify_environment
-}
-
-apply_upstream_update() {
-  local previous
-  previous="$(git -C "$UPSTREAM" rev-parse HEAD)"
-
-  echo
-  echo "==> Updating Matt upstream"
-  if ! "$PYTHON" "$ROOT/update_upstream.py" --update; then
-    return 1
-  fi
-
-  if ! run_tests || ! "$PYTHON" "$ROOT/install.py" || ! "$PYTHON" "$ROOT/install.py" --verify; then
-    echo >&2
-    echo "Upstream validation failed; restoring previous pin checkout: $previous" >&2
-    git -C "$UPSTREAM" checkout --detach "$previous"
-    "$PYTHON" "$ROOT/install.py" >/dev/null 2>&1 || true
-    return 1
-  fi
-
-  git -C "$ROOT" add upstream/mattpocock-skills
-  if git -C "$ROOT" diff --cached --quiet -- upstream/mattpocock-skills; then
-    echo "Upstream checkout did not change."
-    return 0
-  fi
-
-  git -C "$ROOT" commit -m "Update Matt skills upstream"
-
-  if ! git -C "$ROOT" push; then
-    cat >&2 <<'EOF'
-
-Upstream was validated and committed locally, but push failed.
-The installed environment is healthy; push the commit manually when ready.
-EOF
-    return 1
-  fi
-
-  echo
-  echo "Matt upstream updated, validated, pinned, and pushed."
 }
 
 command="${1:-help}"
@@ -158,6 +119,7 @@ require_command "$PYTHON"
 case "$command" in
   install)
     ensure_upstream
+    verify_upstream_pin
     run_tests
     echo
     echo "==> Installing environment"
@@ -177,39 +139,25 @@ case "$command" in
     fi
 
     require_clean_update_tree
-
     echo "==> Updating agent-skills"
     git -C "$ROOT" pull --ff-only
     git -C "$ROOT" submodule update --init --recursive
-    ensure_upstream
-
+    reconcile_environment
     echo
-    echo "==> Checking Matt upstream"
-    "$PYTHON" "$ROOT/update_upstream.py"
-
-    current="$(git -C "$UPSTREAM" rev-parse HEAD)"
-    latest="$(git -C "$UPSTREAM" rev-parse origin/main)"
-
-    if [[ "$current" != "$latest" ]] && should_update_upstream; then
-      apply_upstream_update
-    else
-      reconcile_environment
-      echo
-      if [[ "$current" != "$latest" ]]; then
-        echo "Update complete. Matt upstream remains pinned at $current."
-      else
-        echo "Everything is up to date and healthy."
-      fi
-    fi
+    echo "Update complete. Matt upstream remains at the repository pin."
     ;;
 
-  doctor)
+  verify)
     if [[ $# -ne 0 ]]; then
-      echo "'doctor' does not accept additional arguments." >&2
+      echo "'verify' does not accept additional arguments." >&2
       usage >&2
       exit 2
     fi
-    run_doctor
+    verify_upstream_pin
+    run_tests
+    verify_environment
+    echo
+    echo "Environment healthy."
     ;;
 
   help|-h|--help)
