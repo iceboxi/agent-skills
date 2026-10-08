@@ -1,120 +1,67 @@
-# Migration, Estimation & Verification Guidance
+# Phases, Estimates & Verification Documentation
 
 ## Contents
 
-- Applicability
-- Implementation phases
-- Feasibility gates
-- Progressive validation
-- Delivery planning
-- Engineering estimate
-- Verification & acceptance
+- Boundary and self-contained output
+- Phase synthesis
+- Migration and feasibility
+- Engineering estimates
+- Verification and acceptance
+- Final audit
 
-## Applicability
+## Boundary and self-contained output
 
-這份 reference 只在 migration / planning / validation 需要時讀取。不要為了 checklist 把每個小設計擴張成 project / release governance 文件。
+從已確認的 spec、工作規劃、決策、estimate、test strategy 提取 **工程報告需要的內容**，不重新拆解工作、不調整依賴、不創造 engineering / release gate。
 
-核心每案都需要：
+Design Doc 必須獨立閱讀：Phase 直接說明目標、內容、交付成果、工時與驗證，不出現 issue / ticket ID、標題、狀態、tracker URL、ticket-to-phase mapping，也不要求讀者開啟 tracker 才能理解。
 
-- implementation / migration phases（可只有一個 bounded phase）
-- engineering estimate
-- acceptance / regression strategy
+## Phase synthesis
 
-下列僅在 evidence / scope 觸發時展開：
-
-- feasibility gate / fallback
-- shadow / differential validation
-- branch / integration coordination
-- release / rollout / monitoring
-- external resource readiness
-- measurable outcome / extension exercise
-
-未觸發就省略，不填 N/A。
-
-## Implementation phases
-
-Phase 從 architecture dependency、migration safety、validation gates 推導，不按檔案數或任意 P1/P2 切。
+將詳細工作拆分**彙總為少量可向工程與主管說明的 implementation phases**；數量依已規劃的工作與架構邊界決定，不按 ticket 數一對一對照。
 
 每個 phase 說明：
 
-- Goal / preconditions
-- Components / contracts changed
-- Behavior preserved / introduced
-- Verification
-- Compatibility / bridge
-- Stop / rollback condition
-- Dependency
-- Effort range
+- Goal / deliverable
+- Major responsibilities / interfaces / flows affected
+- Preconditions / real dependencies
+- Relevant behavior preserved / introduced
+- Verification / completion signal
+- Migration gate / stop / rollback condition（有來源時）
+- Effort range（已有可追溯數字時）
 
-避免 big-bang，也避免為了 incremental 人為製造 dual owner / dual writer。
+對原本可並行工作，不要因報告順序造成假的 hard dependency。若切換必須先完成 characterization / compatibility，保留這個重要 gate。
 
-temporary bridge 必須有 owner、scope、retirement condition，並在 Migration / Transitional view 可追查。
+## Migration and feasibility
 
-## Feasibility gates
+只記錄來源支持的 transition strategy：legacy / new coexistence、state transfer、expand-contract、bridge retirement、stop criteria 等。若行為保留是目標，交代 Current behavior invariant 與如何觀察。
 
-只有尚未驗證且會改變 target / contract / migration / major estimate 的假設才需要 gate。
+Feasibility unknown 若會改變 target、主要 contract、migration 或重大 estimate，明確標 `UNRESOLVED` 或已規劃的 validation gate；不要自行決定 fallback。
 
-Gate 說明：
+不為一般小型功能製造 rollout、ROI、project governance 等多餘章節。
 
-- assumption
-- required evidence / spike
-- pass / stop criteria
-- earliest validation point
-- fallback / reopen decision
-- estimate impact
+## Engineering estimates
 
-已有足夠 repository / test evidence 時，不為形式新增 spike。
+- 優先使用已確認的估算、單位、範圍與前提；已存在的 work estimates 可以正確彙總，但不能自行加 buffer 或假精確數字。
+- 分開描述 engineering effort（人時 / 人日）與 calendar duration。
+- 估算必須涵蓋來源已納入的實作、整合、review、回歸測試及 device / runtime verification。
+- 未提供可追溯數字時明確列出缺口與影響，不因 Design Doc 需要工時就創造一組數字。
+- 已知的高風險、外部依賴、re-estimation conditions 在文件中具體交代，不作「一切可能延後」的空泛提醒。
 
-## Progressive validation
-
-高風險 behavior preservation / owner switch 可考慮：
-
-- golden fixtures
-- differential tests
-- trace replay
-- read-only shadow compare
-
-shadow path 不得 send command、寫正式 storage、通知正式 consumer 或成為第二 writer。
-
-## Delivery planning
-
-只有長期、多人、跨 release 或 production rollout 真的影響設計安全時才展開：
-
-- branch / integration coordination
-- build / release checkpoints
-- rollout / monitoring
-- external device / account / data readiness
-- rollback limitations
-
-不要在一般單一 refactor 中預設新增這些章節。
-
-## Engineering estimate
-
-Estimate 必須可追到 phases / work packages：
-
-- effort range + total
-- unit（人時 / 人日；人日說明基準）
-- assumptions / reusable mechanisms
-- exploration / implementation / review / regression / device validation
-- dependencies / parallelism
-- unknowns / re-sizing conditions
-
-effort 與 calendar duration 分開。不要製造假精確數字，也不要套固定 buffer 百分比。
-
-## Verification & acceptance
+## Verification and acceptance
 
 區分：
 
-- existing tests / fixtures
-- characterization tests
-- new unit / integration tests
-- manual / device validation
-- planned spike
+- Existing tests / fixtures
+- Characterization baseline
+- Planned unit / integration tests
+- Manual / device / hardware verification
+- Prototype / spike evidence（verified / planned）
 
-Behavior-preserving refactor 至少回答：
+描述 behavior-preserving refactor 時，將已確認的 observable baseline、target invariant、verification method、stop condition 寫完整。不把 planned test 寫成 pass，也不把 unit test 當成 BLE、Watch、background lifecycle 或 entitlement 的 device evidence。
 
-existing baseline → target invariant → verification method → failure / stop condition
+## Final audit
 
-Confirmed goals 若包含 extensibility / UI separation / maintainability，可選代表性的 extension / integration exercise；只有 scope 真正要求量化 outcomes 時才加入 metrics / ROI。
-
-未執行的 validation 一律保持 PLANNED VALIDATION，不得宣稱已通過。
+- [ ] Phase 可獨立理解，沒有呈現任何 tracker management 資訊。
+- [ ] 依賴 / gate 與來源一致，沒有自行重排成新的工程決策。
+- [ ] Estimate 可追溯、有單位、沒有虛構的精確數字。
+- [ ] Verification 標明 existing / planned 和 unit / integration / device 層次。
