@@ -1,351 +1,142 @@
 ---
 name: design
-description: Design a concrete, implementable software solution for a new feature or refactor from repository evidence and requirements. Produce a Markdown Design Doc with architecture, ownership, interfaces, runtime flows, migration, estimates, and verification. Use before implementation; do not merely reformat an already-decided design.
+description: Produce a self-contained, fixed-structure Markdown Design Doc from already-decided requirements, implementation spec, tickets, and repository evidence. Use after grill-with-docs, to-spec, and to-tickets when a human-readable technical design/report is needed. Document existing decisions and plans; do not redesign or change the implementation contract.
 ---
 
-# Software Design
+# Design Documentation
 
-本 skill 負責 **software design 本身**。輸入通常是 requirement + repository；輸出是可獨立 review、可實作的 Markdown Design Doc。
+`design` 是 **post-spec / post-tickets documentation skill**，不是另一輪 architecture design、requirements interview、spec authoring 或 ticket planning。
 
-預設使用繁體中文，保留 code identifiers、API names 與 repository terminology。
+輸入為已收斂的需求與技術決策、implementation spec、工作拆分，以及必要的 repository evidence。輸出為可獨立閱讀、適合工程審閱與主管報告的 **Markdown Design Doc**。使用繁體中文，保留 code identifiers 與台灣團隊自然使用的工程術語。
 
 ## Contents
 
-- Core contract
-- Evidence discipline
-- Degrees of freedom
-- New feature vs refactor
-- Architecture & visual coverage
-- Interfaces & ownership
-- Decisions & uncertainty
-- Migration / estimates / verification
-- Design Doc output
-- Self-correction loop
-- References
+- Role and boundaries
+- Inputs and evidence
+- Documentation workflow
+- Fixed document structure
+- Architecture and diagrams
+- Interfaces and runtime semantics
+- Phases, estimates and verification
+- Handling gaps and changes
+- Completion audit
+- References and maintenance
 
-## 1. Core contract
+## 1. Role and boundaries
 
-Design 必須：
+- **Extract / organize / visualize**：只整理已建立的 requirement、architecture decisions、runtime contracts 與 implementation plan，從 repository evidence 解釋 current state。
+- **Self-contained**：Design Doc 本身包含理解方案所需的背景、技術決策、圖、code sketch、工時與驗證策略，讀者不必開啟上游文件才看得懂。
+- **No ticket exposure**：Design Doc 不列 ticket ID、ticket title、ticket status、tracker URL、ticket-to-phase mapping 或其他 issue-management detail。來源 tickets 可供 skill 閱讀，但不是文件章節或讀者的外部依賴。
+- **No second design authority**：不得藉由補圖、補 protocol、估時或重新分組 phase，默默增加新 requirement、state owner、interface contract、runtime semantics、migration strategy、verification promise。
+- **Implementation authority**：實作依照 spec、已確認的決策與實作工作拆分；Design Doc 是實作前的說明快照，不是不可修改的 API blueprint，也不構成預設 acceptance gate。
+- **Optional artifact**：只有使用者需要這份 Design Doc 時才執行；沒有報告需求，可直接沿 upstream workflow 實作。
+- `challenge` / `review` 都是使用者**手動明確呼叫**的選項，不能由 `design` 自動接續、也不構成產生文件或實作的前置條件。
 
-1. 理解 requirement、scope、non-goals、compatibility constraints；先讀 relevant `GLOSSARY.md` / `GLOSSARY-MAP.md` 與 ADR，沿用既有 domain language，不重新爭論已 accepted durable decision。
-2. 讀取 relevant repository code，建立足以支撐設計的 current model；repository-specific claims 以 code/tests 為 evidence，不要求獨立 explore phase。
-3. 找出 responsibilities、dependencies、state ownership、extension points 與主要 runtime flows。
-4. 先建立 target responsibility model，再決定 abstraction / protocol / pattern。
-5. 用足夠的 architecture / sequence views 讓 reviewer 看懂 **placement、ownership、interaction、migration**；不要用 table 取代本來需要圖才能理解的 relationship。
-6. 只有在確實解決 seam / ownership / testability / extensibility 問題時才引入 abstraction；需要判斷 module depth、locality、interface surface 時使用 `codebase-design` discipline。
-7. 提供可 review 的 concrete interfaces / type sketches，並對已確認的「可擴充／易維護」目標用代表性 change-locality exercise 驗證修改半徑。
-8. 對 refactor 提供 Current → Target mapping、behavior invariants 與 migration。
-9. 從 architecture dependency 與 migration safety 推導 implementation phases。
-10. 提供 engineering estimate 與 verification / regression strategy。
-11. 主動處理會改變 architecture / migration / estimate 的 uncertainty；不要只列 Pending。
-12. 交付前執行 self-audit；有 architecture gap 就先修文件。
+## 2. Inputs and evidence
 
-核心流程：
+開始前收集足夠的來源：
 
-```text
-Requirement
-    ↓
-Repository evidence
-    ↓
-Current model / integration context
-    ↓
-Target responsibility & ownership
-    ↓
-Architecture views
-    ↓
-Interfaces / runtime flows
-    ↓
-Migration / phases / estimate
-    ↓
-Verification
-    ↓
-Self-audit & revise
-    ↓
-Design Doc
-```
+1. `grill-with-docs` 已確認的 requirement / scope / domain decisions，相關 ADR、glossary。
+2. `to-spec` 產生的 implementation spec：目標、已定義的 architecture / interface / runtime / test decisions。
+3. `to-tickets` 的完整工作內容與依賴：用來理解實作順序、migration、驗證和階段範圍；**只供內部彙整，不在 Design Doc 暴露其追蹤結構**。
+4. 對應 repository 的 relevant code / tests：支撐 current architecture、integration seam、legacy behavior，重要 codebase-specific claim 使用 `file:line` + symbol evidence。
+5. 經確認的 estimates / assumptions / test strategy / prototype outcomes（若存在）。
 
-## 2. Evidence discipline
+這些來源是 **writing inputs**，而非報告內需要列出的閱讀前置條件。若 spec / work plan 未完成，指出欠缺哪種輸入；不要自行執行一次新的架構設計或創造 tickets 來填補。
 
-Project-specific technical conclusion 必須來自 repository evidence。
+Source priority：明確已確認的使用者決策與目前有效的 spec / ADR；接著是實作計畫與可驗證 repository facts。遇到矛盾時，先標示衝突並追查是否已被後續決策取代；不能自行挑選較喜歡的方案。
 
-區分：
+在文件中區分：
 
-- **CURRENT**：實際存在的 code / behavior。
-- **INTERPRETATION**：由 evidence 推導的 current model。
-- **PROPOSED**：尚未實作的 target。
-- **CONFIRMED DECISION / REQUIREMENT**：使用者已確認的重要要求或取捨。
-- **PENDING**：仍可能改變 target 的 decision。
-- **PLANNED VALIDATION**：未執行的 test / spike / prototype。
+- **CURRENT**：以 code / tests 證實的現況。
+- **DECIDED / PLANNED**：來源已確立的目標與預計做法，尚未實作。
+- **ILLUSTRATIVE**：忠於已確立契約的示意語法或簡化視圖，不能默默增加新決策。
+- **UNRESOLVED**：來源缺漏、衝突或尚未決定的關鍵事項。
+- **VERIFIED vs PLANNED VALIDATION**：已執行驗證不得與預計驗證混用。
 
-不要把 proposed API、planned tests 或 target behavior 寫成 current fact。重要 current-state claim 使用 `file:line` + symbol evidence。
+## 3. Documentation workflow
 
-## 3. Degrees of freedom
+1. 讀取所有必要來源，建立 requirement → decisions → responsibilities / contracts → execution / validation 的內部工作摘要。
+2. 查 relevant code、tests 以校對 current-state claim；不要把 proposed types 寫成已存在的 class / API。
+3. 按固定章節整合為 **一份獨立的技術敘事**：先 Why / Current → Target，再說明 internal realization、runtime、migration、effort。
+4. 將實作工作依工程上可理解的里程碑**歸納為 report phases**；保留已規劃的先後、依賴與 gate，不複製或顯示追蹤項目。
+5. 依來源建立 architecture / placement / sequence / transitional diagrams；圖可以解釋既有決策，不可以靠圖新創決策。
+6. 產出重要 protocol / interface 的具體 contract 與 code sketches（僅限已確認或能由來源忠實表達的 shape）。
+7. 檢查每一個圖、contract、phase、estimate 是否都能回到來源找到根據；完成 self-audit 才交付。
 
-Software design 是高 freedom reasoning task。只鎖死會影響 correctness / comprehensibility 的 invariant。
+## 4. Fixed Design Doc structure
 
-### Low freedom — 必須遵守
+使用以下順序與 heading；按規模調整各節長度，但不要把重要 technical detail 換成空泛摘要：
 
-- evidence status 不混淆；
-- canonical state 不形成無意義的雙 owner / 雙 writer；
-- significant protocol / collaborator 有 purpose、consumer、implementer、placement；
-- refactor 的重要 behavior invariant 被保留或明確改變；
-- architecture / runtime / migration view 語意清楚；
-- placement / interaction 問題不能只靠 prose / table 取代圖；
-- 未驗證事項不得寫成已完成。
+1. **Executive Summary**：Why、目標、預期成果、Current → Target 摘要、總 effort（若有根據）、主要風險。
+2. **Requirements & Scope**：requirements、non-goals、compatibility constraints、已確認的重要取捨。
+3. **Current Architecture / Integration Context**：重構說明現況架構、runtime、問題；新功能說明既有系統接點，不虛構不存在的 current counterpart。
+4. **Target Architecture**：architecture overview、boundaries、dependency direction、responsibility / state owners。
+5. **Design Realization & Interfaces**：內部 collaborators、protocol / function relationship views、具體 interface contracts、代表性 code sketches 與 placement。
+6. **Runtime Behavior**：主要 sequence / state views，含適用的 async ordering、lifecycle、error / retry / cancellation semantics；重構時展示 before / after。
+7. **Migration & Implementation Phases**：Current → Target mapping、transitional architecture / gates（適用時），以獨立的工程 phase 呈現目標、主要工作、交付與驗證。
+8. **Estimates & Risks**：phase effort 與總計（只使用有根據的估算）、assumptions、high risks、re-estimation / stop conditions。
+9. **Verification & Acceptance**：existing vs planned unit / integration / device verification、behavior invariants、observable acceptance criteria。
 
-### Medium freedom — 給 preferred shape
+文件不能出現 ticket / issue IDs、追蹤標題、狀態與來源對照表；也不要寫「詳見 spec / tickets 才能理解」的內容。必要的決策、規格與步驟應直接完整寫在本文件。若關鍵資料尚未確立，應直接在相關章節具體標示未決，而不是推定其存在。
 
-- interface sketch 深度；
-- phase granularity；
-- diagram decomposition；
-- error / lifecycle detail；
-- migration / validation strategy；
-- file organization。
-
-依 scope / risk 調整，不要求每份 Design Doc 同形。
-
-### High freedom — 由 repository evidence 決定
-
-- pattern 名稱；
-- class / protocol 數量；
-- concrete type vs protocol；
-- naming；
-- section ordering；
-- helper implementation；
-- exact file split。
-
-不要因 skill 形式要求而製造不必要 abstraction 或 governance。
-
-## 4. New feature vs refactor
-
-### New feature
-
-至少回答：
-
-- goal / requirement
-- existing integration context
-- affected owners / extension points
-- target architecture
-- state ownership
-- interfaces / contracts
-- important runtime flow
-- failure / lifecycle semantics
-- implementation phases
-- estimate
-- verification
-
-### Refactor
-
-先驗證 premise。成立後至少回答：
-
-- current architecture / responsibility / state ownership
-- representative current runtime flow
-- concrete coupling / limitation
-- target external architecture
-- target internal realization
-- target responsibility / state ownership
-- Current → Target mapping
-- representative before → after flow
-- migration / transitional architecture（若非一次切換）
-- behavior invariants
-- implementation phases
-- estimate
-- regression strategy
-
-若 premise 被 evidence 推翻，交付 **PREMISE REJECTED**，不虛構 target。
-
-## 5. Architecture & visual coverage
+## 5. Architecture and diagrams
 
 **Tables explain properties; diagrams explain placement and interaction.**
 
-Target Architecture Overview 可以簡化，但它只是第一層，不是唯一一層。若 overview 為了清楚省略了重要 internal collaborators / protocols / workflow owners，後續必須用 Design Realization 或局部 architecture view 補回位置感。
+視任務需要提供 Current / Target external / Target internal realization / runtime before-after / migration views。Target overview 若省略重要 protocol、state owner 或 workflow，應以局部圖補足位置與關係；禁止用表格取代必要的 placement / interaction 圖。
 
-對 non-trivial refactor，Design Doc 必須讓 reviewer 能視覺回答：
+使用 Mermaid 等可維護的 Markdown diagram，並檢查 node、edge、legend、code sketch 命名一致。對實際未 render 或驗證的圖，不宣稱已成功渲染。
 
-1. Current problem structure 在哪裡？
-2. Target external owner / boundary / dependency direction 是什麼？
-3. Target internal collaborators / protocols / state owners 怎麼組合？
-4. Representative behavior 在 Current / Target 怎麼流？
-5. 有 transitional coexistence 時，新舊 world 怎麼接、何時退役？
+詳細規則：[architecture.md](architecture.md)。
 
-**不以固定圖數驗收。** 一張圖可回答相容問題，但不得因「已有 table / mapping」就省略 placement / interaction 所需的圖。
+## 6. Interfaces and runtime semantics
 
-複雜 subsystem（例如 retry / timeout / progress、auto/manual shared mechanics、persistence / background task、multi-step ACK、special workflow）若主圖看不懂 ownership / interaction，增加局部 architecture / sequence view。
+從已確定的技術內容整理 significant protocol / interface：
 
-Diagram 詳細規則請讀 [architecture.md](architecture.md)。
+- purpose、consumer、implementer、placement、responsibilities / non-responsibilities；
+- key methods / data / state owner；
+- 必要時補 error、concurrency、ordering、lifecycle、cancellation semantics；
+- code sketch 可清楚標 `ILLUSTRATIVE`，但不得引入來源尚未同意的新 public capability。
 
-## 6. Interfaces & ownership
+如果沒有足夠資訊可提供具體 signature，只能展示已確立的最小 contract 並列出缺口；不要捏造看似正式的 Swift / Objective-C API。
 
-不要從 MVVM / Clean Architecture / Repository 等 pattern 名稱開始。
+詳細規則：[interfaces.md](interfaces.md)。
 
-優先順序：
+## 7. Phases, estimates and verification
 
-```text
-problem / requirement
-    ↓
-responsibility boundary
-    ↓
-state / workflow / policy ownership
-    ↓
-dependency direction
-    ↓
-interface / abstraction
-    ↓
-pattern（only if useful）
-```
+把來源的執行順序整理成**報告適合的 phase**，不是逐項照抄 issue / ticket。每個 phase 交代 goal、主要變更、相依 / migration gate、可觀察成果、驗證及 effort。保留真正會改變工程風險的 transitional detail。
 
-分別檢查：
+Estimate 以來源中有根據的數字、區間、assumptions 計算與呈現；缺估算時說明缺口，不憑空生成精確工時。區分人時 / 人日與 calendar duration。
 
-- **State ownership**
-- **Workflow ownership**
-- **Policy ownership**
-- **Integration ownership**
-- **Presentation ownership**
+詳細規則：[delivery.md](delivery.md)。
 
-Single domain / single canonical state owner 不代表所有 workflow 都由同一 class 承擔。
+## 8. Handling gaps and changes
 
-每個 significant protocol / interface 至少說明 purpose、consumer、implementer、responsibilities、non-responsibilities 與 key contract；error / concurrency / lifecycle 在 relevant 時補充。
+- **可直接整理**：同一決策的不同描述、示意圖、資訊重排、用既有 numbers 彙總 phase effort。
+- **需標記而不能定案**：source 缺 protocol signature、state owner、exception handling、runtime ordering、migration safety gate、estimate 或出現互相衝突的答案。
+- **需要新決策**：交還原本的 requirement / spec / implementation planning flow 釐清，再重新整理文件；`design` 不自作裁決。
+- **實作階段發現差異**：允許依實際證據調整 implementation。必要時先更新實作契約或已確認決策，再視報告需求使用 maintenance mode 同步 Design Doc；無需為一般 helper / private API 變動反覆更新文件。
 
-Consumer-facing boundary 只暴露真實 consumer 需要的 capability。Owner-only mutation、ingress、hydration、persistence、migration control、raw event stream 預設保持 internal / narrower boundary。
+## 9. Completion audit
 
-詳細 interface 與 abstraction guidance 請讀 [interfaces.md](interfaces.md)。
+- [ ] 不讀取其他文件也能理解 Why、Current、Target、重要 interface、runtime、phase、工時與驗證。
+- [ ] 沒有 ticket / issue metadata、ticket mapping 或依賴 tracker 才看懂的內容。
+- [ ] Current facts 有 repository evidence，Target 與 planned validation 未被說成已完成。
+- [ ] 所有重大 state / workflow ownership 與 protocol consumer / implementer / placement 都有清楚說明。
+- [ ] 必要的 Current / Target / internal / runtime / migration views 能回答關係問題，沒有被表格替代。
+- [ ] Code sketches 沒有自行新增未決 public API、owner、ordering 或 error semantic。
+- [ ] Phase 與 effort 忠實濃縮既有工作規劃，沒有創造新依賴或虛構估時。
+- [ ] Source conflicts / missing decisions 被具體標註，沒有被美化成已確認。
+- [ ] 沒有默默啟動 challenge / review 或將本文件升格為實作唯一權威。
 
-## 7. Decisions & uncertainty
+## 10. References and maintenance
 
-有實質替代方案時比較：
+- [architecture.md](architecture.md)：diagram coverage、placement、runtime / migration 圖及驗證。
+- [interfaces.md](interfaces.md)：從來源整理 protocol、state ownership、lifecycle 與 code sketches。
+- [delivery.md](delivery.md)：將工作計畫彙整為工程 phases、工時和驗證。
+- [document-maintenance.md](document-maintenance.md)：來源決策或實作調整後，有限範圍同步既有 Design Doc。
 
-- ownership / responsibility
-- dependency direction
-- complexity
-- migration impact
-- testability
-- extensibility
-- regression risk
+讀取策略：architecture/refactor 讀 `architecture.md`；protocol/ownership 讀 `interfaces.md`；phases/estimate/verification 讀 `delivery.md`。非平凡技術設計文件通常三者都需要，重要指引皆列在各檔案前段。
 
-不要為了形式製造假選項。
-
-遇到 uncertainty：
-
-- repository fact：直接查 relevant code / tests；
-- repository 外的 platform / SDK / language / toolchain fact：交 `research`；
-- paper reasoning 無法回答的 runtime / state / compatibility / UI feasibility：交 `prototype`；
-- requirement / engineering trade-off：若需要 human judgement 且不是單一 targeted clarification，交 `grill-with-docs` 用 decision-tree frontier 收斂，design 不自行 improvising 長訪談；
-- effort 大到完整 decision tree 尚不可見：先用 `wayfinder` 清除 architecture fog，再回到正常 design。
-
-若 uncertainty 會改變 target、主要 contract、migration path 或 major estimate，在依賴它的工作前建立明確 gate。Implementation-only detail 不必阻塞 Design Doc。
-
-## 8. Migration / estimates / verification
-
-Design Doc 必須描述 implementation / migration **strategy 與 phases**，但不要把它展開成 ticket-level execution plan。Design acceptance 後，需要 durable implementation contract 時交給 upstream `to-spec` 做忠實 synthesis；若還需要 fresh-context work graph / dependency graph，再交給 upstream `to-tickets`。
-
-每個設計都需要：
-
-- bounded implementation / migration phases
-- engineering estimate
-- acceptance / regression strategy
-
-只有 scope / risk 真的需要時才展開：
-
-- feasibility fallback
-- shadow / differential validation
-- branch / integration coordination
-- release / rollout / monitoring
-- external resource readiness
-- outcome metrics
-
-若 confirmed goal 包含 extensibility / maintainability，extension exercise 不是 project governance，而是 design acceptance evidence：用一個代表性 command / source / policy 變更檢查 locality；詳細 discipline 由 `codebase-design` 提供。
-
-不要把一般 design 擴張成 project / release governance 文件。
-
-詳細 planning guidance 請讀 [delivery.md](delivery.md)。
-
-## 9. Design Doc output
-
-章節可依任務調整，不固定模板，但完成後 reviewer 應能回答：
-
-- 為什麼做？scope / non-goals 是什麼？
-- current system 怎麼運作？問題在哪裡？
-- target external architecture 是什麼？
-- internal collaborators / protocols / state owners 放在哪裡？
-- significant abstraction 為什麼存在、誰 consume / implement？
-- important runtime flow 怎麼走？
-- refactor behavior invariant 如何保留？
-- Current → Target responsibility 怎麼搬？
-- migration 怎麼安全完成？
-- phases / estimate / dependencies 是什麼？
-- 每階段怎麼驗證？
-- 哪些 unresolved decision 會 reopen design？
-
-有一定規模的 design，最前面提供短 overview：問題、預期成果、Current → Target、遷移順序、總 effort、最大風險 / gate、待決事項。不要為了格式硬湊一頁。
-
-## 10. Self-correction loop
-
-交付前執行一次 design audit，發現 gap 就修訂後再檢查。
-
-至少檢查：
-
-- [ ] major responsibility 都有 owner；
-- [ ] canonical / draft / workflow / temporary state 沒有不明雙 owner；
-- [ ] significant protocol 有 purpose + consumer + implementer + placement；
-- [ ] Current / Target / runtime / migration views 已覆蓋本次真正重要的問題；
-- [ ] 沒有 responsibility table 正在替代需要的 relationship diagram；
-- [ ] representative before / after behavior 可比較；
-- [ ] migration bridge 若存在，有 scope / owner / retirement condition；
-- [ ] phase 從 dependency / migration safety 推導，不偷偷新增 architecture decision；
-- [ ] PLANNED VALIDATION 沒被寫成 completed evidence；
-- [ ] 文件沒有為了 checklist 加入與 scope 無關的 rollout / governance / metrics。
-
-Audit fail 時先修文件；不要只把問題列成 limitation 然後宣稱完成。
-
-## 11. References
-
-所有 supporting references 都直接從本檔連結，不再 nested：
-
-- [architecture.md](architecture.md)：visual coverage、architecture / realization / runtime / migration diagrams。
-- [interfaces.md](interfaces.md)：degrees of freedom、ownership、protocol / capability boundary、complexity guardrails。
-- `codebase-design` skill：module depth、seam、locality、leverage、change-locality exercise 與 abstraction pressure。
-- `research` skill：repository 外的 authoritative technical facts。
-- `prototype` skill：以最小 throwaway artifact 解一個 paper reasoning 無法確認的問題。
-- `grill-with-docs` skill：repository 中的 HITL decision-tree alignment + domain modeling；用於 target decisions 尚未收斂時。
-- `domain-modeling` skill：domain terminology / ADR discipline；design 消費結果，不把 glossary 當 spec。
-- `wayfinder` skill：超大型 effort 的 decision map；只在完整 design path 尚不可見時使用。
-- [delivery.md](delivery.md)：migration phases、feasibility、estimate、verification 與 conditional delivery planning。
-- [document-maintenance.md](document-maintenance.md)：已接受決策回寫既有 Design Doc 時的 bounded maintenance mode。
-
-讀取策略：
-
-- architecture / refactor：讀 `architecture.md`；
-- protocol / ownership / abstraction：讀 `interfaces.md`；
-- migration / estimate / verification：讀 `delivery.md`；
-- 大多數 non-trivial design 會需要三份，但不要載入與任務無關的額外規則。
-
-每份超過約 100 行的 reference 應在頂部保留 contents，方便定位。
-
-## 12. Handoff
-
-```text
-grill-with-docs / repository evidence
-        ↓
-      design
-        ↓
-   Design Doc draft
-        ├─ optional challenge
-        │      ├─ human decision gaps → grilling / grill-me
-        │      ├─ validation gaps → research / prototype
-        │      └─ revisions → design / document-maintenance
-        │
-        └──────────────→ review
-                           ├─ REVISE / BLOCKED → design / grilling
-                           └─ ACCEPT
-                                ├─ small / single-session → implement
-                                └─ durable contract → to-spec
-                                      ├─ high-risk / multi-session → review (spec-fidelity)
-                                      ├─ single-context → implement
-                                      └─ multi-context → to-tickets → implement / implement-spec
-```
-
-Design Doc 是 technical source of truth。若 human decisions 尚未收斂，先回 `grill-with-docs`；複雜或高風險 draft 可先用 `challenge` 做 multi-role adversarial strengthening，再由 `review` 以 fresh independent evidence 決定 acceptance。Challenge 不建立 accepted baseline。
-
-Upstream `to-spec` 將 accepted design synthesis 成 implementation contract；只有 high-risk / multi-session handoff 才需要再用 `review` 的 spec-fidelity mode。
-
-若只是把已接受決策同步回既有 Design Doc，讀 [document-maintenance.md](document-maintenance.md) 並使用 bounded maintenance mode；不要另開新的 design decision。
+上游 `grill-with-docs → to-spec → to-tickets → implement` 仍是工程主流程；`design` 僅是使用者要求時，在工作拆分後、實作前產生的獨立人類文件。`challenge` 與 `review` 保持手動選用。
