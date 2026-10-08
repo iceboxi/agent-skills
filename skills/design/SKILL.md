@@ -18,6 +18,7 @@ description: Produce a self-contained, fixed-structure Markdown Design Doc from 
 - Architecture and diagrams
 - Interfaces and runtime semantics
 - Phases, estimates and verification
+- Writing style (ASD-STE100-inspired)
 - Handling gaps and changes
 - Completion audit
 - References and maintenance
@@ -62,7 +63,8 @@ Source priority：明確已確認的使用者決策與目前有效的 spec / ADR
 4. 將實作工作依工程上可理解的里程碑**歸納為 report phases**；保留已規劃的先後、依賴與 gate，不複製或顯示追蹤項目。
 5. 依來源建立 architecture / placement / sequence / transitional diagrams；圖可以解釋既有決策，不可以靠圖新創決策。
 6. 產出重要 protocol / interface 的具體 contract 與 code sketches（僅限已確認或能由來源忠實表達的 shape）。
-7. 檢查每一個圖、contract、phase、estimate 是否都能回到來源找到根據；完成 self-audit 才交付。
+7. 依「Writing style」檢查句子主詞、技術術語、行為描述與圖文分工；簡化文字不能刪除必要的技術條件。
+8. 檢查每一個圖、contract、phase、estimate 是否都能回到來源找到根據；完成 self-audit 才交付。
 
 ## 4. Fixed Design Doc structure
 
@@ -111,14 +113,28 @@ Estimate 以來源中有根據的數字、區間、assumptions 計算與呈現�
 
 詳細規則：[delivery.md](delivery.md)。
 
-## 8. Handling gaps and changes
+## 8. Writing style (ASD-STE100-inspired)
+
+採用 ASD-STE100 的**清晰技術寫作精神**，不是嚴格套用英文 controlled language，也**不宣稱符合 ASD-STE100**。適用於繁體中文 prose、說明、表格與圖說；不強制套用英文詞彙表、句長限制或固定句型。
+
+- **Clarity over brevity**：優先確保讀者正確理解；減少冗字，但不得省略重要的 ownership、conditions、invariants、ordering、failure / cancellation semantics 或 migration gates。
+- **One main concept per sentence**：一句處理一個主要訊息；長句可拆分。若拆句會切斷必要的因果、前提或例外關係，應明確保留連結，不為短而短。
+- **Explicit subject and responsibility**：有證據時明確寫出哪個 module、owner 或 protocol 負責讀取、寫入、呼叫或轉移狀態。避免「系統會處理」「適當管理」等無主詞或模糊描述；主詞尚未確認時標示 unknown，不能自行指定 owner。
+- **Concrete behavior**：描述來源已確認的 trigger → responsible actor → action / state transition → observable result；必要時補 error、timeout、retry 與停止條件。不要為了使句子具體而捏造數值、流程或 API。
+- **Consistent terminology**：同一概念使用同一名稱；沿用 repository 的 glossary、ADR、spec 及既有台灣工程術語。保留 Swift / Objective-C identifiers、framework、protocol、API 的原名，不生造中文譯名。
+- **Active voice when clear**：能確定行為主體時優先使用主動句；行為主體不重要或無法確認時，不強制主動語態。清楚區分 CURRENT、DECIDED / PLANNED、ILLUSTRATIVE、UNRESOLVED。
+- **Explain mechanisms instead of slogans**：避免僅說「提升效能」「降低耦合」「增加可維護性」；改為指出已確立的責任改變、依賴方向或行為影響，並說明因果關係。
+- **Complement diagrams, do not narrate every edge**：圖負責呈現 placement / interaction；文字重點說明 Why、contract、限制、風險與不易從圖讀出的 semantics。不可為減少重複而刪去讀者必要的解釋。
+- **Technical accuracy takes priority**：protocol contract、code sketch、state / sequence diagram、技術術語不為了白話或受控語言而犧牲精度。允許使用必要的複句、程式碼和精確術語；不施加任意字數上限。
+
+## 9. Handling gaps and changes
 
 - **可直接整理**：同一決策的不同描述、示意圖、資訊重排、用既有 numbers 彙總 phase effort。
 - **需標記而不能定案**：source 缺 protocol signature、state owner、exception handling、runtime ordering、migration safety gate、estimate 或出現互相衝突的答案。
 - **需要新決策**：交還原本的 requirement / spec / implementation planning flow 釐清，再重新整理文件；`design` 不自作裁決。
 - **實作階段發現差異**：允許依實際證據調整 implementation。必要時先更新實作契約或已確認決策，再視報告需求使用 maintenance mode 同步 Design Doc；無需為一般 helper / private API 變動反覆更新文件。
 
-## 9. Completion audit
+## 10. Completion audit
 
 - [ ] 不讀取其他文件也能理解 Why、Current、Target、重要 interface、runtime、phase、工時與驗證。
 - [ ] 沒有 ticket / issue metadata、ticket mapping 或依賴 tracker 才看懂的內容。
@@ -128,9 +144,12 @@ Estimate 以來源中有根據的數字、區間、assumptions 計算與呈現�
 - [ ] Code sketches 沒有自行新增未決 public API、owner、ordering 或 error semantic。
 - [ ] Phase 與 effort 忠實濃縮既有工作規劃，沒有創造新依賴或虛構估時。
 - [ ] Source conflicts / missing decisions 被具體標註，沒有被美化成已確認。
+- [ ] 關鍵行為與責任有明確主詞、觸發條件和可觀察結果；未決 owner / semantic 沒被自行補完。
+- [ ] 用字遵守台灣工程術語與來源命名，刪除空泛口號、模糊代名詞和不必要重複。
+- [ ] 文字精簡後仍保留 error / ordering / migration / verification 的重要限制，圖與 code sketch 沒被白話取代。
 - [ ] 沒有默默啟動 challenge / review 或將本文件升格為實作唯一權威。
 
-## 10. References and maintenance
+## 11. References and maintenance
 
 - [architecture.md](architecture.md)：diagram coverage、placement、runtime / migration 圖及驗證。
 - [interfaces.md](interfaces.md)：從來源整理 protocol、state ownership、lifecycle 與 code sketches。
