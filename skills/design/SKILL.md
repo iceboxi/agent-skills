@@ -71,7 +71,7 @@ Source priority：明確已確認的使用者決策與目前有效的 spec / ADR
 ## 3. Documentation workflow
 
 1. 先依 Source discovery 規則定位同一計畫的來源；若有多份候選，等待使用者選擇後再繼續。
-3. 讀取所有必要來源，建立 requirement → decisions → responsibilities / contracts → execution / validation 的內部工作摘要。
+2. 讀取所有必要來源，建立 requirement → decisions → responsibilities / contracts → execution / validation 的內部工作摘要。
 3. 查 relevant code、tests 以校對 current-state claim；不要把 proposed types 寫成已存在的 class / API。
 4. 按固定章節整合為 **一份獨立的技術敘事**：先 Why / Current → Target，再說明 internal realization、runtime、migration、effort。
 5. 將實作工作依工程上可理解的里程碑**歸納為 report phases**；保留已規劃的先後、依賴與 gate，不複製或顯示追蹤項目。
