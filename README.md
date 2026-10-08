@@ -97,57 +97,34 @@ Side paths:
 GitHub、GitLab、local files 可以依專案分別設定；不同 repository 的 tracker / credentials / workflow 不混用。
 
 
-## Artifact lifecycle
+## Temp artifact overrides
 
-Agent 產物分三層：
-
-~~~text
-docs/ / GLOSSARY.md / ADR / docs/agents/*
-    = canonical project knowledge
-
-<repo>/.scratch/artifacts/*
-    = project-local reasoning / analysis artifacts
-
-$TMPDIR / /tmp / /var/folders/.../T
-    = machine-temporary intermediates only
-~~~
-
-有 repository context 時，值得給人閱讀、跨 session 保存，但又不是正式 source of truth 的 artifact，預設放：
+Matt upstream 的 artifact ownership 原則上不改，只修三個容易找不到輸出的位置：
 
 ~~~text
-<repo-root>/.scratch/artifacts/<category>/
+handoff
+→ 有 repo context：
+  <repo-root>/.scratch/artifacts/handoff/
+→ 沒有 repo context：保留 upstream OS temp
+
+improve-codebase-architecture
+→ 可以照 upstream 在 $TMPDIR render
+→ 有 repo context 時，final HTML promotion 到：
+  <repo-root>/.scratch/artifacts/architecture/
+
+research
+→ 優先沿用 project 既有 research-note convention
+→ 沒有 convention 才 fallback：
+  <repo-root>/.scratch/artifacts/research/
 ~~~
 
-建議 categories：
+其他 Matt artifacts 不搬家：
 
-~~~text
-.scratch/artifacts/
-├─ architecture/
-├─ research/
-├─ handoff/
-├─ prototype/
-└─ reports/
-~~~
+- `to-spec` / `to-tickets` / `wayfinder`：維持 configured tracker。
+- prototype source：維持 upstream prototype / throwaway-branch 規則。
+- Glossary、ADR、`docs/agents/*`、accepted Design Doc 等 canonical docs：維持 project 原本位置。
 
-例如 `improve-codebase-architecture` 可以照 upstream 規則先在 `$TMPDIR` render，但 final HTML 要 promotion 到：
-
-~~~text
-<repo-root>/.scratch/artifacts/architecture/
-~~~
-
-`handoff` 在 repo context 下放 `.scratch/artifacts/handoff/`；`research` 若專案沒有既有 research-note convention，放 `.scratch/artifacts/research/`。
-
-這個 overlay **不改變 canonical artifact ownership**：Glossary、ADR、`docs/agents/*`、accepted Design Doc 仍依 project convention；`to-spec`、`to-tickets`、`wayfinder` 仍使用 configured tracker。Prototype source 仍可依 upstream 規則保留在 throwaway branch，`.scratch/artifacts/prototype/` 只放 summary / evidence pointer。
-
-`.scratch/artifacts/` 預設視為 non-canonical working state；不要默默修改 tracked `.gitignore` 或 commit，除非專案明確採用這個 policy。
-
-沒有 repository context 時，才 fallback 到：
-
-~~~text
-${AGENT_ARTIFACTS_DIR:-$HOME/Documents/agent-artifacts}/
-~~~
-
-再不可用時使用 `$HOME/Downloads/agent-artifacts/`。Final response 應回報 promotion 後的路徑，而不是只有 temp path。
+`.scratch/artifacts/*` 視為 non-canonical working state，不自動修改 tracked `.gitignore`、也不預設 commit。
 
 ## Skill sources
 
