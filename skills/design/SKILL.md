@@ -12,6 +12,7 @@ description: Produce a self-contained, fixed-structure Markdown Design Doc from 
 ## Contents
 
 - Role and boundaries
+- Source discovery and selection
 - Inputs and evidence
 - Documentation workflow
 - Fixed document structure
@@ -35,6 +36,18 @@ description: Produce a self-contained, fixed-structure Markdown Design Doc from 
 
 ## 2. Inputs and evidence
 
+### Source discovery and selection
+
+在閱讀內容、撰寫 Design Doc **之前**，先確定使用哪一組既有規劃來源。這是選擇 input，不是新的 requirements interview 或 architecture design：
+
+1. **明確指定來源**：使用者提供 plan directory、spec / tickets path 或特定計畫名稱時，優先定位該組來源；核對 spec、工作拆分及決策確實屬於同一個計畫。來源明確且足夠時直接製作，不做多餘的選擇確認。
+2. **未指定來源**：先依 current repository 的既有 tracker / layout convention 尋找；如果使用者提及 `.scratch`，或沒有更明確 convention，掃描目前 repository 的 `.scratch/` 中可辨識的 spec + work items。不要擴大掃描其他 repository 或任意工作目錄。
+3. **只有一份完整候選**：在回覆簡要告知選定的 plan root、spec 與 work-items 來源，接著直接產出；不需要形式上的確認。
+4. **多份候選或同計畫多版本**：先列出每份的計畫名稱 / 路徑、spec 路徑、work-items 所在位置、內容用途與完整性。若多版本可辨識，簡述可證實的版本差異；**等待使用者選擇**，不得僅依檔案時間、名稱或目錄排序默認最新，也不得先生成文件。
+5. **找不到完整對應來源**：指出已找到的內容及欠缺的 spec、work items 或關聯證據。不能把不同計畫的 spec 與 tickets 拼成一組，不能臆測遺失的工作項目；只有能確認唯一計畫但部分資訊缺漏時，才依下方 `UNRESOLVED` 原則決定哪些內容可以忠實整理。
+6. **輸出位置**：使用者指定 `design.md` 路徑時照做；否則沿用專案既有 Design Doc convention，若無則預設為選定計畫根目錄的 `design.md`（例如 `.scratch/<plan>/design.md`）。**若目標檔案已存在，除非使用者明確要求更新或覆寫，先詢問，不得默默覆蓋**。
+7. 來源清單、候選比較與選擇問題只出現在對話 / 工作過程；**成品 Design Doc 不揭露票務 / tracker metadata**，仍必須能單獨閱讀。
+
 開始前收集足夠的來源：
 
 1. `grill-with-docs` 已確認的 requirement / scope / domain decisions，相關 ADR、glossary。
@@ -57,14 +70,15 @@ Source priority：明確已確認的使用者決策與目前有效的 spec / ADR
 
 ## 3. Documentation workflow
 
-1. 讀取所有必要來源，建立 requirement → decisions → responsibilities / contracts → execution / validation 的內部工作摘要。
-2. 查 relevant code、tests 以校對 current-state claim；不要把 proposed types 寫成已存在的 class / API。
-3. 按固定章節整合為 **一份獨立的技術敘事**：先 Why / Current → Target，再說明 internal realization、runtime、migration、effort。
-4. 將實作工作依工程上可理解的里程碑**歸納為 report phases**；保留已規劃的先後、依賴與 gate，不複製或顯示追蹤項目。
-5. 依來源建立 architecture / placement / sequence / transitional diagrams；圖可以解釋既有決策，不可以靠圖新創決策。
-6. 產出重要 protocol / interface 的具體 contract 與 code sketches（僅限已確認或能由來源忠實表達的 shape）。
-7. 依「Writing style」檢查句子主詞、技術術語、行為描述與圖文分工；簡化文字不能刪除必要的技術條件。
-8. 檢查每一個圖、contract、phase、estimate 是否都能回到來源找到根據；完成 self-audit 才交付。
+1. 先依 Source discovery 規則定位同一計畫的來源；若有多份候選，等待使用者選擇後再繼續。
+3. 讀取所有必要來源，建立 requirement → decisions → responsibilities / contracts → execution / validation 的內部工作摘要。
+3. 查 relevant code、tests 以校對 current-state claim；不要把 proposed types 寫成已存在的 class / API。
+4. 按固定章節整合為 **一份獨立的技術敘事**：先 Why / Current → Target，再說明 internal realization、runtime、migration、effort。
+5. 將實作工作依工程上可理解的里程碑**歸納為 report phases**；保留已規劃的先後、依賴與 gate，不複製或顯示追蹤項目。
+6. 依來源建立 architecture / placement / sequence / transitional diagrams；圖可以解釋既有決策，不可以靠圖新創決策。
+7. 產出重要 protocol / interface 的具體 contract 與 code sketches（僅限已確認或能由來源忠實表達的 shape）。
+8. 依「Writing style」檢查句子主詞、技術術語、行為描述與圖文分工；簡化文字不能刪除必要的技術條件。
+9. 檢查每一個圖、contract、phase、estimate 是否都能回到來源找到根據；完成 self-audit 才交付。
 
 ## 4. Fixed Design Doc structure
 
@@ -136,6 +150,7 @@ Estimate 以來源中有根據的數字、區間、assumptions 計算與呈現�
 
 ## 10. Completion audit
 
+- [ ] 來源已明確選定且來自同一計畫；多候選 / 多版本未擅自挑選，既有 `design.md` 未在未授權下覆寫。
 - [ ] 不讀取其他文件也能理解 Why、Current、Target、重要 interface、runtime、phase、工時與驗證。
 - [ ] 沒有 ticket / issue metadata、ticket mapping 或依賴 tracker 才看懂的內容。
 - [ ] Current facts 有 repository evidence，Target 與 planned validation 未被說成已完成。
