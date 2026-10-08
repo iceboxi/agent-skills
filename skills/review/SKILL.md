@@ -1,11 +1,11 @@
 ---
 name: review
-description: Independently decide whether an existing technical design or implementation spec is defensible enough to become an accepted baseline. Verify material claims against authoritative requirements and repository evidence, report only acceptance-relevant findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign or perform exploratory multi-role critique.
+description: On explicit user request, independently assess whether an existing technical design or implementation spec is defensible enough to become an accepted baseline. Verify material claims against authoritative requirements and repository evidence, report only acceptance-relevant findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign or perform exploratory multi-role critique.
 ---
 
 # Independent Technical Review
 
-`review` 是 **acceptance authority**。它回答：
+`review` 是使用者**手動呼叫**的選用技術審查，不是主流程的必經 acceptance gate。它回答：
 
 > 這份既有 proposal 在目前 requirements 與可取得 evidence 下，是否足以成為 downstream implementation baseline？
 
@@ -104,23 +104,8 @@ Notes: <n>
 - **Reopen conditions**
 - **Next step**
 
-## 6. Handoff
+## 6. Optional follow-up
 
-```text
-design
-  ├─ optional challenge → design/grilling → review
-  └────────────────────────────────────→ review
+由使用者決定是否依 verdict 回到 requirement / spec / planning authority 修正技術決策。若僅是獨立 Design Doc 的呈現或同步問題，使用 `design` maintenance mode。
 
-review
-  ├─ REVISE / BLOCKED → design / grilling / missing evidence
-  └─ ACCEPT
-       ├─ small → implement
-       └─ durable contract → to-spec
-             ├─ high-risk / multi-session → review (spec-fidelity)
-             ├─ single-context → implement
-             └─ multi-context → to-tickets → implement / implement-spec
-```
-
-Spec-fidelity 是同一個 independent review authority 對另一種 artifact 的 branch，不是第二支 review skill。
-
-`challenge` 可以在 review 前使用，但不是 mandatory gate。若 review 發現大量 exploratory uncertainty，應回 challenge/design，而不是把 acceptance review 變成 brainstorming session。
+Review 不自動觸發 `to-spec`、`to-tickets` 或 `challenge`；它不是 engineering implementation 的強制 gate。
