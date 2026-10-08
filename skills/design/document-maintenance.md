@@ -1,27 +1,27 @@
-# Document Maintenance Mode
+# Design Doc Maintenance Mode
 
-Use this branch only when the user asks to update an existing Design Doc with decisions that are already accepted.
+Use only when the user asks to refresh an **existing, self-contained Design Doc** after source decisions, implementation planning, or actual implementation facts have changed.
 
-This is not a new design pass.
+This is bounded documentation synchronization, **not** a new architecture design or implementation planning pass.
 
-## Authority
+## Source authority
 
-Use, in order:
-
-1. explicit user-confirmed decisions;
-2. accepted review findings / resolutions;
-3. completed prototype / characterization / decision results;
-4. the existing canonical Design Doc;
-5. repository checks only when a referenced current-state claim is stale or contradictory.
+1. Latest explicitly confirmed requirements / architecture decisions and ADRs.
+2. Current authoritative implementation spec / plan and resolved changes.
+3. Verified implementation / characterization / prototype evidence.
+4. Existing Design Doc as the previous **documentation snapshot**, not the implementation authority.
+5. Repository evidence for current-state / implementation claims.
 
 ## Rules
 
-- Do not invent a new owner, protocol, API, runtime semantic, migration strategy, phase, or estimate.
-- Do not silently promote examples or helper shapes into architecture contracts.
-- Preserve existing terminology and document structure unless the accepted decision requires a change.
-- Update all affected sections consistently: overview, diagrams, interfaces, flows, migration, estimates, and verification when applicable.
-- If applying the accepted decision requires a new architecture choice, stop and return to normal design mode.
+- Update all impacted narrative, diagrams, interface sketches, runtime views, phases, estimates and validation claims consistently.
+- Keep the Design Doc independently readable; do not replace missing explanation with links or references to upstream documents.
+- Never expose issue / ticket IDs, titles, statuses, tracker links or ticket-to-phase mapping.
+- Do not invent a new state owner, protocol, API, migration gate, implementation dependency, phase decision or estimate.
+- Distinguish proposed design, newly verified implementation, and still-unresolved gaps.
+- If sources require a fresh decision, hand it back to the owning requirement / spec / planning process instead of resolving it during synchronization.
+- Do not demand document maintenance for every private helper change; refresh when the user needs an up-to-date human-facing document.
 
 ## Completion criterion
 
-The canonical Design Doc faithfully reflects the accepted decisions, with no new design introduced by the synchronization itself.
+The standalone Design Doc faithfully reflects current confirmed source decisions and known implementation evidence, without introducing a competing implementation contract.
