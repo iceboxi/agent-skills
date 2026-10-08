@@ -1,9 +1,9 @@
 # Agent Environment
 
-個人的跨裝置 agent engineering environment。這個 repository 以 Matt Pocock skills 作為 pinned upstream base，只保留真正不同的 local architecture authority 與少量 global overlay。
+個人的跨裝置 agent engineering environment。這個 repository 以 Matt Pocock skills 作為 pinned upstream base，只保留真正不同的 local documentation / optional critique abilities 與少量 global overlay。
 
 - Matt Pocock skills = generic engineering workflow base
-- local skills = 真正新增的 authority / artifact
+- local skills = 獨立 Design Doc artifact / 選用 critique
 - `instructions/common.md` = 輕量 workflow / Apple-platform overlay
 - `skills-manifest.json` = 決定哪些 upstream skills 會被安裝
 - Git submodule gitlink = upstream 版本唯一 pin
@@ -25,13 +25,13 @@ Matt upstream
 └─ retro / writing-for-agents / ...
 
 Our local skills
-├─ design       # formal Architecture Design Doc + bounded document maintenance
-├─ challenge    # optional multi-role adversarial strengthening
-└─ review       # independent acceptance + optional spec-fidelity mode
+├─ design       # optional standalone post-spec/post-tickets Design Doc
+├─ challenge    # manual adversarial critique
+└─ review       # manual independent assessment
 
 Lightweight overlay
 └─ instructions/common.md
-   ├─ architecture handoff: design → review
+   ├─ optional standalone Design Doc after spec / work planning
    ├─ native Apple-platform prototype rule
    ├─ behavior-preserving characterization
    └─ device/runtime validation boundary
@@ -47,33 +47,29 @@ Lightweight overlay
 $ask-matt
 ~~~
 
-Architecture-changing feature / refactor 的 local overlay：
+工程主流程恢復 Matt upstream 的預設分工：
 
 ~~~text
-grill-with-docs / wayfinder decisions
+grill-with-docs / decisions
         ↓
-      design
+      to-spec
         ↓
-   Design Doc draft
-        ├─ optional challenge
-        │      ├─ human decisions → grilling / grill-me
-        │      └─ revisions → design
-        ↓
-      review (independent acceptance)
-   ┌────┴──────────────────────────┐
-REVISE / BLOCKED                 ACCEPT
-   │                               ├─ small → implement → code-review
-   └────────────→ design            │
-                                   └─ durable contract → to-spec
-                                          ├─ high-risk / multi-session
-                                          │      → review (spec-fidelity)
-                                          ├─ single-context → implement
-                                          └─ multi-context
-                                                 → to-tickets
-                                                 → implement / implement-spec
+     to-tickets
+        ├──────────────→ implement / implement-spec → code-review
+        │
+        └── 需要獨立 Design Doc 時（使用者指定）
+                         ↓
+                       design
+                standalone Markdown
+                         ↓
+                implement / implement-spec → code-review
 ~~~
 
-`challenge` 與 `review` 不同：前者用多個獨立角色高 recall 地找盲點、不給 verdict；後者以 fresh independent reviewer 驗證 acceptance-relevant claims，低噪音地給 ACCEPT / REVISE / BLOCKED。
+小型 single-context 工作可照 upstream 跳過不必要的 ticket 拆分。`design` 從已確立的需求、spec、工作規劃與相關 repository evidence，**只做 extraction / organization / visualization**，將 Current / Target architecture、protocol/function、state ownership、runtime、migration phases、工時與驗證整理成自足的固定格式 Design Doc；不重新做 architecture decisions。
+
+**Design Doc 不露出 ticket ID、標題、狀態、tracker URL 或 ticket-to-phase mapping。** 詳細工作項目可彙整成工程 phase，但文件必須能獨立閱讀，不能要求讀者回到 tracker 或 spec 才看得懂。Implementation 仍依 spec 和確認過的工作規劃；實作發現新證據可適度調整，必要時才同步文件。
+
+`challenge` 和 `review` 僅在使用者主動呼叫時執行；不自動串接，也不是 implementation 必經的 acceptance gate。
 
 Repository current-state inspection 不再是獨立 skill；各 workflow 直接依需要讀 code/tests。Accepted Design Doc 的 bounded maintenance 也不是獨立 skill，而是 `design` 的 document-maintenance mode。
 
