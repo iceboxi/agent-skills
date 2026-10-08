@@ -1,104 +1,76 @@
-# Architecture & Diagram Guidance
+# Architecture & Diagram Documentation Guidance
 
 ## Contents
 
-- Visual coverage contract
+- Boundary: explain, do not redesign
+- Visual coverage
 - View semantics
-- Refactor defaults
-- Diagram construction rules
-- Anti-patterns
-- Local subsystem views
-- Architecture audit
+- Refactor and new feature
+- Diagram construction
+- Completeness audit
 
-## Visual coverage contract
+## Boundary: explain, do not redesign
 
-Design 的目標不是「圖越少越好」，而是讓 reviewer 能直接看懂 ownership、placement、interaction 與 migration。
+本 reference 是 **documentation guidance**：用 diagrams 讓已確立的 architecture / state / workflow / migration 看得懂，不在畫圖過程引入新 owner、seam、protocol 或 runtime rule。
 
-**Tables explain properties; diagrams explain placement and interaction.**
+Source 來自確認過的需求、spec、implementation plan，以及必要的 repository code / tests。若來源矛盾或缺少 architecture-critical relationship，標為 `UNRESOLVED`，不能藉由補一條箭頭來替使用者決策。
 
-若問題本質是「元件在哪裡、誰連到誰、誰持有誰、runtime 怎麼走」，table / prose 不可取代必要的 architecture / sequence view。
+Tables explain properties; diagrams explain placement and interaction. **圖不是越少越好**，但不能為了補圖數製造沒有根據的細節。
 
-對 non-trivial refactor，至少要讓文件以視覺方式回答下列適用問題：
+## Visual coverage
 
-1. **Current Structure**：造成問題的 current responsibilities / dependencies 在哪裡？
-2. **Target External Architecture**：完成後主要 responsibility boundaries 與 dependency direction 是什麼？
-3. **Target Internal Realization**：外部 owner 內的重要 collaborators / protocols / state owners 如何組合？
-4. **Representative Runtime Before / After**：重要 behavior / ordering 如何由 current 轉到 target？
-5. **Migration / Transitional Architecture**：若非一次切換，新舊 world 如何共存、何時退役 bridge？
+對 non-trivial refactor，讀者應能從圖回答：
 
-不以固定圖數驗收；若一張圖能清楚回答兩個相容問題可以合併，但不能因「已有 table」就省略 placement / interaction 所需的圖。
+1. Current responsibility、dependency、state ownership 與耦合問題在哪裡？
+2. Target external owner / boundaries / dependency direction 是什麼？
+3. 重要 internal collaborators / protocols / state owners 如何放在 target 內？
+4. 代表性 behavior / callback ordering 的 Current → Target flow 是什麼？
+5. 有 temporary bridge 時，新舊 world 如何共存、何時 retirement？
+
+一張清楚的圖可以涵蓋數個相容問題，但不能用 table / prose 代替 placement / interaction。Overview 精簡時要用 local realization view 補足被隱藏的重要 protocol 或 state owner。
 
 ## View semantics
 
 | View | 主要回答 |
 | --- | --- |
-| Current Architecture | current responsibility、coupling、state / dependency placement |
-| Target Architecture Overview | 長期 external ownership、major boundaries、dependency direction |
-| Design Realization | protocols / concrete collaborators / state owners 在 target 內的位置 |
-| Runtime / Sequence | call、callback、ordering、state read/write、side effects |
-| Integration | target 與 BLE / DB / network / OS / legacy infrastructure 的接點 |
-| Migration / Transitional | temporary facade / bridge / dual-path / retirement relationship |
+| Current Architecture | 已存在的 owner / dependency / state / coupling |
+| Target Architecture Overview | 已決定的 long-term external boundary 和 responsibility |
+| Target Design Realization | target 內的 protocols、concrete collaborators、state owners |
+| Runtime / Sequence | callers、callbacks、ordering、read/write、side effects |
+| Integration | 已決定的 OS / network / BLE / DB / legacy seam |
+| Migration / Transitional | coexistence、bridge、cutover、retirement conditions |
 
-Target Architecture Overview 是第一層，不是唯一一層。若 Overview 為了清楚而省略 internal collaborators，Design Realization 必須補足到 reviewer 能看懂重要 protocol / workflow / state owner 的位置。
+靜態 dependency、runtime call、callback、data flow 不要混用不明確的箭頭；必要時拆圖或加 legend。
 
-## Refactor defaults
+## Refactor and new feature
 
-Behavior-preserving refactor 通常至少包含：
+Refactor 視來源充足程度通常提供：
 
 - scoped Current Architecture；
 - Target Architecture Overview；
-- Target Internal Realization（只要 target owner 內有多個 significant collaborators / protocols / workflow owners，就視為需要）；
-- representative Current runtime flow；
-- equivalent Target runtime flow；
+- Target Design Realization（有重要 internal collaborator / protocol 時）；
+- representative Current / Target runtime flows；
 - Current → Target responsibility mapping；
-- 有 temporary bridge / coexistence 時的 Migration / Transitional view。
+- transitional view（存在 bridge / coexistence 時）。
 
-複雜 subsystem（例如 pattern transfer、sync、persistence、background task、multi-step ACK flow）若無法從主圖理解 ownership / interaction，加入局部 architecture 或 sequence view。
+New feature 沒有 before counterpart 時，展示現有 integration context / constraints，再展示 Target。不能虛構一條「舊版新功能」流程。
 
-## Diagram construction rules
+對 retry / timeout / auto-sync / persistence / background lifecycle / multi-step ACK 等複雜系統，當 overview 無法交代重要 state / workflow owner 或 ordering 時，加入 subsystem architecture / sequence view。
 
-- 每張圖先寫出它要回答的問題，再選 node。
-- 主圖從 responsibility / owner 出發，不從 type 清單出發。
-- static dependency、runtime call、callback、data flow 不混用同一種箭頭；必要時用 legend 或拆圖。
-- 多個 concrete types 同一 architecture role 時可合併，但 adjacent text/table 要列出 realization。
-- pure helper / DTO / codec 不因存在就升成 peer architecture node；只有它影響 boundary / ownership / dependency 時才畫。
-- legacy infrastructure 展開到設計成立所需的深度即可。
-- 圖中的名稱與 code sketch / tables 使用同一 vocabulary。
-- 圖太大時拆成 overview + local view，不以縮字或省略重要 relationship 解決。
+## Diagram construction
 
-## Anti-patterns
+- 圖先定義要回答的問題，再選 nodes / edges；以責任與 owner，而非完整 class 清單，作為 overview 主軸。
+- 使用 repository 已知 current names 與已確認 target names；current vs proposed 必須明確區分。
+- Protocol / function relation 應與 code sketches 的名稱一致，讓讀者能找到 consumer、implementer、placement。
+- 相同角色的 helpers 可合併；真正影響 dependency / state / lifetime 的 collaborator 不能在所有視圖中消失。
+- 太大的圖拆成 overview + local view，不透過縮小文字或刪除重要關係假裝簡潔。
+- Mermaid 圖交付前檢查 syntax、圖示標籤、edge 方向、legend；若未真的 render，不能聲稱 render verified。
+- 如果缺少足以畫出確定箭頭的 source，改在相應節標示 unknown 與影響，不自創連線。
 
-- 只有「Consumers → Domain → Outputs」三個 box，卻沒有補 internal realization。
-- protocol 有 code sketch，但讀者找不到它位於哪個 responsibility boundary。
-- 用 responsibility table 取代 owner / dependency placement 圖。
-- 為了追求少圖，把 persistence / workflow / migration 的重要 wiring 全部埋在 prose。
-- 為了追求完整，把所有 helper / task / singleton 全塞進一張 giant graph。
-- diagram 看似有 cycle，實際只是把不同 abstraction level / runtime callbacks flatten 在一起。
+## Completeness audit
 
-## Local subsystem views
-
-當下列任一成立時，優先增加局部圖：
-
-- 有獨立 workflow state（retry / timeout / progress / rollback）；
-- 有多 owner 交互且 ordering 重要；
-- persistence / background task 的 read-time / write-time semantic 重要；
-- protocol placement 用 table 仍難以理解；
-- auto / manual flow 共用 mechanics 但 policy owner 不同；
-- migration 中新舊 responsibility 暫時分離。
-
-局部圖只回答該 subsystem；不要重畫整個系統。
-
-## Architecture audit
-
-交付前檢查：
-
-- [ ] Current problem 是否能從圖或 flow 直接看懂？
-- [ ] Target Overview 是否清楚顯示 external owner / boundaries？
-- [ ] Significant internal collaborators / protocols 是否有 placement？
-- [ ] Canonical / draft / workflow state owner 是否可視化或明確映射？
-- [ ] Representative behavior 是否有 before / after flow？
-- [ ] Transitional wiring 若存在，是否可看懂且有 retirement condition？
-- [ ] 是否有 table 正在替代其實需要的 relationship diagram？
-- [ ] 是否有圖只是重複文字而沒有增加 spatial / interaction information？
-
-任一重要問題回答不了，先修 Design Doc，再交付；不要把 audit failure 留成文件中的 vague limitation。
+- [ ] Current / integration context 圖有 code evidence，Target 圖不冒充 current。
+- [ ] 重大 ownership 與 protocol placement 能從圖看到，而不只出現在表格中。
+- [ ] 重要 runtime before / after flow 與 migration transition（適用時）可理解。
+- [ ] 每個具體 arrow 都是 source-backed，沒有為美觀加上想像的 dependency。
+- [ ] 圖示增進可讀性，而非只重複文字。
