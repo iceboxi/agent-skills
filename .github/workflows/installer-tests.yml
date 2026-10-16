@@ -1,6 +1,8 @@
 name: Installer tests
 
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - "install.py"
