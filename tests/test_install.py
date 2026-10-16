@@ -10,7 +10,8 @@ from unittest.mock import patch
 import install
 
 
-ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
+ROOTS = (".agents/skills", ".claude/skills")
+LEGACY_ROOTS = (".codex/skills", ".cursor/skills")
 
 
 class InstallerTests(unittest.TestCase):
@@ -149,6 +150,60 @@ class InstallerTests(unittest.TestCase):
         for destination in self.instruction_destinations():
             self.assertEqual(destination.read_bytes(), self.common.read_bytes())
 
+    def test_migration_removes_current_names_from_retired_roots(self):
+        install.apply_install(self.actions(), self.home)
+        old_links = []
+        for root in LEGACY_ROOTS:
+            for name in ("alpha", "beta"):
+                path = self.home / root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to(self.skills / name, target_is_directory=True)
+                old_links.append(path)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertEqual(sorted(stale), sorted(old_links))
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertTrue(all(not path.is_symlink() for path in old_links))
+        self.assert_installed()
+        self.assertEqual(install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}), [])
+
+    def test_migration_preserves_unmanaged_links_in_retired_roots(self):
+        other = self.root / "other"
+        other.mkdir()
+        path = self.home / ".codex/skills/alpha"
+        path.parent.mkdir(parents=True)
+        path.symlink_to(other, target_is_directory=True)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertNotIn(path, stale)
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertEqual(path.resolve(), other)
+
+    def test_migration_failure_restores_removed_links(self):
+        install.apply_install(self.actions(), self.home)
+        old = []
+        for root in LEGACY_ROOTS:
+            path = self.home / root / "alpha"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.symlink_to(self.skills / "alpha", target_is_directory=True)
+            old.append(path)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        real_unlink = Path.unlink
+        def fail_second(path, *args, **kwargs):
+            if path == old[1]:
+                raise OSError("simulated migration cleanup failure")
+            return real_unlink(path, *args, **kwargs)
+        with patch.object(Path, "unlink", fail_second):
+            with self.assertRaisesRegex(OSError, "simulated migration cleanup failure"):
+                install.apply_install(self.actions(), self.home, stale)
+        self.assertTrue(all(path.is_symlink() for path in old))
+        self.assert_installed()
+
     def test_stale_managed_skill_links_are_detected_and_removed(self):
         managed = self.home / ".codex/skills/retired"
         managed.parent.mkdir(parents=True, exist_ok=True)
@@ -177,7 +232,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual((regular / "keep.txt").read_text(), "keep")
 
     def test_managed_skill_source_move_is_retargeted(self):
-        destination = self.home / ".codex/skills/alpha"
+        destination = self.home / ".claude/skills/alpha"
         destination.parent.mkdir(parents=True, exist_ok=True)
         old_source = self.skills / "alpha"
         destination.symlink_to(old_source, target_is_directory=True)
@@ -211,7 +266,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(stale, [])
 
     def test_conflict_is_found_before_any_link_is_created(self):
-        conflict = self.home / ".cursor/skills/beta"
+        conflict = self.home / ".claude/skills/beta"
         conflict.mkdir(parents=True)
         original = conflict / "keep.txt"
         original.write_text("unrelated skill")
@@ -222,7 +277,7 @@ class InstallerTests(unittest.TestCase):
             self.assertFalse(destination.is_symlink())
 
     def test_identical_existing_directory_requires_explicit_adoption(self):
-        existing = self.home / ".codex/skills/alpha"
+        existing = self.home / ".claude/skills/alpha"
         shutil.copytree(self.skills / "alpha", existing)
         with self.assertRaises(install.InstallError):
             self.actions()
@@ -231,17 +286,17 @@ class InstallerTests(unittest.TestCase):
     def test_adoption_preserves_originals_and_retargets_old_aliases(self):
         originals = {}
         for name in ("alpha", "beta"):
-            old = self.home / ".codex/skills" / name
+            old = self.home / ".claude/skills" / name
             shutil.copytree(self.skills / name, old)
             originals[name] = install.tree_signature(old)
-            for root in (".agents/skills", ".claude/skills", ".cursor/skills"):
+            for root in (".agents/skills",):
                 alias = self.home / root / name
                 alias.parent.mkdir(parents=True, exist_ok=True)
                 alias.symlink_to(old, target_is_directory=True)
         backup = install.apply_install(self.actions(adopt=True), self.home)
         self.assert_installed()
         for name, signature in originals.items():
-            saved = backup / ".codex/skills" / name
+            saved = backup / ".claude/skills" / name
             self.assertFalse(saved.is_symlink())
             self.assertEqual(install.tree_signature(saved), signature)
             self.assertTrue((backup / ".agents/skills" / name).is_symlink())
@@ -249,7 +304,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(install.tree_signature(backup / ".codex/skills/alpha"), originals["alpha"])
 
     def test_adoption_rejects_changed_contents(self):
-        existing = self.home / ".codex/skills/alpha"
+        existing = self.home / ".claude/skills/alpha"
         shutil.copytree(self.skills / "alpha", existing)
         document = existing / "SKILL.md"
         document.write_text(document.read_text() + "\nLocal edits.\n")
@@ -259,7 +314,7 @@ class InstallerTests(unittest.TestCase):
         self.assertFalse((self.home / ".agents").exists())
 
     def test_dangling_symlink_is_never_adopted(self):
-        existing = self.home / ".cursor/skills/beta"
+        existing = self.home / ".claude/skills/beta"
         existing.parent.mkdir(parents=True)
         existing.symlink_to(self.root / "missing", target_is_directory=True)
         with self.assertRaises(install.InstallError):
@@ -291,7 +346,7 @@ class InstallerTests(unittest.TestCase):
         self.assertFalse(self.home.exists())
 
     def test_failed_creation_restores_adopted_directory_and_removes_new_links(self):
-        existing = self.home / ".codex/skills/alpha"
+        existing = self.home / ".claude/skills/alpha"
         shutil.copytree(self.skills / "alpha", existing)
         signature = install.tree_signature(existing)
         real_symlink_to = Path.symlink_to
@@ -310,15 +365,15 @@ class InstallerTests(unittest.TestCase):
 
     def test_parent_file_is_detected_before_writes(self):
         self.home.mkdir()
-        (self.home / ".cursor").write_text("keep")
+        (self.home / ".claude").write_text("keep")
         with self.assertRaises(install.InstallError):
             self.actions()
         self.assertFalse((self.home / ".agents").exists())
-        self.assertEqual((self.home / ".cursor").read_text(), "keep")
+        self.assertEqual((self.home / ".claude").read_text(), "keep")
 
     def test_dangling_parent_symlink_is_detected_before_writes(self):
         self.home.mkdir()
-        parent = self.home / ".cursor"
+        parent = self.home / ".claude"
         parent.symlink_to(self.root / "missing", target_is_directory=True)
         with self.assertRaises(install.InstallError):
             self.actions()
@@ -391,7 +446,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(existing.read_text(), "\n")
 
     def test_instruction_flag_does_not_adopt_existing_skills(self):
-        existing = self.home / ".codex/skills/alpha"
+        existing = self.home / ".claude/skills/alpha"
         shutil.copytree(self.skills / "alpha", existing)
         with self.assertRaises(install.InstallError):
             self.actions(adopt_instructions=True)
@@ -489,7 +544,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_verify_rejects_circular_symlinks_without_changing_them(self):
         install.apply_install(self.actions(), self.home)
-        destination = self.home / ".cursor/skills/alpha"
+        destination = self.home / ".claude/skills/alpha"
         destination.unlink()
         destination.symlink_to(destination, target_is_directory=True)
         self.assertEqual(self.run_verify_cli(), 1)
@@ -519,7 +574,7 @@ class InstallerTests(unittest.TestCase):
     def test_verifier_detects_wrong_and_dangling_symlink_targets(self):
         actions = self.actions()
         install.apply_install(actions, self.home)
-        destination = self.home / ".cursor/skills/alpha"
+        destination = self.home / ".claude/skills/alpha"
         for target in (self.skills / "beta", self.root / "missing"):
             with self.subTest(target=target):
                 destination.unlink()

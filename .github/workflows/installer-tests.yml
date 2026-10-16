@@ -1,0 +1,26 @@
+name: Installer tests
+
+on:
+  pull_request:
+    paths:
+      - "install.py"
+      - "tests/**"
+      - "README.md"
+      - ".github/workflows/installer-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run installer tests
+        run: python -m unittest discover -s tests -v

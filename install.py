@@ -15,7 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-TARGET_ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
+# Install once per intended discovery audience. Codex and Cursor share .agents;
+# Claude Code uses .claude. Retired roots remain in the managed cleanup scope.
+TARGET_ROOTS = (".agents/skills", ".claude/skills")
+MANAGED_ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
 INSTRUCTION_TARGETS = (".codex/AGENTS.md", ".claude/CLAUDE.md")
 MANIFEST_NAME = "skills-manifest.json"
 
@@ -318,7 +321,7 @@ def verify_install(actions: list[Action]) -> None:
             )
 
 
-def apply_install(actions: list[Action], home: Path) -> Path | None:
+def apply_install(actions: list[Action], home: Path, stale_links: list[Path] | None = None) -> Path | None:
     backup_root = None
     if any(action.kind == "adopt" for action in actions):
         backup_parent = home / ".local/share/agent-skills/backups"
@@ -327,6 +330,13 @@ def apply_install(actions: list[Action], home: Path) -> Path | None:
         backup_root = Path(tempfile.mkdtemp(prefix=stamp, dir=backup_parent))
 
     changes: list[tuple[Path, Path | None, Path | None]] = []
+    removed_links: list[tuple[Path, Path]] = []
+    # Capture links before any write. Never remove a link if it changes during migration.
+    stale_targets = {}
+    for path in stale_links or []:
+        if not path.is_symlink():
+            raise InstallError(f"Stale link changed before migration: {path}")
+        stale_targets[path] = path.readlink()
     try:
         for action in actions:
             if action.kind == "unchanged":
@@ -350,8 +360,18 @@ def apply_install(actions: list[Action], home: Path) -> Path | None:
             destination.symlink_to(action.source, target_is_directory=action.source.is_dir())
 
         verify_install(actions)
+        for path, target in stale_targets.items():
+            if not path.is_symlink() or path.readlink() != target:
+                raise InstallError(f"Stale link changed during migration: {path}")
+            path.unlink()
+            removed_links.append((path, target))
     except BaseException as error:
         rollback_errors = []
+        for path, target in reversed(removed_links):
+            try:
+                path.symlink_to(target, target_is_directory=True)
+            except OSError as rollback_error:
+                rollback_errors.append(str(rollback_error))
         for destination, backup, previous_link in reversed(changes):
             try:
                 if destination.exists() or destination.is_symlink():
@@ -381,12 +401,14 @@ def find_stale_managed_skill_links(
     resolved_roots = [root.resolve(strict=False) for root in roots]
     stale = []
 
-    for target_root in TARGET_ROOTS:
+    for target_root in MANAGED_ROOTS:
         installed_root = home / target_root
         if not installed_root.is_dir():
             continue
         for destination in installed_root.iterdir():
-            if not destination.is_symlink() or destination.name in current_skill_names:
+            if not destination.is_symlink():
+                continue
+            if target_root in TARGET_ROOTS and destination.name in current_skill_names:
                 continue
             target = _resolved_link_target(destination)
             if target is None:
@@ -460,8 +482,7 @@ def main() -> int:
             print("Dry run complete; no symlink changes made.")
             return 0
 
-        backup_root = apply_install(actions, home)
-        remove_stale_managed_skill_links(stale_links)
+        backup_root = apply_install(actions, home, stale_links)
 
         if backup_root is not None:
             print(f"Previous entries backed up to: {backup_root}")
