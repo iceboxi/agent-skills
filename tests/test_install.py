@@ -365,15 +365,15 @@ class InstallerTests(unittest.TestCase):
 
     def test_parent_file_is_detected_before_writes(self):
         self.home.mkdir()
-        (self.home / ".cursor").write_text("keep")
+        (self.home / ".claude").write_text("keep")
         with self.assertRaises(install.InstallError):
             self.actions()
         self.assertFalse((self.home / ".agents").exists())
-        self.assertEqual((self.home / ".cursor").read_text(), "keep")
+        self.assertEqual((self.home / ".claude").read_text(), "keep")
 
     def test_dangling_parent_symlink_is_detected_before_writes(self):
         self.home.mkdir()
-        parent = self.home / ".cursor"
+        parent = self.home / ".claude"
         parent.symlink_to(self.root / "missing", target_is_directory=True)
         with self.assertRaises(install.InstallError):
             self.actions()
