@@ -171,15 +171,15 @@ cd ~/Documents/agent-skills
 Installer 使用 symlink，不複製 skill files：
 
 ~~~text
-~/.agents/skills/<name>
-~/.codex/skills/<name>
-~/.claude/skills/<name>
-~/.cursor/skills/<name>
+~/.agents/skills/<name>     # Codex and Cursor
+~/.claude/skills/<name>     # Claude Code
 ~/.codex/AGENTS.md
 ~/.claude/CLAUDE.md
 ~~~
 
-`install` 會先跑 tests，再 reconcile，最後 verify。從舊版升級時，同一 repo 管理的 symlink 可自動 retarget；已移除的 managed skill link 會被清理。
+`install` 會先跑 tests，再 reconcile，最後 verify。從舊版升級時，同一 repo 管理的 symlink 可自動 retarget；已移除的 managed skill link 會被清理。舊版的 `~/.codex/skills/<name>` 與 `~/.cursor/skills/<name>` 若為本 repository 管理的 symlink，也會在 migration 中清理，即使該 skill 名稱仍存在。第三方 symlink、一般檔案及目錄不會刪除。
+
+**安裝路徑取捨：** 預設 Codex 與本機 Cursor 共用 `~/.agents/skills`，Claude Code 使用 `~/.claude/skills`。Cursor 可能會同時掃描 `~/.claude/skills`；是否去重取決於 CLI 版本，這個策略不保證 Cursor 完全不會重複發現。另外，Cursor Cloud Agents 的個人 Skills 同步可能需要 `~/.cursor/skills`；本預設不涵蓋此情境。遷移前使用 `./agent-skills install --dry-run` 檢查清理計畫。
 
 想只看 installation plan：
 
