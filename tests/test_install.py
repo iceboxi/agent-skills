@@ -301,7 +301,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(install.tree_signature(saved), signature)
             self.assertTrue((backup / ".agents/skills" / name).is_symlink())
         (self.skills / "alpha/SKILL.md").write_text("updated source")
-        self.assertEqual(install.tree_signature(backup / ".codex/skills/alpha"), originals["alpha"])
+        self.assertEqual(install.tree_signature(backup / ".claude/skills/alpha"), originals["alpha"])
 
     def test_adoption_rejects_changed_contents(self):
         existing = self.home / ".claude/skills/alpha"
@@ -550,6 +550,16 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.run_verify_cli(), 1)
         self.assertEqual(destination.readlink(), destination)
         self.assertFalse((self.home / ".local/share/agent-skills/backups").exists())
+
+    def test_circular_link_in_retired_root_is_preserved(self):
+        destination = self.home / ".codex/skills/alpha"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.symlink_to(destination, target_is_directory=True)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertNotIn(destination, stale)
+        self.assertEqual(destination.readlink(), destination)
 
     def test_verify_rejects_skill_copies_even_when_contents_match(self):
         install.apply_install(self.actions(), self.home)
