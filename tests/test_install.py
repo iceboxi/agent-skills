@@ -10,7 +10,8 @@ from unittest.mock import patch
 import install
 
 
-ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
+ROOTS = (".agents/skills", ".claude/skills")
+LEGACY_ROOTS = (".codex/skills", ".cursor/skills")
 
 
 class InstallerTests(unittest.TestCase):
@@ -149,6 +150,60 @@ class InstallerTests(unittest.TestCase):
         for destination in self.instruction_destinations():
             self.assertEqual(destination.read_bytes(), self.common.read_bytes())
 
+    def test_migration_removes_current_names_from_retired_roots(self):
+        install.apply_install(self.actions(), self.home)
+        old_links = []
+        for root in LEGACY_ROOTS:
+            for name in ("alpha", "beta"):
+                path = self.home / root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to(self.skills / name, target_is_directory=True)
+                old_links.append(path)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertEqual(sorted(stale), sorted(old_links))
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertTrue(all(not path.is_symlink() for path in old_links))
+        self.assert_installed()
+        self.assertEqual(install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}), [])
+
+    def test_migration_preserves_unmanaged_links_in_retired_roots(self):
+        other = self.root / "other"
+        other.mkdir()
+        path = self.home / ".codex/skills/alpha"
+        path.parent.mkdir(parents=True)
+        path.symlink_to(other, target_is_directory=True)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertNotIn(path, stale)
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertEqual(path.resolve(), other)
+
+    def test_migration_failure_restores_removed_links(self):
+        install.apply_install(self.actions(), self.home)
+        old = []
+        for root in LEGACY_ROOTS:
+            path = self.home / root / "alpha"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.symlink_to(self.skills / "alpha", target_is_directory=True)
+            old.append(path)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        real_unlink = Path.unlink
+        def fail_second(path, *args, **kwargs):
+            if path == old[1]:
+                raise OSError("simulated migration cleanup failure")
+            return real_unlink(path, *args, **kwargs)
+        with patch.object(Path, "unlink", fail_second):
+            with self.assertRaisesRegex(OSError, "simulated migration cleanup failure"):
+                install.apply_install(self.actions(), self.home, stale)
+        self.assertTrue(all(path.is_symlink() for path in old))
+        self.assert_installed()
+
     def test_stale_managed_skill_links_are_detected_and_removed(self):
         managed = self.home / ".codex/skills/retired"
         managed.parent.mkdir(parents=True, exist_ok=True)
@@ -234,7 +289,7 @@ class InstallerTests(unittest.TestCase):
             old = self.home / ".codex/skills" / name
             shutil.copytree(self.skills / name, old)
             originals[name] = install.tree_signature(old)
-            for root in (".agents/skills", ".claude/skills", ".cursor/skills"):
+            for root in (".agents/skills", ".claude/skills"):
                 alias = self.home / root / name
                 alias.parent.mkdir(parents=True, exist_ok=True)
                 alias.symlink_to(old, target_is_directory=True)
