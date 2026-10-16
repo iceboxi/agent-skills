@@ -181,7 +181,12 @@ def _resolved_link_target(destination: Path) -> Path | None:
         return None
     raw = destination.readlink()
     target = raw if raw.is_absolute() else destination.parent / raw
-    return target.resolve(strict=False)
+    try:
+        return target.resolve(strict=False)
+    except (OSError, RuntimeError):
+        # A symlink loop or other unresolvable link is not managed by us.
+        # Leave it intact so preflight can report a conflict.
+        return None
 
 
 def _is_managed_skill_link(destination: Path, managed_roots: list[Path]) -> bool:
