@@ -15,6 +15,12 @@ Run only when the user explicitly invokes `$cleanup`. This is a manual maintenan
 - Read relevant project instructions, current Spec/Map/Tickets/Design, code/tests, and dependency references as needed. Use existing tracker operations to inspect GitHub/GitLab or local state; do not implement or assume Matt-specific internal APIs, filenames, skill names or ticket schemas.
 - Do not modify GitHub/GitLab issues or comments, upload attachments, or write maintained documentation without separate explicit approval of the destination and content. Never manage Wiki, delete branches/worktrees, scan OS temp, change `.gitignore`, or modify upstream skills.
 
+## Incidental filesystem metadata
+
+Ignore Finder-generated `.DS_Store` files inside `.scratch/` **by default**, provided they are untracked and ignored: do not hash them, classify them as work artifacts, include them in deletion proposals or actionable file counts, or treat them as cleanup blockers. Finder can rewrite or recreate these files at any time, so repeatedly chasing them does not improve cleanup. At most, note their excluded count separately; leave them untouched.
+
+This narrow exception applies only to files whose exact basename is `.DS_Store`. Do not generalize it to other hidden files, tracked files, or unrecognized OS/tool artifacts. If the user *explicitly* wants particular `.DS_Store` files deleted, enumerate their exact paths and obtain normal deletion approval. At execution, verify each remains an untracked, ignored, regular (not symlink) file within the permitted scope. Content or SHA256 changes **alone** are not material for these approved, disposable metadata files; do not demand reapproval for hash churn, but stop on path, type, scope, tracking, or authorization changes.
+
 ## Classify by work unit
 
 Identify related Spec, Tickets, Design, research notes, handoff, and other artifacts. Do not assume all files under `.scratch/` belong to the same work item. Check whether sibling or other active efforts reference each item. Inspect artifacts within each directory rather than assuming a whole directory shares one retention need.
@@ -82,7 +88,7 @@ When information needs promotion, mark local deletion **blocked** until the sepa
 1. Inspect `git status` and `git check-ignore` / `git ls-files` for candidates; ignored and untracked files may be irrecoverable. Never assume Git can restore them.
 2. Report exact path, work-unit status, proposed action, rationale, evidence, dependencies, and whether each candidate is tracked, ignored or untracked. Distinguish **KEEP ACTIVE**, **PRESERVE ELSEWHERE**, **DELETE CANDIDATE**, and **BLOCKED / UNKNOWN**. For preservation proposals, specify target and verification needed before deleting the local copy. Prefer a whole completed work unit only when every included file has been checked; do not sweep unrelated artifacts.
 3. **Stop at dry-run**. Ask for explicit approval of the exact enumerated deletion targets. `$cleanup` alone is not approval. Do not delete wildcard-expanded or newly created paths that were not approved.
-4. After approval, recheck paths, contents, tracker completion, active dependencies, working-tree changes and preservation blockers. If anything material changed, stop and issue a revised plan for approval.
+4. After approval, recheck paths, contents, tracker completion, active dependencies, working-tree changes and preservation blockers. If anything material changed, stop and issue a revised plan for approval. The only content-hash exception is for explicitly approved `.DS_Store` deletion under the narrow safeguards above.
 5. Delete only approved files within the permitted scope; never use an unchecked recursive wipe. Do not remove tracked files with pending user modifications unless those exact modifications and their loss were explicitly disclosed and approved.
 6. Verify the remaining paths and report deleted, retained, skipped and failed items. Do not claim cleanup succeeded without checking.
 
