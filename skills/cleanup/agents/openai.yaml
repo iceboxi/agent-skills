@@ -1,0 +1,6 @@
+interface:
+  display_name: "Cleanup Working Artifacts"
+  short_description: "Review and safely clean completed .scratch work"
+  default_prompt: "使用 $cleanup 檢查目前 repository 的 .scratch 工作產物，判斷完成狀態、剩餘依賴與需長期保存的決策，先提供具體 dry-run 清單。未經使用者核准刪除目標，不執行刪除。"
+policy:
+  allow_implicit_invocation: false
