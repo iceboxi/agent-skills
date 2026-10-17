@@ -47,6 +47,8 @@ Do not redirect other upstream artifacts:
 
 `.scratch/artifacts/*` is non-canonical working state. Do not silently add it to tracked `.gitignore` or commit it unless the user/project explicitly chooses that policy.
 
+Cleanup is manual-only: completed .scratch work may be proposed for deletion after checking unfinished dependencies and durable knowledge. Non-canonical status alone never authorizes deletion; require explicit approval of exact paths. Durable ADRs belong in the project's canonical docs (for example docs/adr/), not .scratch. Do not automatically archive or modify Wiki.
+
 For promoted temp artifacts, final responses should report the project-local path and auto-open that copy when possible. Mention the OS-temp path only for debugging.
 
 # Code Navigation
