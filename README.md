@@ -3,7 +3,7 @@
 個人的跨裝置 agent engineering environment。這個 repository 以 Matt Pocock skills 作為 pinned upstream base，只保留真正不同的 local documentation / optional critique abilities 與少量 global overlay。
 
 - Matt Pocock skills = generic engineering workflow base
-- local skills = 獨立 Design Doc artifact / 選用 critique
+- local skills = 獨立 Design Doc artifact / 選用 critique / 手動 cleanup
 - `instructions/common.md` = 輕量 workflow / Apple-platform overlay
 - `skills-manifest.json` = 決定哪些 upstream skills 會被安裝
 - Git submodule gitlink = upstream 版本唯一 pin
@@ -27,7 +27,8 @@ Matt upstream
 Our local skills
 ├─ design       # optional standalone post-spec/post-tickets Design Doc
 ├─ challenge    # manual adversarial critique
-└─ review       # manual independent assessment
+├─ review       # manual independent assessment
+└─ cleanup      # manual .scratch working-artifact cleanup
 
 Lightweight overlay
 └─ instructions/common.md
@@ -70,6 +71,8 @@ grill-with-docs / decisions
 **Design Doc 不露出 ticket ID、標題、狀態、tracker URL 或 ticket-to-phase mapping。** 詳細工作項目可彙整成工程 phase，但文件必須能獨立閱讀，不能要求讀者回到 tracker 或 spec 才看得懂。Implementation 仍依 spec 和確認過的工作規劃；實作發現新證據可適度調整，必要時才同步文件。
 
 `challenge` 和 `review` 僅在使用者主動呼叫時執行；不自動串接，也不是 implementation 必經的 acceptance gate。
+
+`cleanup` 也僅在使用者明確呼叫 `$cleanup` 時執行。它先檢查 `.scratch` 工作單位的完成狀態、依賴及值得長期保存的知識，再提出 dry-run 刪除清單；未經確認不會刪除。已完成的 Spec / Tickets / Design 工作版本不預設封存。ADR 等長期文件保留在專案的正式文件位置，Wiki 不屬於此流程。
 
 Repository current-state inspection 不再是獨立 skill；各 workflow 直接依需要讀 code/tests。Accepted Design Doc 的 bounded maintenance 也不是獨立 skill，而是 `design` 的 document-maintenance mode。
 
@@ -130,6 +133,7 @@ Local skills：
 skills/design/
 skills/challenge/
 skills/review/
+skills/cleanup/
 ~~~
 
 Upstream skills：
