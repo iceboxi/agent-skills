@@ -17,14 +17,27 @@ Run only when the user explicitly invokes `$cleanup`. This is a manual maintenan
 
 ## Classify by work unit
 
-Identify related Spec, Tickets, Design, research notes, handoff, and other artifacts. Do not assume all files under `.scratch/` belong to the same work item. Check whether sibling or other active efforts reference each item.
+Identify related Spec, Tickets, Design, research notes, handoff, and other artifacts. Do not assume all files under `.scratch/` belong to the same work item. Check whether sibling or other active efforts reference each item. Inspect artifacts within each directory rather than assuming a whole directory shares one retention need.
 
 - **Completed**: all in-scope deliverables are implemented, required verification and acceptance are evidenced, there are no open requirements or active dependencies. Candidate: the *entire related working directory*, including local Spec, Map, Tickets and Design, regardless of tracker type. A closed ticket alone is insufficient.
-- **In progress**: preserve the latest effective Spec, Tickets, Map, Design and inputs needed to continue; do not prune completed ticket records from a still-active work unit. Only obsolete, unreferenced intermediate outputs are candidates.
+- **In progress**: preserve the latest effective Spec, Tickets, Map, Design and inputs needed to continue; do not prune completed ticket records from a still-active work unit. Keep only those local inputs necessary for active or imminent work. Obsolete outputs can be deletion candidates; historical evidence not needed locally should be considered for preservation elsewhere.
 - **Superseded**: keep the currently effective working version; older drafts are candidates after confirming significant rationale has been retained and no remaining work depends on them. Avoid silently choosing a latest version from names or timestamps where authority is unclear.
 - **Unknown**: do not propose the whole unit for deletion. Report which evidence is missing.
 
 For remote-backed work, read the relevant issues/PRs/MRs to establish status and dependencies. For local-only work, use the effective local tracker records. Both use the same cleanup policy; tracker choice changes evidence discovery, not retention policy.
+
+## Locality and disposition
+
+Historical value is **not** by itself a reason to keep a file in `.scratch/`. Independently assess (a) whether the data still matters and (b) whether active or imminent work needs the local copy. For each artifact, choose:
+
+- **KEEP ACTIVE**: active or imminent work needs direct local access; identify the specific ticket, verification gate, or consumer, and preferably the files it needs rather than retaining an entire directory by association.
+- **PRESERVE ELSEWHERE**: historically or operationally valuable evidence is not needed locally. Identify a concrete existing destination (for example, a relevant issue comment or attachment, PR, release artifact store, or project documentation convention), what to save, and how to verify retrieval. This is a **proposal**, not an automatic upload. Keep the source until preservation is verified, then it may become a delete candidate.
+- **DELETE CANDIDATE**: finished, obsolete, recoverable, or reproducible data with no active dependency or outstanding preservation requirement.
+- **BLOCKED / UNKNOWN**: a decision, verification requirement, ownership, or destination is unresolved. State the exact missing fact; do not silently default every historical file to KEEP ACTIVE.
+
+Classify mixed-content directories at file or meaningful subgroup granularity. Do not retain all release artifacts, all baseline measurements, or all files listed in an earlier retention manifest merely because one item is valuable. Revalidate previous `RETAINED.md`-style decisions against current issues, code, tests, and release state; prior retention labels are evidence, not permanent protection.
+
+For release-related artifacts, distinguish reproducibility and recovery assets (for example, unique source patches, IPA, dSYM), verification logs, and disposable build outputs. Never assume release success makes unique recovery or symbolication artifacts disposable. Prefer the project's existing release retention arrangements rather than creating new archive machinery.
 
 ## Knowledge preservation check
 
@@ -40,7 +53,7 @@ When information needs promotion, mark affected files **blocked** until that sep
 ## Safety and execution
 
 1. Inspect `git status` and `git check-ignore` / `git ls-files` for candidates; ignored and untracked files may be irrecoverable. Never assume Git can restore them.
-2. Report exact path, work-unit status, proposed action, rationale, evidence, dependencies, and whether each candidate is tracked, ignored or untracked. Distinguish **DELETE CANDIDATE**, **RETAIN**, **BLOCKED**, and **UNKNOWN**. Prefer whole completed work units; do not sweep unrelated artifacts.
+2. Report exact path, work-unit status, proposed action, rationale, evidence, dependencies, and whether each candidate is tracked, ignored or untracked. Distinguish **KEEP ACTIVE**, **PRESERVE ELSEWHERE**, **DELETE CANDIDATE**, and **BLOCKED / UNKNOWN**. For preservation proposals, specify target and verification needed before deleting the local copy. Prefer a whole completed work unit only when every included file has been checked; do not sweep unrelated artifacts.
 3. **Stop at dry-run**. Ask for explicit approval of the exact enumerated deletion targets. `$cleanup` alone is not approval. Do not delete wildcard-expanded or newly created paths that were not approved.
 4. After approval, recheck paths, contents, tracker completion, active dependencies, working-tree changes and preservation blockers. If anything material changed, stop and issue a revised plan for approval.
 5. Delete only approved files within the permitted scope; never use an unchecked recursive wipe. Do not remove tracked files with pending user modifications unless those exact modifications and their loss were explicitly disclosed and approved.
