@@ -10,8 +10,8 @@ from unittest.mock import patch
 import install
 
 
-ROOTS = (".agents/skills", ".claude/skills")
-LEGACY_ROOTS = (".codex/skills", ".cursor/skills")
+ROOTS = (".agents/skills", ".claude/skills", ".gemini/config/skills")
+LEGACY_ROOTS = (".codex/skills", ".cursor/skills", ".gemini/antigravity-cli/skills")
 
 
 class InstallerTests(unittest.TestCase):
@@ -125,6 +125,75 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaisesRegex(install.InstallError, "Missing OpenAI skill metadata"):
             self.actions()
         self.assertFalse(self.home.exists())
+
+    def test_antigravity_cli_skills_are_installed_and_verified(self):
+        actions = self.actions()
+        install.apply_install(actions, self.home)
+        for name in ("alpha", "beta"):
+            destination = self.home / ".gemini/config/skills" / name
+            self.assertTrue(destination.is_symlink())
+            self.assertEqual(destination.resolve(), self.skills / name)
+        install.verify_install(actions)
+
+    def test_antigravity_global_conflict_stops_before_any_changes(self):
+        existing = self.home / ".gemini/config/skills/alpha"
+        existing.mkdir(parents=True)
+        (existing / "keep.txt").write_text("Do not overwrite")
+        with self.assertRaises(install.InstallError):
+            self.actions()
+        self.assertEqual((existing / "keep.txt").read_text(), "Do not overwrite")
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertFalse((self.home / ".claude").exists())
+
+    def test_retired_antigravity_cli_link_is_cleaned(self):
+        destination = self.home / ".gemini/antigravity-cli/skills/retired"
+        destination.parent.mkdir(parents=True)
+        destination.symlink_to(self.skills / "retired", target_is_directory=True)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertEqual(stale, [destination])
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertFalse(destination.is_symlink())
+        self.assert_installed()
+
+    def test_retired_antigravity_cli_current_name_is_removed(self):
+        retired = self.home / ".gemini/antigravity-cli/skills/alpha"
+        retired.parent.mkdir(parents=True)
+        retired.symlink_to(self.skills / "alpha", target_is_directory=True)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertEqual(stale, [retired])
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertFalse(retired.is_symlink())
+        self.assert_installed()
+
+    def test_retired_antigravity_cli_unmanaged_entries_are_preserved(self):
+        retired = self.home / ".gemini/antigravity-cli/skills"
+        retired.mkdir(parents=True)
+        unrelated = retired / "unrelated"
+        unrelated.mkdir()
+        (unrelated / "SKILL.md").write_text("Unmanaged skill")
+        external = self.root / "external-skill"
+        external.mkdir()
+        external_link = retired / "external"
+        external_link.symlink_to(external, target_is_directory=True)
+        stale = install.find_stale_managed_skill_links(
+            self.home, self.skills, {"alpha", "beta"}
+        )
+        self.assertEqual(stale, [])
+        install.apply_install(self.actions(), self.home, stale)
+        self.assertTrue(unrelated.is_dir())
+        self.assertEqual((unrelated / "SKILL.md").read_text(), "Unmanaged skill")
+        self.assertEqual(external_link.resolve(), external)
+
+    def test_antigravity_verify_does_not_repair_missing_link(self):
+        install.apply_install(self.catalog_actions(), self.home)
+        destination = self.home / ".gemini/config/skills/alpha"
+        destination.unlink()
+        self.assertEqual(self.run_verify_cli(), 1)
+        self.assertFalse(destination.exists())
 
     def test_fresh_install_preserves_references(self):
         self.assertIsNone(install.apply_install(self.actions(), self.home))
