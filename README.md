@@ -177,16 +177,16 @@ Installer 使用 symlink，不複製 skill files：
 ~~~text
 ~/.agents/skills/<name>     # Codex and Cursor
 ~/.claude/skills/<name>     # Claude Code
-~/.gemini/antigravity-cli/skills/<name> # Antigravity CLI
+~/.gemini/config/skills/<name> # Antigravity
 ~/.codex/AGENTS.md
 ~/.claude/CLAUDE.md
 ~~~
 
 `install` 會先跑 tests，再 reconcile，最後 verify。從舊版升級時，同一 repo 管理的 symlink 可自動 retarget；已移除的 managed skill link 會被清理。舊版的 `~/.codex/skills/<name>` 與 `~/.cursor/skills/<name>` 若為本 repository 管理的 symlink，也會在 migration 中清理，即使該 skill 名稱仍存在。第三方 symlink、一般檔案及目錄不會刪除。
 
-**安裝路徑取捨：** 預設 Codex 與本機 Cursor 共用 `~/.agents/skills`，Claude Code 使用 `~/.claude/skills`，Antigravity CLI 使用 `~/.gemini/antigravity-cli/skills`。Cursor 可能會同時掃描 `~/.claude/skills`；是否去重取決於 CLI 版本，這個策略不保證 Cursor 完全不會重複發現。另外，Cursor Cloud Agents 的個人 Skills 同步可能需要 `~/.cursor/skills`；本預設不涵蓋此情境。遷移前使用 `./agent-skills install --dry-run` 檢查清理計畫。
+**安裝路徑取捨：** 預設 Codex 與本機 Cursor 共用 `~/.agents/skills`，Claude Code 使用 `~/.claude/skills`，Antigravity 使用 `~/.gemini/config/skills`。Cursor 可能會同時掃描 `~/.claude/skills`；是否去重取決於 CLI 版本，這個策略不保證 Cursor 完全不會重複發現。另外，Cursor Cloud Agents 的個人 Skills 同步可能需要 `~/.cursor/skills`；本預設不涵蓋此情境。遷移前使用 `./agent-skills install --dry-run` 檢查清理計畫。
 
-Antigravity CLI 使用相同的 `SKILL.md` catalog 與 symlink 管理；安裝、`update`、`verify`、dry-run、衝突保護及 stale-link cleanup 都會涵蓋這個目標。不會額外建立 `~/.gemini/AGENTS.md` 或 Antigravity IDE 專用的 `~/.gemini/config/skills`。既有該路徑下同名但非本 repo 管理的檔案會停止安裝，不會覆蓋。
+Antigravity 使用相同的 `SKILL.md` catalog 與 symlink 管理，統一安裝到 `~/.gemini/config/skills`。不會額外建立 `~/.gemini/AGENTS.md`。舊版錯誤路徑 `~/.gemini/antigravity-cli/skills` 列為 retired root：`install` / `update` 會移除指向本 repo local/upstream skills 的舊 symlink（即使名稱仍在現行 manifest），但**不會**刪除該目錄、一般檔案或第三方 symlink。`verify` 只報告殘留連結，不會自動清理。先用 `./agent-skills install --dry-run` 檢查清理清單；遇到非本 repo 管理的同名項目會停止安裝。
 
 想只看 installation plan：
 
