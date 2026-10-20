@@ -16,9 +16,16 @@ from pathlib import Path
 
 
 # Install once per intended discovery audience. Codex and Cursor share .agents;
-# Claude Code uses .claude. Retired roots remain in the managed cleanup scope.
-TARGET_ROOTS = (".agents/skills", ".claude/skills")
-MANAGED_ROOTS = (".agents/skills", ".codex/skills", ".claude/skills", ".cursor/skills")
+# Claude Code and Antigravity CLI each need their own global skill root.
+# Retired roots remain in the managed cleanup scope.
+TARGET_ROOTS = (".agents/skills", ".claude/skills", ".gemini/antigravity-cli/skills")
+MANAGED_ROOTS = (
+    ".agents/skills",
+    ".codex/skills",
+    ".claude/skills",
+    ".cursor/skills",
+    ".gemini/antigravity-cli/skills",
+)
 INSTRUCTION_TARGETS = (".codex/AGENTS.md", ".claude/CLAUDE.md")
 MANIFEST_NAME = "skills-manifest.json"
 
