@@ -7,6 +7,10 @@ on:
     paths:
       - "install.py"
       - "tests/**"
+      - "skills/**"
+      - "instructions/**"
+      - "skills-manifest.json"
+      - ".gitmodules"
       - "README.md"
       - ".github/workflows/installer-tests.yml"
   workflow_dispatch:

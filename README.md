@@ -180,19 +180,42 @@ Installer 使用 symlink，不複製 skill files：
 ~/.gemini/config/skills/<name> # Antigravity
 ~/.codex/AGENTS.md
 ~/.claude/CLAUDE.md
+~/.gemini/GEMINI.md           # Antigravity global rules
 ~~~
 
 `install` 會先跑 tests，再 reconcile，最後 verify。從舊版升級時，同一 repo 管理的 symlink 可自動 retarget；已移除的 managed skill link 會被清理。舊版的 `~/.codex/skills/<name>` 與 `~/.cursor/skills/<name>` 若為本 repository 管理的 symlink，也會在 migration 中清理，即使該 skill 名稱仍存在。第三方 symlink、一般檔案及目錄不會刪除。
 
 **安裝路徑取捨：** 預設 Codex 與本機 Cursor 共用 `~/.agents/skills`，Claude Code 使用 `~/.claude/skills`，Antigravity 使用 `~/.gemini/config/skills`。Cursor 可能會同時掃描 `~/.claude/skills`；是否去重取決於 CLI 版本，這個策略不保證 Cursor 完全不會重複發現。另外，Cursor Cloud Agents 的個人 Skills 同步可能需要 `~/.cursor/skills`；本預設不涵蓋此情境。遷移前使用 `./agent-skills install --dry-run` 檢查清理計畫。
 
-Antigravity 使用相同的 `SKILL.md` catalog 與 symlink 管理，統一安裝到 `~/.gemini/config/skills`。不會額外建立 `~/.gemini/AGENTS.md`。舊版錯誤路徑 `~/.gemini/antigravity-cli/skills` 列為 retired root：`install` / `update` 會移除指向本 repo local/upstream skills 的舊 symlink（即使名稱仍在現行 manifest），但**不會**刪除該目錄、一般檔案或第三方 symlink。`verify` 只報告殘留連結，不會自動清理。先用 `./agent-skills install --dry-run` 檢查清理清單；遇到非本 repo 管理的同名項目會停止安裝。
+Antigravity 使用相同的 `SKILL.md` catalog 與 symlink 管理，統一安裝到 `~/.gemini/config/skills`；全域 instructions 則 symlink 到 `~/.gemini/GEMINI.md`（Antigravity 的全域 rules 檔）。舊版錯誤路徑 `~/.gemini/antigravity-cli/skills` 列為 retired root：`install` / `update` 會移除指向本 repo local/upstream skills 的舊 symlink（即使名稱仍在現行 manifest），但**不會**刪除該目錄、一般檔案或第三方 symlink。`verify` 只報告殘留連結，不會自動清理。先用 `./agent-skills install --dry-run` 檢查清理清單；遇到非本 repo 管理的同名項目會停止安裝。
 
 想只看 installation plan：
 
 ~~~sh
 ./agent-skills install --dry-run
 ~~~
+
+## Tool detection
+
+`install` / `update` / `verify` 預設只處理「這台電腦有安裝」的工具，沒偵測到的工具不建立任何目錄或連結：
+
+| Tool | 偵測條件（任一成立） | Skills | 全域 instructions |
+| --- | --- | --- | --- |
+| codex | `~/.codex` 存在，或 `codex` 在 PATH | `~/.agents/skills` | `~/.codex/AGENTS.md` |
+| claude | `~/.claude` 存在，或 `claude` 在 PATH | `~/.claude/skills` | `~/.claude/CLAUDE.md` |
+| antigravity | `agy` 在 PATH（不看 `~/.gemini`，因為舊 Gemini CLI 也會留下它） | `~/.gemini/config/skills` | `~/.gemini/GEMINI.md` |
+| cursor | `~/.cursor` 存在，或 `cursor` 在 PATH | `~/.agents/skills`（與 Codex 共用） | 無 |
+
+PATH 檢查只在安裝到真實 `$HOME` 時使用（`--home` 指定其他目錄時只看標記目錄，所以 antigravity 需用 `--tools antigravity` 指定）。每次執行都會印出 `Tools:` 與 `Skipped:`，可以分辨「沒裝所以跳過」與「偵測失敗」。
+
+```
+./agent-skills install --tools all            # 不偵測，全部安裝
+./agent-skills install --tools claude,codex   # 只裝指定工具
+```
+
+已偵測過、之後才移除的工具，既有連結不會被刪除或重建；repo 已移除的 skill 連結仍會被清理。
+
+**不要直接編輯全域 instructions**：`~/.codex/AGENTS.md`、`~/.claude/CLAUDE.md`、`~/.gemini/GEMINI.md` 都是指向 `instructions/common.md` 的 symlink，從工具內（例如 `/memory` 或 rules 設定）編輯會寫進本 repo，導致 `update` 因 working tree 有變更而停止。要改規則請改 `instructions/common.md` 後 commit。
 
 ## Normal update
 
@@ -270,6 +293,13 @@ skills/<name>/agents/openai.yaml
 ~~~
 
 Installer 會驗證 local metadata。Upstream skill 使用 Matt 自己的 `SKILL.md` invocation metadata，不要求我們額外包一份 `agents/openai.yaml`。
+
+手動呼叫限定（`challenge`、`cleanup`、`design`、`review`）必須兩邊同時設定，installer 會驗證兩者一致：
+
+```
+SKILL.md frontmatter          disable-model-invocation: true      # Claude Code
+agents/openai.yaml            policy.allow_implicit_invocation: false   # Codex
+```
 
 ## Project bootstrap and trackers
 

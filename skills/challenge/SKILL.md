@@ -1,6 +1,7 @@
 ---
 name: challenge
 description: Adversarially strengthen an existing technical design or Design Doc with multiple independent reviewer perspectives. Use only when the user explicitly requests adversarial critique of a design, spec, or Design Doc; this is optional and never an automatic gate. Produces a consolidated challenge set, not an acceptance verdict.
+disable-model-invocation: true
 ---
 
 # Design Challenge

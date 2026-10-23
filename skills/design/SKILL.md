@@ -1,6 +1,7 @@
 ---
 name: design
 description: Produce a self-contained, fixed-structure Markdown Design Doc from already-decided requirements, implementation spec, tickets, and repository evidence. Use after grill-with-docs, to-spec, and to-tickets when a human-readable technical design/report is needed. Document existing decisions and plans; do not redesign or change the implementation contract.
+disable-model-invocation: true
 ---
 
 # Design Documentation

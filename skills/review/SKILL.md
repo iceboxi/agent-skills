@@ -1,6 +1,7 @@
 ---
 name: review
 description: On explicit user request, independently assess whether an existing technical design or implementation spec is defensible enough to become an accepted baseline. Verify material claims against authoritative requirements and repository evidence, report only acceptance-relevant findings, and return ACCEPT, ACCEPT WITH NON-BLOCKING NOTES, REVISE, or BLOCKED. Do not redesign or perform exploratory multi-role critique.
+disable-model-invocation: true
 ---
 
 # Independent Technical Review

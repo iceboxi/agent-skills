@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,21 +16,82 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-# Install once per intended discovery audience. Codex and Cursor share .agents;
-# Claude Code and Antigravity use their documented global skill roots.
-# The previously added Antigravity CLI root is retired: only repository-owned
-# symlinks there are cleaned up; unrelated entries remain untouched.
-TARGET_ROOTS = (".agents/skills", ".claude/skills", ".gemini/config/skills")
-MANAGED_ROOTS = (
-    ".agents/skills",
-    ".codex/skills",
-    ".claude/skills",
-    ".cursor/skills",
-    ".gemini/config/skills",
-    ".gemini/antigravity-cli/skills",
+@dataclass(frozen=True)
+class Tool:
+    """One AI tool: how to detect it and where its global entries live (under $HOME)."""
+
+    name: str
+    markers: tuple[str, ...]  # directories under $HOME that indicate the tool is set up
+    commands: tuple[str, ...]  # executables on PATH that indicate the tool is installed
+    skill_roots: tuple[str, ...]
+    instruction_target: str | None = None
+
+
+# Codex and Cursor share ~/.agents/skills; Claude Code and Antigravity use their own
+# global roots. Cursor has no file-based global instructions, so it only contributes
+# the shared skill root.
+TOOLS = (
+    Tool("codex", (".codex",), ("codex",), (".agents/skills",), ".codex/AGENTS.md"),
+    Tool("claude", (".claude",), ("claude",), (".claude/skills",), ".claude/CLAUDE.md"),
+    Tool("antigravity", (), ("agy",), (".gemini/config/skills",), ".gemini/GEMINI.md"),
+    Tool("cursor", (".cursor",), ("cursor",), (".agents/skills",), None),
 )
-INSTRUCTION_TARGETS = (".codex/AGENTS.md", ".claude/CLAUDE.md")
+TOOL_NAMES = tuple(tool.name for tool in TOOLS)
+
+
+def _unique(items):
+    return tuple(dict.fromkeys(items))
+
+
+# Union of every known tool; used when no tool selection is given (all tools).
+TARGET_ROOTS = _unique(root for tool in TOOLS for root in tool.skill_roots)
+INSTRUCTION_TARGETS = tuple(tool.instruction_target for tool in TOOLS if tool.instruction_target)
+
+# Retired roots: repository-owned symlinks here are always cleaned up, even when the
+# skill name still exists. Unrelated entries remain untouched.
+RETIRED_ROOTS = (".codex/skills", ".cursor/skills", ".gemini/antigravity-cli/skills")
+MANAGED_ROOTS = (*TARGET_ROOTS, *RETIRED_ROOTS)
 MANIFEST_NAME = "skills-manifest.json"
+
+
+def detect_tools(home: Path, which=shutil.which) -> list[Tool]:
+    """Return tools that look installed for this home directory.
+
+    A tool counts as present if one of its marker directories exists under ``home`` or,
+    when ``home`` is the real home directory, one of its commands is on PATH.
+    """
+    check_path = home == Path.home().resolve()
+    found = []
+    for tool in TOOLS:
+        has_marker = any((home / marker).is_dir() for marker in tool.markers)
+        has_command = check_path and any(which(command) for command in tool.commands)
+        if has_marker or has_command:
+            found.append(tool)
+    return found
+
+
+def select_tools(spec: str, home: Path, which=shutil.which) -> list[Tool]:
+    """Resolve --tools: ``auto`` (detect), ``all``, or a comma-separated list of names."""
+    spec = spec.strip().lower()
+    if spec == "auto":
+        return detect_tools(home, which)
+    if spec == "all":
+        return list(TOOLS)
+    names = [name.strip() for name in spec.split(",") if name.strip()]
+    unknown = [name for name in names if name not in TOOL_NAMES]
+    if not names or unknown:
+        raise InstallError(
+            f"Unknown --tools value: {spec!r}. Use auto, all, or any of: {', '.join(TOOL_NAMES)}"
+        )
+    return [tool for tool in TOOLS if tool.name in names]
+
+
+def tool_targets(tools: list[Tool] | None) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Skill roots and instruction targets for the selected tools (None means all)."""
+    selected = TOOLS if tools is None else tools
+    roots = _unique(root for tool in selected for root in tool.skill_roots)
+    instructions = _unique(tool.instruction_target for tool in selected if tool.instruction_target)
+    return roots, instructions
 
 
 class InstallError(Exception):
@@ -102,6 +164,16 @@ def _validate_skill(
         for pattern, field in required_metadata:
             if not re.search(pattern, metadata_text, re.M):
                 raise InstallError(f"Missing or invalid {field} in {metadata}")
+        # Manual-only must hold in every tool: Codex reads allow_implicit_invocation,
+        # Claude Code reads disable-model-invocation. Keep the two in agreement.
+        manual_codex = bool(re.search(r"^\s*allow_implicit_invocation:\s*false\s*$", metadata_text, re.M))
+        manual_claude = bool(re.search(r"^disable-model-invocation:\s*true\s*$", fields, re.M))
+        if manual_codex != manual_claude:
+            raise InstallError(
+                f"Invocation policy mismatch in {skill.name}: agents/openai.yaml "
+                f"allow_implicit_invocation:false and SKILL.md disable-model-invocation:true "
+                f"must be set together"
+            )
 
     if validate_references:
         root = reference_root.resolve()
@@ -266,14 +338,16 @@ def plan_install_sources(
     adopt_identical: bool,
     adopt_instructions: bool = False,
     managed_skill_roots: list[Path] | None = None,
+    tools: list[Tool] | None = None,
 ) -> list[Action]:
     repository_root = Path(__file__).resolve().parent
     common = repository_root / "instructions/common.md"
     if common.is_symlink() or not common.is_file() or not common.read_text(encoding="utf-8").strip():
         raise InstallError(f"Missing, empty, or symlinked common instructions: {common}")
 
+    target_roots, instruction_targets = tool_targets(tools)
     actions = []
-    for target_root in TARGET_ROOTS:
+    for target_root in target_roots:
         for skill in skills:
             destination = home / target_root / skill.name
             actions.append(
@@ -284,7 +358,7 @@ def plan_install_sources(
                     managed_skill_roots=managed_skill_roots,
                 )
             )
-    for target in INSTRUCTION_TARGETS:
+    for target in instruction_targets:
         actions.append(plan_action(common, home / target, adopt_identical, adopt_instructions))
     return actions
 
@@ -422,7 +496,7 @@ def find_stale_managed_skill_links(
         for destination in installed_root.iterdir():
             if not destination.is_symlink():
                 continue
-            if target_root in TARGET_ROOTS and destination.name in current_skill_names:
+            if target_root not in RETIRED_ROOTS and destination.name in current_skill_names:
                 continue
             target = _resolved_link_target(destination)
             if target is None:
@@ -458,6 +532,12 @@ def main() -> int:
         help="Back up and adopt global instruction files only when their entire non-empty "
              "text is already contained in instructions/common.md.",
     )
+    parser.add_argument(
+        "--tools",
+        default="auto",
+        help="Which tools to install for: auto (detect, default), all, or a comma-separated "
+             f"list of {', '.join(TOOL_NAMES)}.",
+    )
     args = parser.parse_args()
 
     if args.verify and (args.adopt_identical or args.adopt_instructions):
@@ -468,12 +548,18 @@ def main() -> int:
 
     try:
         skills, managed_roots = load_install_skills(repository_root)
+        tools = select_tools(args.tools, home)
+        skipped = [name for name in TOOL_NAMES if name not in {tool.name for tool in tools}]
+        print("Tools:    " + (", ".join(tool.name for tool in tools) or "(none detected)"))
+        if skipped:
+            print("Skipped:  " + ", ".join(skipped) + "  (not detected; use --tools all to force)")
         actions = plan_install_sources(
             skills,
             home,
             args.adopt_identical,
             args.adopt_instructions,
             managed_skill_roots=managed_roots,
+            tools=tools,
         )
         current_skill_names = {skill.name for skill in skills}
         stale_links = find_stale_managed_skill_links(home, managed_roots, current_skill_names)

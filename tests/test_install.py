@@ -53,12 +53,12 @@ class InstallerTests(unittest.TestCase):
                 '  allow_implicit_invocation: false\n'
             )
         (self.skills / "alpha/SKILL.md").write_text(
-            "---\nname: alpha\ndescription: First fixture skill.\n---\n"
+            "---\nname: alpha\ndescription: First fixture skill.\ndisable-model-invocation: true\n---\n"
             "[Guide](references/planning.md)\n[Sibling](../beta/SKILL.md)\n"
         )
         (self.skills / "alpha/references/planning.md").write_text("A supporting guide.\n")
         (self.skills / "beta/SKILL.md").write_text(
-            "---\nname: beta\ndescription: Second fixture skill.\n---\n"
+            "---\nname: beta\ndescription: Second fixture skill.\ndisable-model-invocation: true\n---\n"
             "[Sibling](../alpha/SKILL.md)\n"
         )
         self.common = self.skills.parent / "instructions/common.md"
@@ -409,7 +409,7 @@ class InstallerTests(unittest.TestCase):
         script = self.skills.parent / "install.py"
         shutil.copyfile(install.__file__, script)
         with patch.object(install, "__file__", str(script)), \
-                patch("sys.argv", ["install.py", "--home", str(self.home), "--dry-run"]), \
+                patch("sys.argv", ["install.py", "--home", str(self.home), "--tools", "all", "--dry-run"]), \
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(install.main(), 0)
         self.assertFalse(self.home.exists())
@@ -551,7 +551,7 @@ class InstallerTests(unittest.TestCase):
         script = self.skills.parent / "install.py"
         shutil.copyfile(install.__file__, script)
         with patch.object(install, "__file__", str(script)), \
-                patch("sys.argv", ["install.py", "--home", str(self.home),
+                patch("sys.argv", ["install.py", "--home", str(self.home), "--tools", "all",
                                    "--adopt-instructions", "--dry-run"]), \
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(install.main(), 0)
@@ -595,7 +595,7 @@ class InstallerTests(unittest.TestCase):
         script = self.skills.parent / "install.py"
         shutil.copyfile(install.__file__, script)
         with patch.object(install, "__file__", str(script)), \
-                patch("sys.argv", ["install.py", "--home", str(self.home), "--verify"]), \
+                patch("sys.argv", ["install.py", "--home", str(self.home), "--tools", "all", "--verify"]), \
                 contextlib.redirect_stdout(io.StringIO()), \
                 contextlib.redirect_stderr(io.StringIO()):
             return install.main()
@@ -678,6 +678,124 @@ class InstallerTests(unittest.TestCase):
         self.assertFalse(existing.is_symlink())
         self.assertEqual(existing.read_bytes(), original)
         self.assertTrue(all(not destination.is_symlink() for destination in self.destinations()))
+
+    # ---- tool detection / selection -------------------------------------------------
+
+    def names(self, tools):
+        return [tool.name for tool in tools]
+
+    def test_antigravity_gets_global_instructions(self):
+        self.assertIn(".gemini/GEMINI.md", install.INSTRUCTION_TARGETS)
+        actions = self.catalog_actions()
+        gemini = [a for a in actions if a.destination == self.home / ".gemini/GEMINI.md"]
+        self.assertEqual(len(gemini), 1)
+        self.assertEqual(gemini[0].source, self.common)
+
+    def test_detect_nothing_on_empty_home(self):
+        self.home.mkdir()
+        self.assertEqual(install.detect_tools(self.home, which=lambda _c: None), [])
+
+    def test_detect_by_marker_directory(self):
+        (self.home / ".claude").mkdir(parents=True)
+        (self.home / ".codex").mkdir()
+        self.assertEqual(self.names(install.detect_tools(self.home, which=lambda _c: None)),
+                         ["codex", "claude"])
+
+    def test_antigravity_is_not_detected_from_gemini_directory_alone(self):
+        # ~/.gemini may be left over from the legacy Gemini CLI; only `agy` counts.
+        (self.home / ".gemini").mkdir(parents=True)
+        self.assertEqual(install.detect_tools(self.home, which=lambda _c: None), [])
+
+    def test_detect_by_command_only_for_real_home(self):
+        # A --home override must not pick up tools from the real PATH.
+        self.home.mkdir()
+        self.assertEqual(install.detect_tools(self.home, which=lambda _c: "/usr/bin/x"), [])
+        real = Path.home().resolve()
+        found = install.detect_tools(real, which=lambda c: "/usr/bin/x" if c == "agy" else None)
+        self.assertIn("antigravity", self.names(found))
+
+    def test_select_tools_modes(self):
+        self.home.mkdir()
+        self.assertEqual(self.names(install.select_tools("all", self.home)), list(install.TOOL_NAMES))
+        self.assertEqual(self.names(install.select_tools("claude, codex", self.home)), ["codex", "claude"])
+        with self.assertRaises(install.InstallError):
+            install.select_tools("claude,bogus", self.home)
+        with self.assertRaises(install.InstallError):
+            install.select_tools("", self.home)
+
+    def test_plan_only_touches_selected_tools(self):
+        skills, roots = install.load_install_skills(self.skills.parent)
+        tools = install.select_tools("claude", self.home)
+        with patch.object(install, "__file__", str(self.skills.parent / "install.py")):
+            actions = install.plan_install_sources(
+                skills, self.home, adopt_identical=False, managed_skill_roots=roots, tools=tools)
+        destinations = {a.destination for a in actions}
+        self.assertIn(self.home / ".claude/skills/alpha", destinations)
+        self.assertIn(self.home / ".claude/CLAUDE.md", destinations)
+        self.assertFalse(any(".agents" in str(d) or ".gemini" in str(d) for d in destinations))
+
+    def test_shared_agents_root_is_not_duplicated_for_codex_and_cursor(self):
+        roots, _ = install.tool_targets(install.select_tools("codex,cursor", self.home))
+        self.assertEqual(roots.count(".agents/skills"), 1)
+
+    def test_cursor_alone_installs_skills_but_no_instructions(self):
+        roots, instructions = install.tool_targets(install.select_tools("cursor", self.home))
+        self.assertEqual(roots, (".agents/skills",))
+        self.assertEqual(instructions, ())
+
+    def run_cli(self, *args):
+        script = self.skills.parent / "install.py"
+        shutil.copyfile(install.__file__, script)
+        with patch.object(install, "__file__", str(script)), \
+                patch("sys.argv", ["install.py", "--home", str(self.home), *args]), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(io.StringIO()):
+            return install.main()
+
+    def test_auto_installs_only_detected_tools(self):
+        (self.home / ".claude").mkdir(parents=True)
+        self.assertEqual(self.run_cli(), 0)
+        self.assertTrue((self.home / ".claude/skills/alpha").is_symlink())
+        self.assertTrue((self.home / ".claude/CLAUDE.md").is_symlink())
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertFalse((self.home / ".gemini").exists())
+        self.assertFalse((self.home / ".codex").exists())
+
+    def test_auto_with_no_tools_installs_nothing(self):
+        self.home.mkdir()
+        self.assertEqual(self.run_cli(), 0)
+        self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_undetected_tool_links_are_left_alone(self):
+        # Install everything, then simulate Antigravity being removed: auto mode must
+        # neither recreate nor delete its existing (current) links.
+        self.assertEqual(self.run_cli("--tools", "all"), 0)
+        gemini_link = self.home / ".gemini/config/skills/alpha"
+        self.assertTrue(gemini_link.is_symlink())
+        (self.home / ".claude").mkdir(exist_ok=True)
+        self.assertEqual(self.run_cli("--tools", "claude"), 0)
+        self.assertTrue(gemini_link.is_symlink())
+
+    def test_removed_skill_link_is_cleaned_even_for_inactive_tool(self):
+        self.assertEqual(self.run_cli("--tools", "all"), 0)
+        (self.skills / "beta").rename(self.root / "beta-gone")
+        stale = install.find_stale_managed_skill_links(
+            self.home, [self.skills, self.upstream], {"alpha", "gamma"})
+        self.assertIn(self.home / ".gemini/config/skills/beta", stale)
+
+    # ---- invocation policy consistency ----------------------------------------------
+
+    def test_policy_mismatch_between_codex_and_claude_is_rejected(self):
+        skill = self.skills / "alpha/SKILL.md"
+        skill.write_text(skill.read_text().replace("disable-model-invocation: true\n", ""))
+        with self.assertRaisesRegex(install.InstallError, "Invocation policy mismatch"):
+            install.validate_skills(self.skills)
+
+    def test_packaged_manual_only_skills_are_manual_in_both_tools(self):
+        root = Path(install.__file__).resolve().parent / "skills"
+        for name in ("challenge", "cleanup", "design", "review"):
+            text = (root / name / "SKILL.md").read_text()
+            self.assertRegex(text, r"(?m)^disable-model-invocation:\s*true\s*$", name)
 
 
 if __name__ == "__main__":
