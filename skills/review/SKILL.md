@@ -67,8 +67,8 @@ Finding 必須包含：
 
 只報真正影響 acceptance 或值得 downstream 明確追蹤的事項。
 
-- 缺少 human decision → 不替 human 決定；回 `grilling` / `design`。
-- 需要新 target architecture → 回 `design`。
+- 缺少 human decision → 不替 human 決定；回 `grilling` / `grill-with-docs`。
+- 需要新 target architecture → 回 `grill-with-docs` / `to-spec` 補決策；`design` 只在決策確定後同步文件。
 - 只是探索性 concern、沒有 evidence → 不升格成 blocker；必要時標 NOTE 或交 `challenge`。
 - naming / private helper /一般 implementation taste 不影響 architecture contract 時，不列 blocker。
 

@@ -80,7 +80,7 @@ disable-model-invocation: true
 - 明確標出彼此衝突的 challenger assumptions；
 - 將結果分成：
   - **Document correction**：不需要新 decision；
-  - **Design gap**：需要回 `design`；
+  - **Design gap**：需要回 `grill-with-docs` / `to-spec` 補技術決策；
   - **Human decision gap**：需要 live `grilling` / `grill-me`；
   - **Validation gap**：需要 research / prototype / characterization。
 

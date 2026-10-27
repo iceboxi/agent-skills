@@ -25,6 +25,8 @@ Matt skills are the generic workflow base. Apply these local differences only wh
 - `challenge` and `review` are both optional **user-invoked** skills, never automatic acceptance gates. Challenge explores blind spots; review assesses a selected design/spec only when asked.
 - Architecture-focused `wayfinder` rejoins upstream at `to-spec`; no Design Doc is required unless the user asks for one.
 
+Many skills named in these instructions are user-invoked: installed, but hidden from your skill list. To run one, ask the user to type `/name` (Claude Code) or `$name` (Codex) instead of executing it yourself.
+
 # Prototype / Verification Overlay
 
 - Apple-platform prototype: when `prototype` depends on Swift/Objective-C compilation, UIKit/SwiftUI, Apple framework behavior, lifecycle, persistence, hardware, or device/runtime semantics, use the smallest native executable, test target, demo controller/view, preview, or integration harness that can answer the single question instead of forcing an HTML/web artifact.
