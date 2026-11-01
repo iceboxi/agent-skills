@@ -3,9 +3,12 @@
 - Inspect relevant code before making codebase-specific technical conclusions.
 - Support important technical claims with `file:line` evidence.
 - Do not reinforce unverified assumptions.
+- When two fixes built on the same assumption fail the same check, stop patching. State that assumption in one sentence, verify it against code or runtime evidence, and revise it before attempting another fix.
 - Prefer minimal, verifiable changes over broad refactors.
 - Follow existing codebase and platform patterns.
 - Include appropriate regression verification for behavioral changes.
+- Fix the cause of a failure. A guard, `try?`, fallback default, retry, or catch-all that only hides the symptom is mitigation: report it as mitigation, not as a fix.
+- Resolve compiler, type-checker, and linter errors at their cause. Any suppression (`as!`, a force unwrap added only to compile, `@ts-ignore`, `swiftlint:disable`, `# type: ignore`) needs a stated reason in the code or the response.
 - Verify side effects before modifying repository flows.
 - Do not duplicate state ownership.
 - Use Traditional Chinese for explanations and reasoning, following terminology natural to Taiwan software engineering teams.
@@ -31,6 +34,7 @@ Many skills named in these instructions are user-invoked: installed, but hidden 
 
 - Apple-platform prototype: when `prototype` depends on Swift/Objective-C compilation, UIKit/SwiftUI, Apple framework behavior, lifecycle, persistence, hardware, or device/runtime semantics, use the smallest native executable, test target, demo controller/view, preview, or integration harness that can answer the single question instead of forcing an HTML/web artifact.
 - Behavior-preserving refactor: before changing behavior-bearing legacy code, characterize the current observable behavior at an existing seam, then refactor in small green steps. Expected values must come from current behavior, a known fixture, protocol/spec, or another independent oracle.
+- Vacuous-test check: before relying on a new or changed test, confirm by inspection that it would fail if the code under test returned an empty or default result (`nil`, `0`, empty collection, no-op side effect). If it would still pass, strengthen the assertion to check the observable outcome, or remove the test.
 - Runtime validation: keep unit/integration/device evidence distinct. BLE, Watch, background lifecycle, entitlement, hardware timing, and similar OS/device behavior remain runtime gates even when unit tests pass.
 
 # Temp Artifact Overlay
