@@ -18,6 +18,10 @@
 - Explicit terminology requested by the user takes precedence for audience-facing wording, while quoted source text and code identifiers remain unchanged. Apply such terminology consistently across the output.
 - Ask before adding newly discovered conventions to project `AGENTS.md`.
 
+# UI Rules
+
+- Avoid unnecessary secondary labels and descriptions. Let the layout do the explaining.
+
 # Workflow Overlay
 
 Matt skills are the generic workflow base. Apply these local differences only when the branch matches:
