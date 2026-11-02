@@ -1,0 +1,6 @@
+interface:
+  display_name: "Verify Harness"
+  short_description: "Generate or maintain a project-owned skill that drives the real app and keeps evidence"
+  default_prompt: "使用 $verify-harness 為目前 repository 建立或維護專案自有的 verify-<app> skill：從 codebase 找出啟動、操作、觀察與隔離方式，產生固定 CLI 與 feature map，並實際跑一次 launch → doctor → drive → 讓 gate 失敗一次 → cleanup 證明可用。產生的檔案不自動 commit。"
+policy:
+  allow_implicit_invocation: false

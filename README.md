@@ -3,7 +3,7 @@
 個人的跨裝置 agent engineering environment。這個 repository 以 Matt Pocock skills 作為 pinned upstream base，只保留真正不同的 local documentation / optional critique abilities 與少量 global overlay。
 
 - Matt Pocock skills = generic engineering workflow base
-- local skills = 獨立 Design Doc artifact / 選用 critique / 手動 cleanup
+- local skills = 獨立 Design Doc artifact / 選用 critique / 手動 cleanup / 手動產生專案 verify skill
 - `instructions/common.md` = 輕量 workflow / Apple-platform overlay
 - `skills-manifest.json` = 決定哪些 upstream skills 會被安裝
 - Git submodule gitlink = upstream 版本唯一 pin
@@ -28,7 +28,8 @@ Our local skills
 ├─ design       # optional standalone post-spec/post-tickets Design Doc
 ├─ challenge    # manual adversarial critique
 ├─ review       # manual independent assessment
-└─ cleanup      # manual .scratch working-artifact cleanup
+├─ cleanup      # manual .scratch working-artifact cleanup
+└─ verify-harness # manual generator/maintainer of project verify-<app> skills
 
 Lightweight overlay
 └─ instructions/common.md
@@ -73,6 +74,8 @@ grill-with-docs / decisions
 `challenge` 和 `review` 僅在使用者主動呼叫時執行；不自動串接，也不是 implementation 必經的 acceptance gate。
 
 `cleanup` 也僅在使用者明確呼叫 `$cleanup` 時執行。它先檢查 `.scratch` 工作單位的完成狀態、依賴及值得長期保存的知識，再提出 dry-run 刪除清單；未經確認不會刪除。已完成的 Spec / Tickets / Design 工作版本不預設封存。ADR 等長期文件保留在專案的正式文件位置，Wiki 不屬於此流程。
+
+`verify-harness` 僅在使用者明確呼叫時執行。它先從 codebase 找出 app 的啟動、操作、觀察與隔離方式，再在專案內產生自有的 `verify-<app>` skill：一支固定 CLI（launch / doctor / test / shot / state / logs / cleanup）加上 feature map，證據放在 `.scratch/artifacts/verify/`。交付前必須實際跑完一次 launch → doctor → drive → 讓 gate 失敗一次 → cleanup；產生的檔案屬於該專案，不自動 commit。專案已有 verify skill 時改走 maintenance mode。內容改寫自 Lauren Tan 的 pstack `create-verification-skill` / `maintain-verification-skill`（MIT），Apple recipe 來自 NovelReader 的實測。
 
 Repository current-state inspection 不再是獨立 skill；各 workflow 直接依需要讀 code/tests。Accepted Design Doc 的 bounded maintenance 也不是獨立 skill，而是 `design` 的 document-maintenance mode。
 
@@ -134,6 +137,7 @@ skills/design/
 skills/challenge/
 skills/review/
 skills/cleanup/
+skills/verify-harness/
 ~~~
 
 Upstream skills：
@@ -294,7 +298,7 @@ skills/<name>/agents/openai.yaml
 
 Installer 會驗證 local metadata。Upstream skill 使用 Matt 自己的 `SKILL.md` invocation metadata，不要求我們額外包一份 `agents/openai.yaml`。
 
-手動呼叫限定（`challenge`、`cleanup`、`design`、`review`）必須兩邊同時設定，installer 會驗證兩者一致：
+手動呼叫限定（`challenge`、`cleanup`、`design`、`review`、`verify-harness`）必須兩邊同時設定，installer 會驗證兩者一致：
 
 ```
 SKILL.md frontmatter          disable-model-invocation: true      # Claude Code
