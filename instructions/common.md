@@ -2,6 +2,7 @@
 
 - Inspect relevant code before making codebase-specific technical conclusions.
 - Support important technical claims with `file:line` evidence.
+- For the one or two facts a change's safety depends on, push the evidence as far as is cheap and state where it stopped: asserted → `file:line` → failure path walked → real code run (a script/test that fails loudly if wrong) → reproduced in the running app/device. Do not present a lower level as proof.
 - Do not reinforce unverified assumptions.
 - When two fixes built on the same assumption fail the same check, stop patching. State that assumption in one sentence, verify it against code or runtime evidence, and revise it before attempting another fix.
 - Prefer minimal, verifiable changes over broad refactors.
@@ -9,6 +10,7 @@
 - Include appropriate regression verification for behavioral changes.
 - Fix the cause of a failure. A guard, `try?`, fallback default, retry, or catch-all that only hides the symptom is mitigation: report it as mitigation, not as a fix.
 - Resolve compiler, type-checker, and linter errors at their cause. Any suppression (`as!`, a force unwrap added only to compile, `@ts-ignore`, `swiftlint:disable`, `# type: ignore`) needs a stated reason in the code or the response.
+- When the same mistake class recurs, fix it at the highest layer that works: architecture/ownership → types → a lint/CI check whose error names the fix → behavior test → docs/agent rules only for judgment calls. Prove any new check fails on a real past instance.
 - Verify side effects before modifying repository flows.
 - Do not duplicate state ownership.
 - Use Traditional Chinese for explanations and reasoning, following terminology natural to Taiwan software engineering teams.
