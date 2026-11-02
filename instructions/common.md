@@ -41,6 +41,7 @@ Many skills named in these instructions are user-invoked: installed, but hidden 
 - Apple-platform prototype: when `prototype` depends on Swift/Objective-C compilation, UIKit/SwiftUI, Apple framework behavior, lifecycle, persistence, hardware, or device/runtime semantics, use the smallest native executable, test target, demo controller/view, preview, or integration harness that can answer the single question instead of forcing an HTML/web artifact.
 - Behavior-preserving refactor: before changing behavior-bearing legacy code, characterize the current observable behavior at an existing seam, then refactor in small green steps. Expected values must come from current behavior, a known fixture, protocol/spec, or another independent oracle.
 - Vacuous-test check: before relying on a new or changed test, confirm by inspection that it would fail if the code under test returned an empty or default result (`nil`, `0`, empty collection, no-op side effect). If it would still pass, strengthen the assertion to check the observable outcome, or remove the test.
+- XCUITest verdict: read the result bundle (`xcrun xcresulttool get test-results summary`), not the `xcodebuild` exit code. It exits 0 when every selected test skipped; a skip is not a pass.
 - Runtime validation: keep unit/integration/device evidence distinct. BLE, Watch, background lifecycle, entitlement, hardware timing, and similar OS/device behavior remain runtime gates even when unit tests pass.
 
 # Temp Artifact Overlay
