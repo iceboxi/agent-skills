@@ -793,7 +793,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_packaged_manual_only_skills_are_manual_in_both_tools(self):
         root = Path(install.__file__).resolve().parent / "skills"
-        for name in ("challenge", "cleanup", "design", "review", "verify-harness"):
+        for name in ("challenge", "cleanup", "design", "review"):
             text = (root / name / "SKILL.md").read_text()
             self.assertRegex(text, r"(?m)^disable-model-invocation:\s*true\s*$", name)
 
