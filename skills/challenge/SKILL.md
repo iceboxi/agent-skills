@@ -37,7 +37,7 @@ disable-model-invocation: true
 
 ## 3. Independence
 
-優先把每個 perspective 交給不同的 fresh agent / subagent，並行執行。
+優先把每個 perspective 交給不同的 fresh agent / subagent，並行執行。每個 challenger 都以 fresh context window 啟動，不要 fork 目前對話：fork 會繼承作者的 reasoning，失去獨立性。
 
 每個 challenger 只拿：
 

@@ -14,7 +14,7 @@ disable-model-invocation: true
 
 ## 1. Independence
 
-優先使用 fresh reviewer agent / subagent。若目前 session 本身就是未參與設計的 fresh context，可直接 review。
+優先使用 fresh reviewer agent / subagent，以 fresh context window 啟動，不要 fork 目前對話。若目前 session 本身就是未參與設計的 fresh context，可直接 review。Fork 出來的 reviewer 會繼承作者 context，視同下方的 `SAME-CONTEXT REVIEW`。
 
 Independent reviewer 的必要 context 只有：
 
