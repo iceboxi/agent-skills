@@ -13,6 +13,9 @@
 - When the same mistake class recurs, fix it at the highest layer that works: architecture/ownership → types → a lint/CI check whose error names the fix → behavior test → docs/agent rules only for judgment calls. Prove any new check fails on a real past instance.
 - Verify side effects before modifying repository flows.
 - Do not duplicate state ownership.
+- Names over comments: names, types, small functions, and tests should say what code does. In code you write or modify, delete comments that only restate them: signature-echo docs, field-name echoes, narration of the next line. Descriptions of runtime behavior get no exemption. Doc comments required by the project's linter or public-API convention (for example SwiftLint `missing_docs`, or DocC for a published SDK) take precedence over this rule. Otherwise only two kinds of comment are allowed:
+  - Module/class header: 1–3 lines stating its role and the invariant every change must preserve, i.e. the rule a new caller or new function could break.
+  - Why-not: beside code that looks wrong, redundant, or arbitrary but is deliberate, stating the constraint, observed failure, or decision behind it. Name the code it protects so later changes can re-check it, and delete it together with that code.
 - Use Traditional Chinese for explanations and reasoning, following terminology natural to Taiwan software engineering teams.
 - Keep code identifiers and API names unchanged. Do not force-translate established engineering terms when the English term is clearer or more natural in Taiwan usage (for example: API, protocol, callback, workflow, state, snapshot, cache, payload, codec, timeout, retry, commit, rollback).
 - Avoid Mainland-China-specific engineering translations when Taiwan usage, repository terminology, or the original English term is more natural.
@@ -32,7 +35,6 @@ Matt skills are the generic workflow base. Apply these local differences only wh
 - On explicit user request, run local `design` **after** the spec and work breakdown to publish an independently readable Markdown Design Doc for technical/manager communication, normally before implementation. Extract and visualize source decisions; do not redesign or override the spec.
 - Do not expose individual tickets (IDs, names, statuses, URLs, ticket-to-phase mapping) in the Design Doc. Summarize planned work as meaningful engineering phases, keeping relevant dependencies, gates and evidence.
 - `challenge` and `review` are both optional **user-invoked** skills, never automatic acceptance gates. Challenge explores blind spots; review assesses a selected design/spec only when asked.
-- Architecture-focused `wayfinder` rejoins upstream at `to-spec`; no Design Doc is required unless the user asks for one.
 
 Many skills named in these instructions are user-invoked: installed, but hidden from your skill list. To run one, ask the user to type `/name` (Claude Code) or `$name` (Codex) instead of executing it yourself.
 
