@@ -32,11 +32,22 @@
 Matt skills are the generic workflow base. Apply these local differences only when the branch matches:
 
 - Follow Matt upstream by default: `grill-with-docs → to-spec → to-tickets → implement` (or its small-work shortcut). Requirements and architecture decisions belong to the existing discussion/spec process, not a mandatory local design stage.
+- During `grill-with-docs`, when a frontier question needs a runnable answer (a state model, business logic, a UI to see, or Apple framework/device behavior), recommend the `/prototype` detour for that question instead of settling it in conversation, and keep it open until the verdict returns. `to-spec` records a question still waiting on its prototype as unresolved. Product and preference calls stay with the user.
 - On explicit user request, run local `design` **after** the spec and work breakdown to publish an independently readable Markdown Design Doc for technical/manager communication, normally before implementation. Extract and visualize source decisions; do not redesign or override the spec.
 - Do not expose individual tickets (IDs, names, statuses, URLs, ticket-to-phase mapping) in the Design Doc. Summarize planned work as meaningful engineering phases, keeping relevant dependencies, gates and evidence.
 - `challenge` and `review` are both optional **user-invoked** skills, never automatic acceptance gates. Challenge explores blind spots; review assesses a selected design/spec only when asked.
 
 Many skills named in these instructions are user-invoked: installed, but hidden from your skill list. To run one, ask the user to type `/name` (Claude Code) or `$name` (Codex) instead of executing it yourself.
+
+# Phased Delivery Overlay
+
+When the user asks to split a spec into phases:
+
+- A **phase** lands on trunk on its own and leaves trunk releasable. It ends on an **exit check**: the surface (per Runtime validation below), a concrete scenario, and a pass predicate. A phase that claims a performance effect also names the metric, the probe, the trunk baseline measured before the change, and the number that fails. A phase that only works once a later phase lands merges into that phase or becomes an expand–contract step.
+- `to-spec`: add a `## Phases` section giving each phase its delivered user stories, deferred scope, and exit check. Confirm the phase boundaries with the user together with the test seams.
+- `to-tickets`: assign every ticket to exactly one phase (a `**Phase:**` line in local tickets; a milestone or label on a real tracker). Blocking edges point to the same or an earlier phase.
+- `implement-spec`: implement one phase per invocation, on its own integration branch and PR started from trunk after the previous phase lands, instead of one branch for the whole spec. The phase is done when its exit check has run and passed.
+- `design`: take the Design Doc phases from the spec's `## Phases` section.
 
 # Prototype / Verification Overlay
 

@@ -33,6 +33,7 @@ Our local skills
 Lightweight overlay
 └─ instructions/common.md
    ├─ optional standalone Design Doc after spec / work planning
+   ├─ optional phased spec / per-phase delivery
    ├─ native Apple-platform prototype rule
    ├─ behavior-preserving characterization
    └─ device/runtime validation boundary
@@ -66,7 +67,9 @@ grill-with-docs / decisions
                 implement / implement-spec → code-review
 ~~~
 
-小型 single-context 工作可照 upstream 跳過不必要的 ticket 拆分。`design` 從已確立的需求、spec、工作規劃與相關 repository evidence，**只做 extraction / organization / visualization**，將 Current / Target architecture、protocol/function、state ownership、runtime、migration phases、工時與驗證整理成自足的固定格式 Design Doc；不重新做 architecture decisions。
+小型 single-context 工作可照 upstream 跳過不必要的 ticket 拆分。使用者要求把 spec 拆成多個 phase 時，依 `instructions/common.md` 的 Phased Delivery Overlay：spec 定義每個 phase 的範圍與 exit check，tickets 歸屬到 phase，`implement-spec` 一次落地一個 phase，`design` 直接沿用 spec 的 phases。
+
+`design` 從已確立的需求、spec、工作規劃與相關 repository evidence，**只做 extraction / organization / visualization**，將 Current / Target architecture、protocol/function、state ownership、runtime、migration phases、工時與驗證整理成自足的固定格式 Design Doc；不重新做 architecture decisions。
 
 **Design Doc 不露出 ticket ID、標題、狀態、tracker URL 或 ticket-to-phase mapping。** 詳細工作項目可彙整成工程 phase，但文件必須能獨立閱讀，不能要求讀者回到 tracker 或 spec 才看得懂。Implementation 仍依 spec 和確認過的工作規劃；實作發現新證據可適度調整，必要時才同步文件。
 
