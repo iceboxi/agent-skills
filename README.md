@@ -3,7 +3,7 @@
 個人的跨裝置 agent engineering environment。這個 repository 以 Matt Pocock skills 作為 pinned upstream base，只保留真正不同的 local documentation / optional critique abilities 與少量 global overlay。
 
 - Matt Pocock skills = generic engineering workflow base
-- local skills = 獨立 Design Doc artifact / 選用 critique / 手動 cleanup
+- local skills = 獨立 Design Doc artifact / 選用 critique / 手動 cleanup / herdr pointer
 - `instructions/common.md` = 輕量 workflow / Apple-platform overlay
 - `skills-manifest.json` = 決定哪些 upstream skills 會被安裝
 - Git submodule gitlink = upstream 版本唯一 pin
@@ -28,7 +28,8 @@ Our local skills
 ├─ design       # optional standalone post-spec/post-tickets Design Doc
 ├─ challenge    # manual adversarial critique
 ├─ review       # manual independent assessment
-└─ cleanup      # manual .scratch working-artifact cleanup
+├─ cleanup      # manual .scratch working-artifact cleanup
+└─ herdr        # pointer to the installed herdr binary's bundled skill
 
 Lightweight overlay
 └─ instructions/common.md
@@ -137,6 +138,7 @@ skills/design/
 skills/challenge/
 skills/review/
 skills/cleanup/
+skills/herdr/
 ~~~
 
 Upstream skills：
@@ -304,6 +306,8 @@ SKILL.md frontmatter          disable-model-invocation: true      # Claude Code
 agents/openai.yaml            policy.allow_implicit_invocation: false   # Codex
 ```
 
+`herdr` 刻意設為可由 model 觸發：另一個 agent 透過 Herdr 送來的 prompt，必須能讓接收端自行載入這個 skill。frontmatter description 沿用 herdr 官方 skill 的觸發條件（使用者明確提到 Herdr 才觸發），所以派工 prompt 要寫明「用 Herdr」；herdr 改了觸發條件時要手動同步。它只是 pointer，內文要求 agent 執行 `herdr --skill`，讓指令與每台機器安裝的 herdr 版本一致。不要再用 `npx skills add herdrdev/herdr` 裝同名 skill：installer 遇到非本 repo 管理的同名項目會停止；已經用 npx 裝過的機器，先移除各 agent skills 目錄下 npx 裝的 `herdr`，再執行 `./agent-skills install`。
+
 ## Project bootstrap and trackers
 
 Matt 的 `setup-matt-pocock-skills` 也會被安裝。它目前支援 GitHub、GitLab、local files 或其他 tracker convention。這些是 project-local configuration，不寫回本 agent-skills repo。
@@ -323,6 +327,9 @@ Upstream generic engineering discipline
 
 Our architecture workflow
     → local design / challenge / review
+
+Herdr control instructions
+    → installed herdr binary (`herdr --skill`); skills/herdr is only a pointer
 
 Our lightweight behavioral differences
     → instructions/common.md

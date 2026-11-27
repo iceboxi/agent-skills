@@ -797,6 +797,12 @@ class InstallerTests(unittest.TestCase):
             text = (root / name / "SKILL.md").read_text()
             self.assertRegex(text, r"(?m)^disable-model-invocation:\s*true\s*$", name)
 
+    def test_packaged_herdr_skill_is_model_invocable_in_both_tools(self):
+        # A prompt sent by another agent through Herdr must let the receiving agent load this skill itself.
+        root = Path(install.__file__).resolve().parent / "skills" / "herdr"
+        self.assertNotRegex((root / "SKILL.md").read_text(), r"(?m)^disable-model-invocation:\s*true\s*$")
+        self.assertRegex((root / "agents/openai.yaml").read_text(), r"(?m)^\s*allow_implicit_invocation:\s*true\s*$")
+
 
 if __name__ == "__main__":
     unittest.main()

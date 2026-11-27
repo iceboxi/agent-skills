@@ -1,0 +1,6 @@
+interface:
+  display_name: "Herdr"
+  short_description: "Control Herdr panes and coordinate other agents"
+  default_prompt: "使用 $herdr：先執行 herdr --skill 取得與本機版本一致的完整指令，再依其規則檢查或控制 Herdr panes 與其他 agents。"
+policy:
+  allow_implicit_invocation: true
